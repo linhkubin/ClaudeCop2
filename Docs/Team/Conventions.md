@@ -7,12 +7,12 @@
 Game: rail shooter kiểu Virtua Cop 2 cho mobile — xem `Docs/Design/Plan_VirtuaCop2_Mobile.md`.
 
 > ### ⚡ Đội gọn cho DEMO (M1 + M2) — chủ dự án chốt 2026-10-04
-> Coder **đang hoạt động**: **gameplay-coder** và **ui-coder**, cùng level-designer, reviewer.
+> Coder **đang hoạt động**: **gameplay-coder** và **ui-coder**, cùng level-designer, reviewer (tester).
 > - **gameplay-coder** sở hữu tạm thời **toàn bộ** thư mục của combat-coder, enemy-coder và jev-coder (Core, Combat, Props, FX, Enemy, Camera, Game, Jev + prefab tương ứng), ngoài phạm vi của chính mình.
 > - **ui-coder** giữ nguyên phạm vi UI/Ads.
 > - **combat-coder, enemy-coder tạm nghỉ** — nhận lại thư mục từ M3/M4. **jev-coder đã giải thể** (2026-10-04: game offline, bỏ Jev online/server) — `Scripts/Jev/` thuộc gameplay-coder.
 > - Code vẫn tách module theo bảng asmdef mục 2. Quy tắc "không ai tham chiếu UI/Ads" vẫn áp dụng.
-> - Reviewer review **một lần mỗi wave** (gộp).
+> - **Reviewer đổi vai thành tester (2026-10-04):** không duyệt code nữa; mỗi wave viết test cho Unity Test Runner + checklist test thủ công, **chủ dự án chạy test và phản hồi lỗi**. Lỗi → Liaison giao chủ module sửa.
 
 | Agent | Model | Sở hữu (chỉ được tạo/sửa trong đây) |
 |---|---|---|
@@ -23,7 +23,7 @@ Game: rail shooter kiểu Virtua Cop 2 cho mobile — xem `Docs/Design/Plan_Virt
 | combat-coder | sonnet | `Assets/_Game/Scripts/Core/`, `Assets/_Game/Scripts/Combat/`, `Assets/_Game/Scripts/Props/`, `Assets/_Game/Scripts/FX/`, `Assets/_Game/Prefabs/Combat/`, `Assets/_Game/Prefabs/Props/`, `Assets/_Game/Prefabs/FX/` |
 | enemy-coder | sonnet | `Assets/_Game/Scripts/Enemy/`, `Assets/_Game/Prefabs/Enemies/` |
 | ui-coder | sonnet | `Assets/_Game/Scripts/UI/`, `Assets/_Game/Scripts/Ads/`, `Assets/_Game/UI/` (gồm `UI/Fonts/`), `Assets/_Game/Prefabs/UI/`, `Assets/TextMesh Pro/` (TMP Essentials) |
-| reviewer | sonnet | `Docs/Team/Reviews/` |
+| reviewer (tester) | sonnet | `Assets/_Game/Tests/EditMode/`, `Assets/_Game/Tests/PlayMode/`, `Docs/Team/Testing/` (bản review cũ ở `Docs/Team/Reviews/` giữ làm lịch sử) |
 
 Mỗi coder còn có scene thử riêng: `Assets/_Game/Scenes/Sandbox/<agent-name>.unity` (hoặc `<agent-name>-<module>.unity`), chỉ chủ của nó được sửa.
 
@@ -40,12 +40,13 @@ Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham 
 | Assembly | Thư mục | Tham chiếu | Chủ |
 |---|---|---|---|
 | `ClaudeCop.Core` | `Scripts/Core/` | _(không — `references: []`)_ — **đóng băng** | combat-coder |
-| `ClaudeCop.Combat` | `Scripts/Combat/` (Props M3: asmdef riêng `ClaudeCop.Props`, cùng quy tắc) | Core, Unity.InputSystem | combat-coder |
+| `ClaudeCop.Combat` | `Scripts/Combat/` | Core, Unity.InputSystem | combat-coder |
+| `ClaudeCop.Props` | `Scripts/Props/` (M3: riêng ra, cùng quy tắc) | Core | combat-coder |
 | `ClaudeCop.FX` | `Scripts/FX/` | Core (FX tự nghe `CombatEvents` + raycast, không ai tham chiếu FX) | combat-coder |
 | `ClaudeCop.Enemy` | `Scripts/Enemy/` | Core | enemy-coder |
 | `ClaudeCop.Camera` | `Scripts/Camera/` | Core, Unity.Cinemachine, Unity.Splines, Unity.Mathematics | gameplay-coder |
 | `ClaudeCop.Jev` | `Scripts/Jev/` (gồm `JevDirector`; chỉ offline) | Core, Enemy | gameplay-coder |
-| `ClaudeCop.Game` | `Scripts/Game/` | Core, Combat, Enemy, Camera, Jev, Unity.Cinemachine (Camera/Jev/Cinemachine dùng cho bot debug, bọc define) | gameplay-coder |
+| `ClaudeCop.Game` | `Scripts/Game/` | Core, Combat, Props, Enemy, Camera, Jev, Unity.Cinemachine (Camera/Jev/Cinemachine dùng cho bot debug, bọc define) | gameplay-coder |
 | `ClaudeCop.Ads` | `Scripts/Ads/` | Unity.ugui, Unity.TextMeshPro (**không** ref Core/module game) | ui-coder |
 | `ClaudeCop.UI` | `Scripts/UI/` | Core, Combat, Ads, Jev, Unity.ugui, Unity.TextMeshPro | ui-coder |
 
@@ -58,7 +59,12 @@ Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham 
 | `ClaudeCop.UI.Editor` | `Scripts/UI/Editor/` | UI, Ads, Jev, Core, ugui, TextMeshPro | ui-coder |
 
 ### Tests (Editor-only + `defineConstraints: UNITY_INCLUDE_TESTS`, ref thêm TestRunner)
-`ClaudeCop.Core.Tests` (Core) · `ClaudeCop.Combat.Tests` (Core, Combat) · `ClaudeCop.Enemy.Tests` (Core, Enemy) · `ClaudeCop.Jev.Tests` (Core, Jev, Enemy) · `ClaudeCop.Game.Tests` (Core, Game) · `ClaudeCop.FX.Tests` (Core, FX) · `ClaudeCop.UI.Tests` (Core, Combat, UI, Ads, Jev, ugui, TMP). Mỗi asmdef Tests nằm trong `Tests/` của module, chủ = chủ module.
+**EditMode & PlayMode (M3):**
+- `ClaudeCop.Tests.EditMode` | `Assets/Tests/EditMode/` | Core, Combat, Props, FX, Enemy, Jev, Game, Camera, UI, ugui, TMP | tester
+- `ClaudeCop.Tests.PlayMode` | `Assets/Tests/PlayMode/` | như EditMode + SceneHierarchy | tester
+
+**Module-scoped (cũ, có thể giữ):**
+`ClaudeCop.Core.Tests` (Core) · `ClaudeCop.Combat.Tests` (Core, Combat, Props) · `ClaudeCop.Enemy.Tests` (Core, Enemy) · `ClaudeCop.Jev.Tests` (Core, Jev, Enemy) · `ClaudeCop.Game.Tests` (Core, Game) · `ClaudeCop.FX.Tests` (Core, FX) · `ClaudeCop.UI.Tests` (Core, Combat, UI, Ads, Jev, ugui, TMP). Mỗi asmdef Tests nằm trong `Tests/` của module, chủ = chủ module.
 
 ### Luật
 - **Không ai được tham chiếu UI hoặc Ads** (ngoài UI và test/editor của UI). Gameplay báo cho UI bằng event C#.
