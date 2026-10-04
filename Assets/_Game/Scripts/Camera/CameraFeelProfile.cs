@@ -69,6 +69,10 @@ namespace ClaudeCop.Camera
         [Tooltip("Le (do) quanh moi diem can thay: than enemy + vong target")] public float frameMargin = 5f;
         [Tooltip("Xoay ngang toi da khi can giua (do)")] public float frameMaxYaw = 15f;
         [Tooltip("Lui ra sau toi da (m); dung truoc vat can")] public float frameMaxPullBack = 8f;
+        [Tooltip("Khi giao tranh: muc tieu dang lo ra ngoai khung thi camera lia ngang cho no vao khung")]
+        public bool trackTargets = true;
+        [Tooltip("Goc lia toi da so voi goc dat (do)")] public float trackMaxYaw = 25f;
+        [Tooltip("Toc do lia (do/giay), < maxYawRate")] public float trackSpeed = 40f;
 
         [Header("Shake khi trung dan")]
         public float hitShakeDuration = 0.2f;
