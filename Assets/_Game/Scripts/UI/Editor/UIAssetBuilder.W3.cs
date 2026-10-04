@@ -146,7 +146,7 @@ namespace ClaudeCop.UI.Editor
                 var t = NewText("ComboText", safe, "x2 COMBO", 64, TextAlignmentOptions.Top, new Color(1f, 0.85f, 0.2f));
                 var r = t.rectTransform;
                 r.anchorMin = r.anchorMax = new Vector2(0.5f, 1f); r.pivot = new Vector2(0.5f, 1f);
-                r.sizeDelta = new Vector2(600, 90); r.anchoredPosition = new Vector2(0, -30);
+                r.sizeDelta = new Vector2(600, 90); r.anchoredPosition = new Vector2(0, -150); // man doc: duoi hang diem/tim
                 t.gameObject.SetActive(false);
                 Set(root.GetComponent<HudView>(), "comboText", t);
                 PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -205,7 +205,8 @@ namespace ClaudeCop.UI.Editor
             Stretch(black.rectTransform);
             var bg = black.gameObject.AddComponent<CanvasGroup>(); bg.alpha = 0f; bg.blocksRaycasts = false; bg.interactable = false;
             var title = NewText("Title", content, "STAGE 1-1", 120, TextAlignmentOptions.Center, Color.white);
-            Center(title.rectTransform, new Vector2(1600, 240), Vector2.zero);
+            Center(title.rectTransform, new Vector2(1000, 240), Vector2.zero);
+            AutoSize(title);
             var tg = title.gameObject.AddComponent<CanvasGroup>(); tg.alpha = 0f; tg.blocksRaycasts = false; tg.interactable = false;
             var view = root.AddComponent<PhaseTransitionView>();
             Set(view, "content", content.gameObject);
@@ -255,7 +256,8 @@ namespace ClaudeCop.UI.Editor
             var safe = NewRect("SafeArea", content.transform);
             Stretch(safe); safe.gameObject.AddComponent<SafeAreaPanel>();
             var title = NewText("GameTitle", safe, "CLAUDE COP 2", 130, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f));
-            Center(title.rectTransform, new Vector2(1600, 260), new Vector2(0, 230));
+            Center(title.rectTransform, new Vector2(1000, 260), new Vector2(0, 230));
+            AutoSize(title);
             var sub = NewText("Subtitle", safe, "Rail shooter", 56, TextAlignmentOptions.Center, new Color(0.8f, 0.85f, 0.95f));
             Center(sub.rectTransform, new Vector2(1000, 90), new Vector2(0, 80));
             var start = NewButton("StartButton", safe, white, new Color(0.15f, 0.55f, 0.25f, 1f), "BẮT ĐẦU", 80, out _);

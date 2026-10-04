@@ -136,6 +136,12 @@ namespace ClaudeCop.UI.Editor
             return t;
         }
 
+        /// <summary>Man doc: chu lon tu thu nho (toi 40%) neu khong vua khung.</summary>
+        static void AutoSize(TMP_Text t)
+        {
+            t.enableAutoSizing = true; t.fontSizeMax = t.fontSize; t.fontSizeMin = Mathf.Floor(t.fontSize * 0.4f);
+        }
+
         static Button NewButton(string name, Transform parent, Sprite bg, Color color, string label, int labelSize, out TMP_Text labelText)
         {
             var img = NewImage(name, parent, bg, color, true);
@@ -268,7 +274,8 @@ namespace ClaudeCop.UI.Editor
             var content = NewImage("Content", root.transform, white, tint, true);
             Stretch(content.rectTransform);
             var t = NewText("Title", content.transform, title, 120, TextAlignmentOptions.Center, Color.white);
-            Anchor(t.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(1400, 160), new Vector2(0, 140));
+            Anchor(t.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(1000, 160), new Vector2(0, 140));
+            AutoSize(t);
             var score = NewText("ScoreText", content.transform, "SCORE  0", 72, TextAlignmentOptions.Center, Color.white);
             Anchor(score.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(1000, 100), new Vector2(0, 0));
             var btn = NewButton("RestartButton", content.transform, white, new Color(0.15f, 0.45f, 0.9f, 1f), "RESTART", 56, out _);
@@ -286,7 +293,8 @@ namespace ClaudeCop.UI.Editor
             var content = NewImage("Content", root.transform, white, new Color(0f, 0f, 0f, 0.92f), true);
             Stretch(content.rectTransform);
             var title = NewText("Title", content.transform, "QUẢNG CÁO", 100, TextAlignmentOptions.Center, Color.white);
-            Anchor(title.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(1200, 140), new Vector2(0, 160));
+            Anchor(title.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(1000, 140), new Vector2(0, 160));
+            AutoSize(title);
             var count = NewText("Countdown", content.transform, "3", 220, TextAlignmentOptions.Center, new Color(1f, 0.9f, 0.2f));
             Anchor(count.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(600, 260), new Vector2(0, -80));
             var v = root.AddComponent<FakeRewardedAd>();

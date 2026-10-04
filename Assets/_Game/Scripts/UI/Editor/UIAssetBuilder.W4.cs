@@ -58,11 +58,11 @@ namespace ClaudeCop.UI.Editor
 
             // Nut JEV nho o goc duoi-trai (raycast chi tren nut)
             var btn = NewButton("JevButton", safe, white, new Color(0.1f, 0.1f, 0.15f, 0.75f), "JEV", 34, out _);
-            Anchor((RectTransform)btn.transform, new Vector2(0f, 0f), new Vector2(130, 70), new Vector2(24, 24));
+            Anchor((RectTransform)btn.transform, new Vector2(0f, 0f), new Vector2(130, 70), new Vector2(24, 260)); // tren cum vu khi/dan
 
             // Panel: KHONG chan raycast (chi nut JEV chan tap); thu nho ~0.56 => ~460px / 1920 (~24% chieu rong), nam tren nut JEV
             var panel = NewImage("Panel", safe, white, new Color(0.04f, 0.06f, 0.1f, 0.88f), false);
-            Anchor(panel.rectTransform, new Vector2(0f, 0f), new Vector2(820, 770), new Vector2(24, 106));
+            Anchor(panel.rectTransform, new Vector2(0f, 0f), new Vector2(820, 770), new Vector2(24, 342));
             panel.rectTransform.localScale = new Vector3(0.56f, 0.56f, 1f);
             var p = panel.transform;
 
