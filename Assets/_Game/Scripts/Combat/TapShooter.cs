@@ -230,7 +230,7 @@ namespace ClaudeCop.Combat
             if (cam == null) { Debug.LogWarning("[TapShooter] Khong co Camera.main.", this); return null; }
             if (projectFunc == null) projectFunc = Project;
 
-            float scale = Screen.height / (config != null ? config.ReferenceScreenHeight : 1080f);
+            float scale = Mathf.Min(Screen.width, Screen.height) / (config != null ? config.ReferenceScreenHeight : 1080f);
             float radius = weapon.HitRadiusPx * scale;
             float justice = (config != null ? config.JusticeRadiusPx : 35f) * scale;
 

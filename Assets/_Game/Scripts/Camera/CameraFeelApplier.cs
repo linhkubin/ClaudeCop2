@@ -17,6 +17,8 @@ namespace ClaudeCop.Camera
         {
             if (stage != CinemachineCore.Stage.Noise || profile == null || !Application.isPlaying) return;
 
+            state.Lens.FieldOfView = FitFov(state.Lens.FieldOfView, state.Lens.Aspect, profile);
+
             bool reduce = UserSettings.ReduceMotion;
             float t = Time.time;
             Vector3 pos = Vector3.zero;
@@ -83,6 +85,19 @@ namespace ClaudeCop.Camera
                 }
                 if (fovCut > 0f) state.Lens.FieldOfView = Mathf.Max(20f, state.Lens.FieldOfView - fovCut);
             }
+        }
+
+        /// <summary>
+        /// Quy doi FOV doc (dat o designAspect) khi man hep hon (man doc): noi rong FOV doc de giu goc nhin ngang
+        /// theo keepHorizontalFov, toi da maxVerticalFov. Man rong hon designAspect: giu nguyen.
+        /// </summary>
+        public static float FitFov(float verticalFov, float aspect, CameraFeelProfile p)
+        {
+            if (p == null || aspect <= 0f || aspect >= p.designAspect || p.keepHorizontalFov <= 0f) return verticalFov;
+            float halfV = verticalFov * 0.5f * Mathf.Deg2Rad;
+            float fullV = 2f * Mathf.Atan(Mathf.Tan(halfV) * p.designAspect / aspect) * Mathf.Rad2Deg;
+            float v = Mathf.Lerp(verticalFov, fullV, p.keepHorizontalFov);
+            return Mathf.Max(verticalFov, Mathf.Min(v, p.maxVerticalFov));
         }
     }
 }

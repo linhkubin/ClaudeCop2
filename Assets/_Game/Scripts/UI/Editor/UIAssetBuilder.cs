@@ -153,9 +153,9 @@ namespace ClaudeCop.UI.Editor
             c.renderMode = RenderMode.ScreenSpaceOverlay; c.sortingOrder = sortingOrder;
             var s = go.GetComponent<CanvasScaler>();
             s.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            s.referenceResolution = new Vector2(1920, 1080);
+            s.referenceResolution = new Vector2(1080, 1920);
             s.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            s.matchWidthOrHeight = 0.5f;
+            s.matchWidthOrHeight = 0f; // man hinh doc: khop chieu rong
             return go;
         }
 

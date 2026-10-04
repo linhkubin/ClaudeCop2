@@ -204,7 +204,7 @@ namespace ClaudeCop.UI.Editor
             var black = NewImage("Black", content, white, Color.black);
             Stretch(black.rectTransform);
             var bg = black.gameObject.AddComponent<CanvasGroup>(); bg.alpha = 0f; bg.blocksRaycasts = false; bg.interactable = false;
-            var title = NewText("Title", content, "STAGE 1-1", 150, TextAlignmentOptions.Center, Color.white);
+            var title = NewText("Title", content, "STAGE 1-1", 120, TextAlignmentOptions.Center, Color.white);
             Center(title.rectTransform, new Vector2(1600, 240), Vector2.zero);
             var tg = title.gameObject.AddComponent<CanvasGroup>(); tg.alpha = 0f; tg.blocksRaycasts = false; tg.interactable = false;
             var view = root.AddComponent<PhaseTransitionView>();
@@ -254,7 +254,7 @@ namespace ClaudeCop.UI.Editor
             Stretch(content.rectTransform);
             var safe = NewRect("SafeArea", content.transform);
             Stretch(safe); safe.gameObject.AddComponent<SafeAreaPanel>();
-            var title = NewText("GameTitle", safe, "CLAUDE COP 2", 190, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f));
+            var title = NewText("GameTitle", safe, "CLAUDE COP 2", 130, TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.2f));
             Center(title.rectTransform, new Vector2(1600, 260), new Vector2(0, 230));
             var sub = NewText("Subtitle", safe, "Rail shooter", 56, TextAlignmentOptions.Center, new Color(0.8f, 0.85f, 0.95f));
             Center(sub.rectTransform, new Vector2(1000, 90), new Vector2(0, 80));

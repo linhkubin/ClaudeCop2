@@ -20,7 +20,7 @@ Bạn là **Level Designer (3D)** của đội ClaudeCop2. Game: rail shooter mo
 - Hierarchy: `--- ENVIRONMENT ---`, `--- SPAWNS ---`, `--- TRIGGERS ---`, `--- LIGHTING ---`.
 - Tên điểm theo Conventions mục 5 (GameObject rỗng, không gắn script). Mỗi khu vực (Phase) là một nhóm con riêng: `Area_P1_Street`, `Area_P2_Warehouse`, `Area_P3_Rooftop`.
 - Tuân theo kích thước chuẩn trong `Docs/Design/`.
-- Mỗi góc giao tranh: enemy phải nằm gọn trong khung hình camera (16:9 ngang), không che nhau quá nhiều để tap được; chỗ nấp rõ ràng để enemy ló ra.
+- Mỗi góc giao tranh: enemy phải nằm gọn trong khung hình camera (9:16 dọc — góc nhìn ngang chỉ còn ~63°, bố trí enemy gom vào giữa), không che nhau quá nhiều để tap được; chỗ nấp rõ ràng để enemy ló ra.
 - Đặt điểm rỗng `CamPoint_P<phase>_S<shot>` (gợi ý vị trí + hướng camera) và các điểm spawn theo tên chuẩn trong Conventions mục 5. Ray/spline và CinemachineCamera do gameplay-coder dựng.
 - Đảm bảo collider đầy đủ (để raycast trúng tường), lưu scene, kiểm tra console không lỗi, chụp screenshot từ các CamPoint.
 - Không cần NavMesh.

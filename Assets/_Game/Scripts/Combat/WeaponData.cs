@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ClaudeCop.Combat
 {
-    /// <summary>So lieu mot loai vu khi. Ban kinh tinh bang pixel chuan 1080p (quy doi theo Screen.height / 1080).</summary>
+    /// <summary>So lieu mot loai vu khi. Ban kinh tinh bang pixel chuan 1080p (quy doi theo canh ngan man hinh / 1080, dung ca man doc).</summary>
     [CreateAssetMenu(menuName = "ClaudeCop/Combat/Weapon Data", fileName = "WeaponData")]
     public sealed class WeaponData : ScriptableObject
     {

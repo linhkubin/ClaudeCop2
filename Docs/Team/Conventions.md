@@ -96,7 +96,7 @@ Agent khác cần tag/layer/input/package mới → ghi yêu cầu trong báo c�
 | Multi-touch | Combat đọc trực tiếp `Touchscreen.touches` (ngón thứ 2 khi ngón 1 còn giữ) | F-108 — **chưa thử máy thật** |
 | Package | `com.unity.splines` 2.8.2, `com.unity.cinemachine`, `com.unity.probuilder`, `com.unity.inputsystem`, URP, ugui (gồm TextMeshPro) | |
 | TextMeshPro | **Đang dùng** cho toàn bộ UI. Essentials ở `Assets/TextMesh Pro/` (commit). Font tiếng Việt `Assets/_Game/UI/Fonts/ClaudeCop UI SDF.asset` (Dynamic, nguồn LiberationSans, đủ dấu). Không dùng `UnityEngine.UI.Text` cho chữ mới | |
-| Player Settings | Android, **landscape-only**, ARM64 | |
+| Player Settings | Android, **portrait-only** (màn hình dọc, đổi 2026-10-04), ARM64 | |
 | Quality / URP | Mức `Mobile`, URP asset `Assets/Settings/Mobile_RPAsset.asset`: **MSAA 2×, renderScale 1.0, HDR tắt**. `DefaultVolumeProfile.asset` đã dọn override Missing script | |
 | Material blockout | URP Lit: **tắt Specular Highlights + Environment Reflections** (khử nhiễu lấp lánh trên mobile, T-404). Material mới của level phải theo | level-designer |
 | Frame rate | 60 FPS — đặt ở cả Title và gameplay (F-207) | |

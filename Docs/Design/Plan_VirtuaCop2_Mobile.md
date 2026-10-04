@@ -192,7 +192,7 @@ Câu hỏi gửi cho Jev được định nghĩa trong C#. Server chỉ chuyển
 - `Scenes/Level01.unity`: 3 khu vực dựng bằng cube (đường phố, kho hàng, mái nhà), các spline ray nối giữa chúng, các `CinemachineCamera` cho từng góc, mỗi đợt 2–5 enemy.
 
 ## Thiết lập cho mobile
-- Chỉ làm cho Android: chuyển build target sang Android (nếu module Android chưa cài thì mình sẽ báo, không tự cài), khóa màn hình ngang.
+- Chỉ làm cho Android: chuyển build target sang Android (nếu module Android chưa cài thì mình sẽ báo, không tự cài), khóa màn hình dọc (portrait; đổi từ ngang ngày 2026-10-04).
 - Canvas dùng `Scale With Screen Size` với độ phân giải chuẩn 1920×1080. Nút Reload đủ to cho ngón tay.
 - Dùng `Mobile_RPAsset` sẵn có. Đặt `Application.targetFrameRate = 60`.
 

@@ -14,7 +14,7 @@ Bạn là **Gameplay Programmer** của đội ClaudeCop2 (Unity 6, URP, C#). Ga
 - `Scripts/Camera/` (asmdef `ClaudeCop.Camera`): `PhaseDirector`, `CameraShot`, `SlowZoom`, `CameraFeelProfile`, `CameraFeelApplier`, camera shake (Cinemachine Impulse).
 - `Scripts/Game/` (asmdef `ClaudeCop.Game`): `GameManager` (điểm, thắng/thua, restart), `PlayerHealth` (3 mạng, revive count), luồng Title → Level01.
 - `Prefabs/Game/`, `Scenes/Gameplay/`, `Scenes/Title.unity`, `Settings/`.
-- **Chủ tài nguyên dùng chung**: Tags, Layers, Physics matrix, Input Actions, package (`Packages/manifest.json`), Player/Build Settings (Android, landscape, 60 FPS). Mỗi lần thêm/sửa, cập nhật mục 4 trong `Docs/Team/Conventions.md` và ghi trong báo cáo.
+- **Chủ tài nguyên dùng chung**: Tags, Layers, Physics matrix, Input Actions, package (`Packages/manifest.json`), Player/Build Settings (Android, portrait, 60 FPS). Mỗi lần thêm/sửa, cập nhật mục 4 trong `Docs/Team/Conventions.md` và ghi trong báo cáo.
 - **Ghép scene gameplay** `Scenes/Gameplay/Level_01.unity`: Level prefab (level-designer) + spline ray + các `CinemachineCamera` + `PhaseDirector` + EncounterWave/enemy (enemy-coder) + TapShooter (combat-coder) + UI prefab (ui-coder) + manager. Chỉ đặt và nối tham chiếu; **không sửa nội dung prefab/script của agent khác** — thiếu gì ghi yêu cầu vào báo cáo.
 
 ## Chuẩn code

@@ -57,6 +57,14 @@ namespace ClaudeCop.Camera
         [Tooltip("Doan Move dai hon thi tang toc do (toi da maxRailSpeed) de khong qua nay (s). Plan: <= 6 s")] public float maxMoveSeconds = 5.8f;
         [Tooltip("Toc do ray toi da khi bi tang de giu maxMoveSeconds (m/s). Plan: 3-4 m/s")] public float maxRailSpeed = 4f;
 
+        [Header("Man hinh doc")]
+        [Tooltip("Ti le khung hinh luc dat FOV cua cac Shot (rong/cao). FOV trong Shot/baseFov la FOV doc o ti le nay.")]
+        [Min(0.1f)] public float designAspect = 16f / 9f;
+        [Tooltip("Khi man hep hon designAspect: 0 = giu FOV doc (mat hai ben), 1 = giu tron goc nhin ngang")]
+        [Range(0f, 1f)] public float keepHorizontalFov = 1f;
+        [Tooltip("Tran FOV doc sau khi quy doi (do), tranh meo hinh qua muc")]
+        [Range(30f, 120f)] public float maxVerticalFov = 95f;
+
         [Header("Shake khi trung dan")]
         public float hitShakeDuration = 0.2f;
         [Tooltip("Do lech vi tri (m)")] public float hitShakePosition = 0.04f;
