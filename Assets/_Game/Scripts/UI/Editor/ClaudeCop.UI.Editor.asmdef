@@ -1,0 +1,23 @@
+{
+    "name": "ClaudeCop.UI.Editor",
+    "rootNamespace": "ClaudeCop.UI.Editor",
+    "references": [
+        "ClaudeCop.UI",
+        "ClaudeCop.Ads",
+        "ClaudeCop.Jev",
+        "ClaudeCop.Core",
+        "Unity.ugui",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90ad3c91cde213e43aa136c0149d8a80, type: 3}
+  m_Name: FxConfig
+  m_EditorClassIdentifier: ClaudeCop.FX::ClaudeCop.FX.FxConfig
+  surfaceImpacts:
+  - prefab: {fileID: 3930777615212662170, guid: 72b8cbe98d471c34db2d34e6a6e4a8c7, type: 3}
+    lifetime: 0.8
+    maxInstances: 8
+  - prefab: {fileID: 740797426167092707, guid: 402a365d405d8364dae8423c0ffe621c, type: 3}
+    lifetime: 0.8
+    maxInstances: 8
+  - prefab: {fileID: 8885275874974696342, guid: 016506c9c2b43b340a6cdfa38db002d3, type: 3}
+    lifetime: 0.5
+    maxInstances: 8
+  - prefab: {fileID: 1552224790891512170, guid: 916323bb0801a624fb36a2cd7705f599, type: 3}
+    lifetime: 0.7
+    maxInstances: 8
+  - prefab: {fileID: 8646773254987999828, guid: 27a40f47bd345ec48b959b2eda5acfe4, type: 3}
+    lifetime: 1
+    maxInstances: 8
+  - prefab: {fileID: 2448290264503092048, guid: 010ec27c72254a649b677690ca0e6a8c, type: 3}
+    lifetime: 0.6
+    maxInstances: 8
+  muzzle:
+    prefab: {fileID: 2490185772701318540, guid: f6f99f023f63fc5429629077adf531d0, type: 3}
+    lifetime: 0.4
+    maxInstances: 4
+  enemyHit:
+    prefab: {fileID: 5252371316010933139, guid: 55650fc6ec4bb934487ed751600be0bb, type: 3}
+    lifetime: 0.6
+    maxInstances: 8
+  justiceHit:
+    prefab: {fileID: 6517523935102068206, guid: 451e4eff562c6bd4c8534807adcb8057, type: 3}
+    lifetime: 0.8
+    maxInstances: 4
+  hostageHit:
+    prefab: {fileID: 8367016649525619512, guid: aa558dcd20000ca48ba29267b177e783, type: 3}
+    lifetime: 0.6
+    maxInstances: 4
+  bulletMark:
+    prefab: {fileID: 6633985028024217379, guid: 3b11a73b1e84c854183d81aea9d5a963, type: 3}
+    lifetime: 8
+    maxInstances: 24
+  maxActiveParticles: 300
+  reduceMotionScale: 0.4
+  muzzleEnabled: 1
+  rayMaxDistance: 80
+  rayMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  markOffset: 0.012

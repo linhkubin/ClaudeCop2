@@ -1,0 +1,21 @@
+{
+    "name": "ClaudeCop.UI",
+    "rootNamespace": "ClaudeCop.UI",
+    "references": [
+        "ClaudeCop.Core",
+        "ClaudeCop.Combat",
+        "ClaudeCop.Ads",
+        "ClaudeCop.Jev",
+        "Unity.ugui",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

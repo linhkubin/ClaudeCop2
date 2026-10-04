@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8380887581651996251
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7558314010557108611}
+  - component: {fileID: 573661319691493405}
+  - component: {fileID: 3150822039614416927}
+  m_Layer: 0
+  m_Name: CombatSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7558314010557108611
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8380887581651996251}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &573661319691493405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8380887581651996251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61ed81d92c3a81842853d066a2e60ec1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ClaudeCop.Combat::ClaudeCop.Combat.TapShooter
+  inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  startingWeapon: {fileID: 11400000, guid: f341d92e2b8810a4d8aced2c36cbe335, type: 2}
+  config: {fileID: 11400000, guid: b19eb45f61fb49040a1b8c5c0638fbac, type: 2}
+  combo: {fileID: 3150822039614416927}
+  actionMapName: Gameplay
+  tapActionName: Tap
+  tapPositionActionName: TapPosition
+--- !u!114 &3150822039614416927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8380887581651996251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfb6870ab8980e7418ddc82b711b7c59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ClaudeCop.Combat::ClaudeCop.Combat.ComboSystem
+  config: {fileID: 11400000, guid: b19eb45f61fb49040a1b8c5c0638fbac, type: 2}

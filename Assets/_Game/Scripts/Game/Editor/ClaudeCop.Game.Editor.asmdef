@@ -1,0 +1,26 @@
+{
+    "name": "ClaudeCop.Game.Editor",
+    "rootNamespace": "ClaudeCop.Game.Editor",
+    "references": [
+        "ClaudeCop.Core",
+        "ClaudeCop.Camera",
+        "ClaudeCop.Camera.Editor",
+        "ClaudeCop.Enemy",
+        "ClaudeCop.Combat",
+        "ClaudeCop.Game",
+        "Unity.Cinemachine",
+        "Unity.Splines",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

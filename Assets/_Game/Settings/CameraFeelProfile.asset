@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d794016a6caca7e4b958f73242ac4845, type: 3}
+  m_Name: CameraFeelProfile
+  m_EditorClassIdentifier: ClaudeCop.Camera::ClaudeCop.Camera.CameraFeelProfile
+  railSpeed: 3.5
+  easeInTime: 1
+  easeOutTime: 1
+  lookAhead: 4
+  lookDamping: 0.35
+  baseFov: 60
+  maxYawRate: 60
+  maxRoll: 2
+  maxPitch: 10
+  cutAngle: 90
+  reduceMotionCutAngle: 30
+  defaultBlend: 0.5
+  blendStyle: 1
+  subAngleBlend: 0.6
+  restAfterClear: 0.3
+  handheldAmplitude: 0.3
+  handheldFrequency: 0.4
+  handheldTimeScale: 5
+  bobAmplitude: 0.025
+  bobStepsPerSecond: 1.9
+  dollyInFov: 8
+  dollyInDuration: 12
+  modeFade: 0.4
+  punchFov: 5
+  punchIn: 0.15
+  punchOut: 0.4
+  killZoomFov: 6
+  killZoomDuration: 0.5
+  killZoomAimBlend: 0.35
+  killZoomMaxTurn: 6
+  phaseFadeOut: 0.4
+  phaseHold: 1
+  phaseFadeIn: 0.4
+  reduceMotionFade: 0.2
+  maxMoveSeconds: 5.4
+  maxRailSpeed: 4
+  hitShakeDuration: 0.2
+  hitShakePosition: 0.04
+  hitShakeAngle: 1.2
+  hitShakeReduceScale: 0.35

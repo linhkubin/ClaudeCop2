@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.Jev",
+    "rootNamespace": "ClaudeCop.Jev",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Enemy"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.Camera",
+    "rootNamespace": "ClaudeCop.Camera",
+    "references": ["ClaudeCop.Core", "Unity.Cinemachine", "Unity.Splines", "Unity.Mathematics"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

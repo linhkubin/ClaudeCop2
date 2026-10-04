@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1033705489992338215
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5742233723532188575}
+  - component: {fileID: 1251807854225270243}
+  - component: {fileID: 2685881134270506749}
+  - component: {fileID: 3327462428151228009}
+  m_Layer: 0
+  m_Name: GameSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5742233723532188575
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1033705489992338215}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1251807854225270243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1033705489992338215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 758d9c99a7f358f4388d118bfc28cfc4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ClaudeCop.Game::ClaudeCop.Game.PlayerHealth
+  config: {fileID: 11400000, guid: 7e6e88ea5132d1b49bcda48d0e080740, type: 2}
+--- !u!114 &2685881134270506749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1033705489992338215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9694a3bb42d2cd04d8cb8b671dfd0f29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ClaudeCop.Game::ClaudeCop.Game.ScoreSystem
+  config: {fileID: 11400000, guid: 7e6e88ea5132d1b49bcda48d0e080740, type: 2}
+--- !u!114 &3327462428151228009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1033705489992338215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70d1cc57883c2a44b955b14a3ef5ea58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ClaudeCop.Game::ClaudeCop.Game.GameManager
+  config: {fileID: 11400000, guid: 7e6e88ea5132d1b49bcda48d0e080740, type: 2}
+  playerHealth: {fileID: 1251807854225270243}
+  scoreSystem: {fileID: 2685881134270506749}

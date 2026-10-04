@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.Combat",
+    "rootNamespace": "ClaudeCop.Combat",
+    "references": ["ClaudeCop.Core", "Unity.InputSystem"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

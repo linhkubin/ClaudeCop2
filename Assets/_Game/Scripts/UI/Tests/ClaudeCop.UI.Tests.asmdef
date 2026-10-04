@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.UI.Tests",
+    "rootNamespace": "ClaudeCop.UI.Tests",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Combat", "ClaudeCop.UI", "UnityEngine.TestRunner", "UnityEditor.TestRunner", "Unity.ugui", "Unity.TextMeshPro", "ClaudeCop.Ads", "ClaudeCop.Jev"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

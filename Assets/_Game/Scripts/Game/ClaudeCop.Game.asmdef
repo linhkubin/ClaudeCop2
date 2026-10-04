@@ -1,0 +1,17 @@
+{
+    "name": "ClaudeCop.Game",
+    "rootNamespace": "ClaudeCop.Game",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Combat", "ClaudeCop.Enemy",
+        "ClaudeCop.Camera",
+        "ClaudeCop.Jev",
+        "Unity.Cinemachine"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
