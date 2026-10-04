@@ -9,7 +9,7 @@ Bạn là **Gameplay Programmer** của đội ClaudeCop2 (Unity 6, URP, C#). Ga
 **Đọc trước khi làm:** `Docs/Team/Conventions.md` (phạm vi, asmdef, git) và `Docs/Design/Plan_VirtuaCop2_Mobile.md` (thiết kế, đặc biệt mục "Cấu trúc màn chơi" và "Cảm giác camera").
 
 ## Phạm vi sở hữu
-> **Trong DEMO (M1 + M2)** bạn là coder gameplay duy nhất: ngoài phạm vi dưới đây, bạn **tạm sở hữu cả thư mục của combat-coder, enemy-coder, jev-coder** — Core (hợp đồng dùng chung), TapShooter/đạn/vũ khí/combo/Justice, FX, Enemy/EncounterWave/Hostage, Jev Offline. Đọc thêm `.claude/agents/combat-coder.md`, `enemy-coder.md`, `jev-coder.md` để áp dụng chuẩn code của các phần đó. Vẫn tách asmdef theo bảng trong Conventions mục 2. UI vẫn là của ui-coder.
+> **Trong DEMO (M1 + M2)** bạn là coder gameplay duy nhất: ngoài phạm vi dưới đây, bạn **tạm sở hữu cả thư mục của combat-coder, enemy-coder** và sở hữu hẳn `Scripts/Jev/` (jev-coder đã giải thể, Jev chỉ chạy offline — không gọi mạng, không server, không API key) — Core (hợp đồng dùng chung), TapShooter/đạn/vũ khí/combo/Justice, FX, Enemy/EncounterWave/Hostage, Jev Offline. Đọc thêm `.claude/agents/combat-coder.md`, `enemy-coder.md` để áp dụng chuẩn code của các phần đó. Vẫn tách asmdef theo bảng trong Conventions mục 2. UI vẫn là của ui-coder.
 
 - `Scripts/Camera/` (asmdef `ClaudeCop.Camera`): `PhaseDirector`, `CameraShot`, `SlowZoom`, `CameraFeelProfile`, `CameraFeelApplier`, camera shake (Cinemachine Impulse).
 - `Scripts/Game/` (asmdef `ClaudeCop.Game`): `GameManager` (điểm, thắng/thua, restart), `PlayerHealth` (3 mạng, revive count), luồng Title → Level01.

@@ -2,7 +2,7 @@
 
 > Do **project-manager** duy trì. Trạng thái: TODO · IN PROGRESS · IN REVIEW · DONE · BLOCKED
 > Kế hoạch hiện hành: **DEMO M1 + M2** (lập 2026-10-04), nguồn: `Docs/Design/Plan_VirtuaCop2_Mobile.md`.
-> **Đội gọn:** gameplay-coder (Core, Combat, FX, Enemy, Camera, Game, Jev Offline, ghép scene, tài nguyên dùng chung) · ui-coder (UI/Ads) · level-designer · reviewer (1 lần/wave). combat-coder, enemy-coder, jev-coder nghỉ đến M3/M4.
+> **Đội gọn:** gameplay-coder (Core, Combat, FX, Enemy, Camera, Game, Jev Offline, ghép scene, tài nguyên dùng chung) · ui-coder (UI/Ads) · level-designer · reviewer (1 lần/wave). combat-coder, enemy-coder nghỉ đến M3/M4. jev-coder đã giải thể (game offline).
 > **Cập nhật 2026-10-04 (sau W2–W4):** W1–W4 xong, M2 chơi được (bot kiểm Title→Start→3 Phase→Win, Restart, 3 nhánh Revive đều PASS). Đang làm polish W4 (T-404/T-405/T-412). Còn lại: **R-W4** → chủ dự án bấm thử → **commit một lần sau khi demo xong**. Báo cáo: [Reports/W1.md](Reports/W1.md), [Reports/W2-W4.md](Reports/W2-W4.md).
 
 ## Quy trình làm việc
@@ -72,7 +72,10 @@ Chủ dự án ⇄ Liaison (agent chính)
 | T-404 | W4 polish | gameplay-coder (URP) / level-designer (material trong `Level/`) | Khử nhiễu lấp lánh: tắt Specular Highlights + Environment Reflections trên material blockout | T-403 | IN PROGRESS |
 | T-405 | W4 polish | gameplay-coder | Khử hitch khi spawn enemy (prewarm/pool, tránh Instantiate giữa giao tranh) | T-403 | IN PROGRESS |
 | T-412 | W4 polish | ui-coder | Thu nhỏ bảng debug JEV (không che vùng bắn) | T-411 | IN PROGRESS |
-| R-W4 | W4 kết | reviewer | Review cuối: T-321, T-401, T-402, T-403, T-404/405/412, F-2xx đã sửa + checklist "Kiểm tra" của plan (trừ Props/Jev online) | T-403…T-412 | TODO |
+| R-W4 | W4 kết | reviewer | Review cuối: T-321, T-401, T-402, T-403, T-404/405/412, F-2xx đã sửa + checklist "Kiểm tra" của plan (trừ Props) | T-403…T-412 | TODO |
+| T-500 | W5 | (Liaison) | Chuyển màn dọc: Player Settings portrait, Canvas 1080×1920 khớp chiều rộng, camera giữ góc ngang (`CameraFeelProfile` nhóm "Man hinh doc"), bán kính tap theo cạnh ngắn. Game offline: bỏ `JevMode.Online`, bỏ jev-coder | — | DONE — cần chủ dự án mở Unity kiểm |
+| T-501 | W5 | level-designer | Enemy nhiều tầng, nhiều hướng (plan mục "Enemy xuất hiện từ nhiều tầng"): thêm mặt tiền nhà 2–3 tầng có cửa sổ/ban công/mép mái ở các góc giao tranh của 3 Phase; đặt lại/ thêm `EnemySpawn_*`/`HostageSpawn_*` + con `Peek` theo bảng kiểu xuất hiện; mỗi đợt ≥ 2 độ cao; kiểm khung hình dọc 9:16 | T-500 | TODO |
+| T-502 | W5 | gameplay-coder | Sau T-501: chạy lại menu `Assemble Level_01`, chỉnh vị trí/FOV các góc Combat cho khung dọc (thấy đủ các tầng), chạy bot `DebugM2Bot` PASS | T-501 | TODO |
 | COMMIT | sau demo | từng owner (Liaison điều phối) | Commit một lần sau khi R-W4 APPROVED + chủ dự án đồng ý; loại file theo F-111 | R-W4 | TODO |
 
 ## Vấn đề từ review (F-xxx)
@@ -164,7 +167,7 @@ Assembly `ClaudeCop.Core`, namespace `ClaudeCop.Core`, không tham chiếu assem
 - Material blockout: **tắt Specular Highlights và Environment Reflections** (T-404, khử nhiễu lấp lánh trên mobile).
 
 ## Số liệu
-**Từ plan:** ray 3–4 m/s (mặc định 3.5) · nhìn trước 3–5 m · xoay ngang ≤ 60°/s · nghiêng ≤ 2° · ngẩng/cúi ≤ 10° · đổi hướng > 90° dùng Cut · Blend 0.3–0.8 s, góc phụ 0.5–0.7 s · rung cầm tay Perlin 0.3 / 0.4 · nhún 2–3 cm · dolly-in ≤ 8–10° FOV · zoom punch −5° trong 0.15 s, trả 0.4 s · shake trúng đạn 0.2 s · di chuyển 3–5 s (≤ 6), giao tranh 8–15 s, nghỉ 0.3 s · vòng target 2.5 s · Pistol 6 · Shotgun 6 · MG 30 · 3 mạng · Revive 10 s, quảng cáo giả 3 s, 1 lần/lượt, hồi 3 tim · combo x1…x5 · 2–5 enemy/đợt · Jev: timeout 1.5 s, confidence 0.6, reticle_time 2.0/2.5/3.0 · Canvas 1080×1920 dọc (khớp chiều rộng) · 60 FPS.
+**Từ plan:** ray 3–4 m/s (mặc định 3.5) · nhìn trước 3–5 m · xoay ngang ≤ 60°/s · nghiêng ≤ 2° · ngẩng/cúi ≤ 10° · đổi hướng > 90° dùng Cut · Blend 0.3–0.8 s, góc phụ 0.5–0.7 s · rung cầm tay Perlin 0.3 / 0.4 · nhún 2–3 cm · dolly-in ≤ 8–10° FOV · zoom punch −5° trong 0.15 s, trả 0.4 s · shake trúng đạn 0.2 s · di chuyển 3–5 s (≤ 6), giao tranh 8–15 s, nghỉ 0.3 s · vòng target 2.5 s · Pistol 6 · Shotgun 6 · MG 30 · 3 mạng · Revive 10 s, quảng cáo giả 3 s, 1 lần/lượt, hồi 3 tim · combo x1…x5 · 2–5 enemy/đợt · Jev offline: confidence 0.6, reticle_time 2.0/2.5/3.0 · Canvas 1080×1920 dọc (khớp chiều rộng) · 60 FPS.
 
 **Đang dùng trong SO (đã chốt cho demo):** bán kính trúng Pistol 90 px / Shotgun 180 px ≤ 5 mục tiêu · Justice 35 px · reload 0.5 s · MG 10 phát/s · hạ enemy 100 + thưởng sớm ≤ 100 · Justice 300, ×1.5 nếu vòng còn xanh · **combo nhân điểm: bật (`applyComboMultiplier`)**, Shotgun không nhân thêm theo số mục tiêu (đã bỏ n²) · màu vòng xanh < 0.4 ≤ vàng < 0.75 ≤ đỏ · ló ra 0.3 s · spawn so le 0.4–1.0 s · nấp 0.8 s · **bất tử 1.5 s sau khi trúng đạn** (thay 0.5 s) · ân hạn 1.0 s sau revive · fade Phase 0.4 / tiêu đề 1.0 / 0.4 s · **`maxMoveSeconds` 5.4 s** (tự tăng tốc tới `maxRailSpeed` 4 m/s) · **thời lượng blend tối thiểu theo góc: góc (độ) / 40** · nhặt thùng không tốn đạn · hết đạn đặc biệt → Pistol đầy băng.
 **Đồ họa (Mobile_RPAsset):** MSAA 2×, renderScale 1.0, HDR tắt.
@@ -173,7 +176,6 @@ Assembly `ClaudeCop.Core`, namespace `ClaudeCop.Core`, không tham chiếu assem
 - Dùng **TextMeshPro** (chữ tiếng Việt có dấu, font `ClaudeCop UI SDF`).
 - Không commit `Assets/Screenshots/`, `ProjectSettings/Packages/com.unity.probuilder/`, `ProjectSettings/SceneTemplateSettings.json`.
 - **Commit một lần sau khi demo xong** (sau R-W4).
-- Ghi chú Jev: API choice cần `criteria` dạng **dictionary** {tên: mô tả}; key TypeSafe trong biến môi trường `TYPESAFE_API_KEY` (đã kiểm, jev-1.13.0) — **không ghi key vào repo**.
 
 ## Backlog sau demo (dọn dẹp, chưa chia task)
 - F-203: đưa số cân bằng hard-code vào SO (đặc biệt luật Offline Jev).
@@ -186,5 +188,5 @@ Assembly `ClaudeCop.Core`, namespace `ClaudeCop.Core`, không tham chiếu assem
 ## Backlog M3/M4 (giữ nguyên)
 - Props tương tác (PhysicsProp, FoliageProp, BreakableGlass + tool cắt mảnh, ShootableDoor, ExplosiveBarrel, LampProp, HangingSign, PropPool, ≤ 40 Rigidbody, mảnh vỡ 4 s); phân biệt Environment vs IShootable cho stats Jev (F-204 phần còn lại).
 - Grenade, HumanShieldEnemy (enemy_tactic grenade/human_shield thật).
-- Jev: ProxyJevClient (Jev Online qua proxy — nhớ `criteria` dictionary), DirectJevClient (`#if UNITY_EDITOR || DEVELOPMENT_BUILD`), `Server/python` + `Server/node`, `.env`/`.gitignore`, rank S/A/B/C + weakness, cửa sổ Editor `JevPlaytestReview`.
-- Trả thư mục cho combat-coder / enemy-coder / jev-coder; boss, âm thanh, rung, slow-motion, quảng cáo thật, Pause menu (xem lại F-206).
+- Jev offline mở rộng: `wave_preset`, `weapon_drop`, rank S/A/B/C + weakness (luật viết sẵn). **Đã bỏ:** Jev online, Proxy/Direct client, server, API key.
+- Trả thư mục cho combat-coder / enemy-coder; boss, âm thanh, rung, slow-motion, quảng cáo thật, Pause menu (xem lại F-206).

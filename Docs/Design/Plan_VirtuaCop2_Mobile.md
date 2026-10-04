@@ -4,7 +4,7 @@
 > - **M1 – Vòng lặp cốt lõi:** camera chạy ray (Cinemachine 3 + Splines) qua 1 Phase, tap bắn, enemy ló ra + vòng target thu nhỏ, đạn/reload, 3 mạng, HUD, thắng/thua, CameraFeelProfile cơ bản.
 > - **M2 – Hoàn thiện Level01:** đủ 3 Phase (đường phố, kho hàng, mái nhà), fade + tiêu đề Phase, con tin, combo, Justice Shot, Shotgun/Súng máy + thùng vật phẩm, Revive + quảng cáo giả, màn Title, FX cơ bản (tia lửa, vết đạn, chữ bay, enemy văng, nháy đỏ), tùy chọn "Giảm chuyển động", thiết lập Android. **Jev chỉ dùng `OfflineJevClient`** (luật viết sẵn) + bảng debug.
 > - **Props trong demo (W4):** `IShootable`, `SurfaceMaterial`, `PropPool`, hộp bay (`PhysicsProp`), kính vỡ (`BreakableGlass`), thùng nổ (`ExplosiveBarrel`) — theo mục 14 bên dưới.
-> - **CHƯA làm (M3/M4):** cây, cửa, đèn, biển hiệu, đồ ẩn trong hộp, lựu đạn, human shield, Jev Proxy/Direct, server Python/Node, cửa sổ Editor chấm log, đánh giá rank.
+> - **CHƯA làm (M3/M4):** cây, cửa, đèn, biển hiệu, đồ ẩn trong hộp, lựu đạn, human shield, đánh giá rank (offline). **Đã bỏ hẳn:** Jev online/TypeSafe, Proxy/Direct client, server Python/Node.
 > - **Giá trị mặc định đã duyệt** cho các chỗ plan còn thiếu: xem `Docs/Team/TASK_BOARD.md` (câu hỏi mở 1–10 của PM, chủ dự án chấp nhận toàn bộ).
 >
 > Thư mục/asmdef thực tế theo `Docs/Team/Conventions.md` (ghi đè mục "Cấu trúc file" bên dưới nếu khác).
@@ -110,36 +110,43 @@ Level01 (prototype): 3 Phase, mỗi Phase có 1 đoạn di chuyển và 2 lần 
 
 **Giao diện ngoài trận:** chỉ có màn hình tiêu đề (logo chữ và dòng "TAP TO START"), sau đó vào Level01. Bản demo **chưa có boss**; boss sẽ làm sau.
 
-## Tích hợp Jev (TypeSafe)
-Jev chỉ trả về các quyết định có kiểu (Choice, Score, Noul) kèm xác suất, qua API `POST https://api.typesafe.ai/v1/systemone` với `Authorization: Bearer <key>` và `model: "jev-latest"`. Vì mỗi lần gọi phải qua mạng, Jev **chỉ quyết định giữa các đợt giao tranh**. Các phần chạy mỗi frame (tap, kiểm tra trúng, vòng target, camera) vẫn viết bằng code thường.
+## Enemy xuất hiện từ nhiều tầng, nhiều hướng (màn dọc)
+> **Chốt 2026-10-04.** Màn dọc có nhiều chỗ theo chiều cao và ít chỗ theo chiều ngang (góc nhìn ngang ~63°). Vì vậy mỗi góc giao tranh trải enemy **theo chiều dọc** (nhiều tầng), không chỉ ló ra từ hai bên.
 
-**Những gì Jev quyết định.** Các câu hỏi được gửi chung trong một request và Jev trả lời song song.
-1. **Bộ điều phối (JevDirector):** gọi khi Shot di chuyển bắt đầu, để có kết quả sẵn trước đợt giao tranh kế tiếp.
-   - `state`: tóm tắt bằng chữ các chỉ số của người chơi (độ chính xác, thời gian phản xạ trung bình, số mạng, combo cao nhất, số lần trúng con tin, đạn còn lại, vũ khí đang cầm) cộng mô tả đợt giao tranh sắp tới (bối cảnh, các điểm xuất hiện).
-   - `player_skill`: Score 5 mức, từ "mới chơi" đến "rất giỏi".
-   - `wave_preset`: Choice giữa calm, standard, intense, hostage_heavy. Mỗi lựa chọn ứng với một bộ cấu hình đợt làm sẵn.
-   - `reticle_time`: Choice 2.0, 2.5 hoặc 3.0 giây.
-   - `enemy_tactic`: Choice giữa peek (ló ra từng con), rush (xông lên cùng lúc), grenade (ném lựu đạn), human_shield (bắt con tin làm khiên).
-   - `hostage_spot`: Choice trong các điểm đặt con tin của đợt đó, mô tả bằng chữ.
-   - `weapon_drop`: Choice giữa none, shotgun, machinegun.
-2. **Đánh giá cuối màn:** `rank` là Choice giữa S, A, B, C. `weakness` là Choice giữa phản xạ chậm, bắn trượt nhiều, hay bắn nhầm con tin, reload sai lúc. Mỗi điểm yếu ứng với một câu gợi ý soạn sẵn hiện trên màn kết quả.
-3. **Công cụ khi phát triển (chỉ chạy trong Editor):** một cửa sổ đọc log các lần chơi thử. Jev chấm mỗi đợt từ "quá dễ" đến "quá khó" để bạn cân bằng màn chơi.
+**Không đổi code cơ chế.** Enemy vẫn đi `chỗ nấp → điểm Peek` (`EnemyActor`: nội suy vị trí và hướng), nên hướng xuất hiện chỉ phụ thuộc vào vị trí con `Peek` so với điểm `EnemySpawn_…`. Muốn kiểu xuất hiện mới thì đặt điểm, không cần viết code.
 
-**Giữ an toàn khi gọi Jev:**
-- **Chấp nhận theo độ tự tin:** nếu `confidence` thấp hơn ngưỡng (khởi đầu 0.6, chỉnh được) thì dùng giá trị mặc định.
-- **Giới hạn thời gian:** mỗi request chờ tối đa khoảng 1.5 giây. Quá thời gian, mất mạng, hoặc bị giới hạn tần suất (lỗi 429/529) thì `OfflineJevClient` dùng luật viết sẵn. Game luôn chơi được khi không có mạng.
-- **Bảng debug trên màn hình (bật/tắt được):** hiện quyết định gần nhất của Jev kèm xác suất. Bảng này rất hữu ích khi trình diễn bản demo.
+| Kiểu xuất hiện | Chỗ nấp (điểm spawn) | Điểm `Peek` | Độ cao gợi ý |
+|---|---|---|---|
+| Ló ngang (đã có) | sau tường/cột | lệch sang trái/phải 0.6–1 m | mặt đất |
+| Đứng dậy sau vật nấp thấp (đã có) | thấp hơn mặt nấp ~1.2 m | thẳng lên | mặt đất |
+| Cửa sổ | trong phòng, lùi sâu ~1 m | ra sát khung cửa sổ | tầng 2 (~3.5 m), tầng 3 (~7 m) |
+| Ban công / lan can | ngồi sau lan can | đứng dậy | tầng 2–3 |
+| Mép mái nhà | nằm sau mép mái | nhô lên | mái (~10 m) |
+| Thả dây từ trên xuống | trên mép mái | thấp xuống 2–3 m, trước mặt tường | giữa tầng 2–3 |
+| Bước ra từ cửa / hẻm | trong cửa / sau góc hẻm | tiến 1–1.5 m về phía camera | mặt đất |
+| Trồi lên từ thấp | dưới cầu thang / sau xe / trong hố | lên ~1 m | thấp hơn mặt đất |
 
-**Ba cách kết nối, chọn trong `JevConfig`:**
-- `ProxyJevClient`: Unity gọi server trung gian trên localhost. Có hai bản server cùng một giao diện, chọn bản nào cũng được:
-  - `Server/python/`: FastAPI kèm `typesafe-sdk`.
-  - `Server/node/`: Express kèm SDK JavaScript.
-  
-  Cả hai đọc `TYPESAFE_API_KEY` từ file `.env` (file này được gitignore) và có endpoint `POST /jev` (chuyển tiếp yêu cầu) cùng `GET /health`. Điện thoại dùng chung Wi-Fi với máy bạn cũng gọi được qua địa chỉ IP LAN.
-- `DirectJevClient`: Unity gọi thẳng API của TypeSafe. API key lấy từ EditorPrefs hoặc một file bị gitignore. **Chỉ có trong Editor và bản Development Build**; bản release bị loại bỏ phần này bằng `#if`.
-- `OfflineJevClient`: chỉ dùng luật viết sẵn, đồng thời là phương án dự phòng cho hai cách trên.
+**Luật bố trí mỗi góc giao tranh:**
+- Mỗi đợt có enemy ở **ít nhất 2 độ cao khác nhau**. Từ Phase 2 trở đi có ít nhất 1 enemy ở tầng 2 trở lên.
+- Mọi enemy và con tin phải nằm trong khung hình dọc 9:16 của góc đó, cách mép ≥ 8% màn hình. Không gom quá chặt: tâm hai enemy cách nhau trên màn hình ≥ 2 lần bán kính tap (≈ 2 × 90 px chuẩn 1080).
+- Enemy ở trên cao quay mặt về camera, có vật nấp rõ (khung cửa, lan can) để người chơi đoán được chỗ sắp ló ra.
+- Con tin dùng cùng các kiểu trên (vd. cửa sổ cạnh enemy) để tăng độ khó đọc.
+- Độ khó tăng dần: Phase 1 chủ yếu mặt đất + 1 cửa sổ; Phase 2 thêm ban công, bước ra từ cửa; Phase 3 (mái nhà) thêm thả dây, mép mái, trồi lên từ thấp.
 
-Câu hỏi gửi cho Jev được định nghĩa trong C#. Server chỉ chuyển tiếp nên cả ba cách dùng chung một logic.
+**Tên điểm giữ nguyên quy ước** (`EnemySpawn_P<p>_W<w>_NN` + con `Peek`, `HostageSpawn_…`), nên `Level01Assembler` tự nhặt điểm mới khi chạy lại menu `ClaudeCop/Game/Assemble Level_01 (T-403)`.
+
+## Bộ điều phối độ khó Jev (Offline)
+> **Chốt 2026-10-04:** game **chạy offline hoàn toàn**. Bỏ Jev online (TypeSafe API), `ProxyJevClient`, `DirectJevClient`, server `Server/python` + `Server/node`, API key. Không có gọi mạng nào trong game.
+
+"Jev" trong dự án là **bộ luật viết sẵn chạy trên máy** (`OfflineJevClient`), dùng chung kiểu dữ liệu Choice/Score/Noul kèm xác suất để bảng debug hiển thị được. Jev **chỉ quyết định giữa các đợt giao tranh**, không chạy mỗi frame.
+
+**Những gì Jev quyết định** (theo chỉ số người chơi trong Phase: độ chính xác, thời gian phản xạ, số mạng mất, số lần trúng con tin):
+- `reticle_time` (đã có): Choice 2.0 / 2.5 / 3.0 giây, gọi khi Shot di chuyển bắt đầu để áp cho đợt kế tiếp.
+- Mở rộng sau (vẫn offline, cùng cơ chế luật): `wave_preset` (calm/standard/intense/hostage_heavy), `weapon_drop` (none/shotgun/machinegun), đánh giá cuối màn `rank` S/A/B/C + `weakness`.
+
+**An toàn:** `confidence` thấp hơn ngưỡng (0.6) hoặc chưa đủ số phát bắn (`minShotsForConfidence`) → dùng giá trị mặc định của đợt. Jev tắt (`JevConfig.enabled = false`) → mọi đợt dùng cấu hình làm sẵn.
+
+**Bảng debug trên màn hình (bật/tắt được):** hiện quyết định gần nhất kèm xác suất.
 
 ## Cấu trúc file
 Đặt trong `Assets/_Game/`:
@@ -177,35 +184,31 @@ Câu hỏi gửi cho Jev được định nghĩa trong C#. Server chỉ chuyển
 - `Scripts/HUD.cs`: hiển thị điểm, mạng, đạn, nút Reload, màn Win/Game Over kèm nút Chơi lại.
 - `Scripts/Jev/`:
   - `IJevClient.cs`
-  - `JevTypes.cs`: request, câu hỏi Choice/Score/Noul, response; serialize bằng `JsonUtility` hoặc Newtonsoft.
-  - `ProxyJevClient.cs`, `DirectJevClient.cs`, `OfflineJevClient.cs`
-  - `JevConfig.cs` (ScriptableObject: chọn cách kết nối, URL, thời gian chờ, ngưỡng confidence)
+  - `JevTypes.cs`: request, câu hỏi Choice/Score/Noul, response (dữ liệu trong máy, không serialize ra mạng).
+  - `OfflineJevClient.cs` (luật viết sẵn — client duy nhất)
+  - `JevConfig.cs` (ScriptableObject: bật/tắt, thời gian vòng target theo lựa chọn, ngưỡng confidence)
   - `JevDirector.cs`: soạn state và câu hỏi, gọi Jev trước mỗi đợt, áp kết quả vào `EncounterWave`.
   - `PlayerStatsTracker.cs`
   - `JevRankEvaluator.cs`
   - `JevDebugOverlay.cs`
-- `Scripts/Editor/JevPlaytestReview.cs`: cửa sổ Editor để chấm độ khó từ log chơi thử.
 - `Scripts/Grenade.cs`: lựu đạn bay tới kèm vòng target nhỏ, tap để bắn hạ.
 - `Scripts/HumanShieldEnemy.cs`: enemy giữ con tin làm khiên, phải tap đúng chấm Justice Shot hoặc đầu enemy.
-- Ở thư mục gốc repo (ngoài `Assets`): `Server/python/{app.py, requirements.txt}`, `Server/node/{server.js, package.json}`, `Server/.env.example`, và thêm `.env` vào `.gitignore`.
 - `Prefabs/Enemy.prefab`, `Prefabs/TargetReticle.prefab`, ảnh vòng tròn (tạo sprite dạng ring bằng code hoặc dùng `Image` có sẵn với sprite tròn).
 - `Scenes/Level01.unity`: 3 khu vực dựng bằng cube (đường phố, kho hàng, mái nhà), các spline ray nối giữa chúng, các `CinemachineCamera` cho từng góc, mỗi đợt 2–5 enemy.
 
 ## Thiết lập cho mobile
 - Chỉ làm cho Android: chuyển build target sang Android (nếu module Android chưa cài thì mình sẽ báo, không tự cài), khóa màn hình dọc (portrait; đổi từ ngang ngày 2026-10-04).
-- Canvas dùng `Scale With Screen Size` với độ phân giải chuẩn 1920×1080. Nút Reload đủ to cho ngón tay.
+- Canvas dùng `Scale With Screen Size` với độ phân giải chuẩn 1080×1920 (dọc, khớp chiều rộng). Nút Reload đủ to cho ngón tay.
 - Dùng `Mobile_RPAsset` sẵn có. Đặt `Application.targetFrameRate = 60`.
 
 ## Các bước thực hiện (qua Unity MCP)
--1. Môi trường: máy đã có Python 3.12. Cài Node.js LTS qua `winget install OpenJS.NodeJS.LTS` (bạn đã yêu cầu). Bạn đã có TypeSafe API key và sẽ tự dán vào `Server/.env`.
 0. Thêm package Cinemachine 3 (và Splines nếu chưa có) qua `manage_packages`.
 1. Tạo thư mục và các script. Refresh Unity, rồi đọc console để chắc chắn không có lỗi compile.
 2. Dựng scene Level01: môi trường, waypoint, các EncounterZone, Canvas và HUD.
 3. Tạo các prefab Enemy và TargetReticle, rồi gán tham chiếu.
 4. Cấu hình Player Settings và Build Settings cho mobile.
-5. Viết các lớp Jev trong Unity, có `OfflineJevClient` trước để game chạy được ngay cả khi chưa có key.
-6. Viết hai server Python và Node, sau đó nối `ProxyJevClient` và `DirectJevClient`.
-7. Viết bảng debug, màn đánh giá cuối màn, và cửa sổ Editor chấm log chơi thử.
+5. Viết các lớp Jev offline trong Unity (`OfflineJevClient`, `JevDirector`).
+7. Viết bảng debug và màn đánh giá cuối màn.
 
 ## Kiểm tra
 - `read_console` sau mỗi lần compile: không có lỗi.
@@ -223,12 +226,9 @@ Câu hỏi gửi cho Jev được định nghĩa trong C#. Server chỉ chuyển
     - Tap vào enemy đứng trước vật thể thì luôn trúng enemy.
   - Màn tiêu đề "TAP TO START" vào được Level01. Các hiệu ứng tia lửa, vết đạn, chữ điểm bay lên và enemy văng ra đều hiện đúng.
   - Màn Win và Game Over hiện đúng, nút Chơi lại hoạt động.
-- Kiểm tra Jev:
-  - `GET /health` của cả hai server trả về OK.
-  - Một request mẫu gửi tới `/jev` nhận về các câu trả lời đúng kiểu.
-  - Chơi thử lần lượt với ba cách kết nối (Proxy, Direct, Offline). Bảng debug phải hiện quyết định của Jev, và đợt giao tranh phải thay đổi theo quyết định đó.
-  - Tắt server hoặc ngắt mạng giữa trận: game tự chuyển sang Offline, không bị đứng.
-  - Chơi hai lượt với hai phong cách khác nhau (bắn chuẩn và bắn ẩu). `player_skill` và `wave_preset` phải khác nhau giữa hai lượt.
-  - Bản release không chứa `DirectJevClient`, và trong build không có API key.
+- Kiểm tra Jev (offline):
+  - Bảng debug hiện quyết định của Jev, và đợt giao tranh thay đổi theo quyết định đó.
+  - Chơi hai lượt với hai phong cách khác nhau (bắn chuẩn và bắn ẩu): `reticle_time` phải khác nhau giữa hai lượt.
+  - Bật chế độ máy bay: game chơi bình thường (không có gọi mạng nào).
 - Chụp screenshot Game view để bạn xem.
 - Lưu ý: lỗi Burst cache (mã 4551) không ảnh hưởng prototype này. Nếu thấy cần, có thể xóa `Library/BurstCache` riêng.

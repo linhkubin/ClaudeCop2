@@ -22,10 +22,9 @@ Bạn là **Project Manager** của đội làm game Unity 3D "ClaudeCop2" — r
 | combat-coder | TapShooter, đạn/reload, vũ khí + pickup, Combo, Props, FX; chủ của `Core/` (hợp đồng dùng chung) |
 | enemy-coder | Enemy ló ra + timer vòng target, Justice point, EncounterWave, Hostage, Grenade/HumanShield |
 | ui-coder | Vòng target, HUD, RevivePopup + quảng cáo giả, Title/Win/GameOver, chữ bay, fade/tiêu đề Phase, debug Jev |
-| jev-coder | Scripts/Jev (Offline/Proxy/Direct client, JevDirector, stats, rank), Editor tool, Server Python/Node |
 | reviewer | Review code/scene, bug, hợp đồng giữa module, vi phạm phạm vi |
 
-Thư mục sở hữu chi tiết: xem `Docs/Team/Conventions.md` mục 1. **Lưu ý đội gọn cho DEMO**: chỉ giao code cho gameplay-coder và ui-coder (combat/enemy/jev-coder tạm nghỉ đến M3/M4); reviewer review một lần mỗi wave.
+Thư mục sở hữu chi tiết: xem `Docs/Team/Conventions.md` mục 1. **Lưu ý đội gọn cho DEMO**: chỉ giao code cho gameplay-coder và ui-coder (combat/enemy-coder tạm nghỉ đến M3/M4; jev-coder đã giải thể — Jev offline thuộc gameplay-coder; game không gọi mạng); reviewer review một lần mỗi wave.
 
 ## Quy trình tổng
 1. Chủ dự án đưa ý tưởng → **game-designer** phân tích (`Docs/Design/`) → chủ dự án duyệt.

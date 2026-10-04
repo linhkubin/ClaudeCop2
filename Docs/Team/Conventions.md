@@ -1,7 +1,7 @@
 # Quy ước chung — ClaudeCop2
 
 > Mọi agent **đọc file này trước khi làm task**. Thay đổi file này phải qua PM.
-> Cập nhật lần cuối: 2026-10-04 sau W2–W4 (bảng asmdef thực tế, TMP, URP Mobile, material blockout, tên `HostageActor`, file không commit, bí mật Jev).
+> Cập nhật lần cuối: 2026-10-04 sau W2–W4 (bảng asmdef thực tế, TMP, URP Mobile, material blockout, tên `HostageActor`, file không commit). Sau đó: màn dọc, game offline (bỏ Jev online + jev-coder).
 
 ## 1. Phạm vi sở hữu
 Game: rail shooter kiểu Virtua Cop 2 cho mobile — xem `Docs/Design/Plan_VirtuaCop2_Mobile.md`.
@@ -10,7 +10,7 @@ Game: rail shooter kiểu Virtua Cop 2 cho mobile — xem `Docs/Design/Plan_Virt
 > Coder **đang hoạt động**: **gameplay-coder** và **ui-coder**, cùng level-designer, reviewer.
 > - **gameplay-coder** sở hữu tạm thời **toàn bộ** thư mục của combat-coder, enemy-coder và jev-coder (Core, Combat, Props, FX, Enemy, Camera, Game, Jev + prefab tương ứng), ngoài phạm vi của chính mình.
 > - **ui-coder** giữ nguyên phạm vi UI/Ads.
-> - **combat-coder, enemy-coder, jev-coder tạm nghỉ** — nhận lại thư mục từ M3/M4.
+> - **combat-coder, enemy-coder tạm nghỉ** — nhận lại thư mục từ M3/M4. **jev-coder đã giải thể** (2026-10-04: game offline, bỏ Jev online/server) — `Scripts/Jev/` thuộc gameplay-coder.
 > - Code vẫn tách module theo bảng asmdef mục 2. Quy tắc "không ai tham chiếu UI/Ads" vẫn áp dụng.
 > - Reviewer review **một lần mỗi wave** (gộp).
 
@@ -19,18 +19,17 @@ Game: rail shooter kiểu Virtua Cop 2 cho mobile — xem `Docs/Design/Plan_Virt
 | project-manager | opus | `Docs/Team/` |
 | game-designer | opus | `Docs/Design/` |
 | level-designer | opus | `Assets/_Game/Level/` (gồm material blockout), `Assets/_Game/Scenes/Levels/` |
-| gameplay-coder | sonnet | `Assets/_Game/Scripts/Camera/`, `Assets/_Game/Scripts/Game/`, `Assets/_Game/Prefabs/Game/`, `Assets/_Game/Scenes/Gameplay/`, `Assets/_Game/Scenes/Title.unity`, `Assets/_Game/Settings/` + tài nguyên dùng chung (mục 4) + Player/Build Settings |
+| gameplay-coder | sonnet | `Assets/_Game/Scripts/Camera/`, `Assets/_Game/Scripts/Game/`, `Assets/_Game/Scripts/Jev/`, `Assets/_Game/Prefabs/Game/`, `Assets/_Game/Scenes/Gameplay/`, `Assets/_Game/Scenes/Title.unity`, `Assets/_Game/Settings/` + tài nguyên dùng chung (mục 4) + Player/Build Settings |
 | combat-coder | sonnet | `Assets/_Game/Scripts/Core/`, `Assets/_Game/Scripts/Combat/`, `Assets/_Game/Scripts/Props/`, `Assets/_Game/Scripts/FX/`, `Assets/_Game/Prefabs/Combat/`, `Assets/_Game/Prefabs/Props/`, `Assets/_Game/Prefabs/FX/` |
 | enemy-coder | sonnet | `Assets/_Game/Scripts/Enemy/`, `Assets/_Game/Prefabs/Enemies/` |
 | ui-coder | sonnet | `Assets/_Game/Scripts/UI/`, `Assets/_Game/Scripts/Ads/`, `Assets/_Game/UI/` (gồm `UI/Fonts/`), `Assets/_Game/Prefabs/UI/`, `Assets/TextMesh Pro/` (TMP Essentials) |
-| jev-coder | sonnet | `Assets/_Game/Scripts/Jev/`, `Assets/_Game/Scripts/Editor/Jev/`, `Server/` (gốc repo) |
 | reviewer | sonnet | `Docs/Team/Reviews/` |
 
 Mỗi coder còn có scene thử riêng: `Assets/_Game/Scenes/Sandbox/<agent-name>.unity` (hoặc `<agent-name>-<module>.unity`), chỉ chủ của nó được sửa.
 
 **Không commit** (chủ dự án chốt, F-111): `Assets/Screenshots/` + `Assets/Screenshots.meta`, `ProjectSettings/Packages/com.unity.probuilder/`, `ProjectSettings/SceneTemplateSettings.json`. File không thuộc ai khác → không commit, báo PM/Liaison.
 
-**Bí mật:** key TypeSafe/Jev chỉ đọc từ biến môi trường `TYPESAFE_API_KEY` (hoặc `.env` bị `.gitignore`). **Không** ghi key vào asset, scene, code, log hay tài liệu.
+**Offline:** game không gọi mạng, không có API key hay server. Không thêm SDK/HTTP client vào game (quảng cáo thật nếu có làm sau sẽ quyết riêng).
 
 ## 2. Assembly Definition (asmdef)
 Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham chiếu thực tế sau W4** — chỉ được tham chiếu theo bảng; cần thêm → hỏi PM.
@@ -45,7 +44,7 @@ Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham 
 | `ClaudeCop.FX` | `Scripts/FX/` | Core (FX tự nghe `CombatEvents` + raycast, không ai tham chiếu FX) | combat-coder |
 | `ClaudeCop.Enemy` | `Scripts/Enemy/` | Core | enemy-coder |
 | `ClaudeCop.Camera` | `Scripts/Camera/` | Core, Unity.Cinemachine, Unity.Splines, Unity.Mathematics | gameplay-coder |
-| `ClaudeCop.Jev` | `Scripts/Jev/` (gồm `JevDirector`) | Core, Enemy | jev-coder |
+| `ClaudeCop.Jev` | `Scripts/Jev/` (gồm `JevDirector`; chỉ offline) | Core, Enemy | gameplay-coder |
 | `ClaudeCop.Game` | `Scripts/Game/` | Core, Combat, Enemy, Camera, Jev, Unity.Cinemachine (Camera/Jev/Cinemachine dùng cho bot debug, bọc define) | gameplay-coder |
 | `ClaudeCop.Ads` | `Scripts/Ads/` | Unity.ugui, Unity.TextMeshPro (**không** ref Core/module game) | ui-coder |
 | `ClaudeCop.UI` | `Scripts/UI/` | Core, Combat, Ads, Jev, Unity.ugui, Unity.TextMeshPro | ui-coder |
@@ -57,7 +56,6 @@ Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham 
 | `ClaudeCop.Game.Editor` | `Scripts/Game/Editor/` (menu `ClaudeCop/Game/Assemble Level_01 (T-403)`) | Core, Camera, Camera.Editor, Enemy, Combat, Game, Cinemachine, Splines, Mathematics | gameplay-coder |
 | `ClaudeCop.FX.Editor` | `Scripts/FX/Editor/` | Core, FX | combat-coder |
 | `ClaudeCop.UI.Editor` | `Scripts/UI/Editor/` | UI, Ads, Jev, Core, ugui, TextMeshPro | ui-coder |
-| `ClaudeCop.Jev.Editor` | `Scripts/Editor/Jev/` (M4, chưa có) | Jev | jev-coder |
 
 ### Tests (Editor-only + `defineConstraints: UNITY_INCLUDE_TESTS`, ref thêm TestRunner)
 `ClaudeCop.Core.Tests` (Core) · `ClaudeCop.Combat.Tests` (Core, Combat) · `ClaudeCop.Enemy.Tests` (Core, Enemy) · `ClaudeCop.Jev.Tests` (Core, Jev, Enemy) · `ClaudeCop.Game.Tests` (Core, Game) · `ClaudeCop.FX.Tests` (Core, FX) · `ClaudeCop.UI.Tests` (Core, Combat, UI, Ads, Jev, ugui, TMP). Mỗi asmdef Tests nằm trong `Tests/` của module, chủ = chủ module.

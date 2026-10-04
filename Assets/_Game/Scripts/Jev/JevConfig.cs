@@ -3,14 +3,11 @@ using ClaudeCop.Enemy;
 
 namespace ClaudeCop.Jev
 {
-    public enum JevMode { Offline, Online }
-
-    /// <summary>Cau hinh Jev. Demo chi dung Offline; Online danh cho M4.</summary>
+    /// <summary>Cau hinh Jev (chi chay offline bang luat viet san, khong goi mang).</summary>
     [CreateAssetMenu(menuName = "ClaudeCop/Jev Config", fileName = "JevConfig")]
     public class JevConfig : ScriptableObject
     {
         public bool enabled = true;
-        public JevMode mode = JevMode.Offline;
         [Min(0.1f)] public float timeoutSeconds = 1.5f;
         [Range(0f, 1f)] public float confidenceThreshold = 0.6f;
         [Min(0.5f)] public float defaultReticleTime = 2.5f;
