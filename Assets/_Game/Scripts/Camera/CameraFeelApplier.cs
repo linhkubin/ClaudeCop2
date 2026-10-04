@@ -13,11 +13,16 @@ namespace ClaudeCop.Camera
     {
         public CameraFeelProfile profile;
 
+        CameraShot shot;
+        bool shotLooked;
+
         protected override void PostPipelineStageCallback(CinemachineVirtualCameraBase vcam, CinemachineCore.Stage stage, ref CameraState state, float deltaTime)
         {
             if (stage != CinemachineCore.Stage.Noise || profile == null || !Application.isPlaying) return;
 
-            state.Lens.FieldOfView = FitFov(state.Lens.FieldOfView, state.Lens.Aspect, profile);
+            if (!shotLooked) { shotLooked = true; shot = GetComponent<CameraShot>(); }
+            if (shot == null || !shot.AutoFramed)
+                state.Lens.FieldOfView = FitFov(state.Lens.FieldOfView, state.Lens.Aspect, profile);
 
             bool reduce = UserSettings.ReduceMotion;
             float t = Time.time;

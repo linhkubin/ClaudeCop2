@@ -64,6 +64,11 @@ namespace ClaudeCop.Camera
         [Range(0f, 1f)] public float keepHorizontalFov = 1f;
         [Tooltip("Tran FOV doc sau khi quy doi (do), tranh meo hinh qua muc")]
         [Range(30f, 120f)] public float maxVerticalFov = 95f;
+        [Tooltip("Goc Combat tu can khung theo ti le man that: xoay cho enemy vao giua, noi FOV, lui ra sau neu can")]
+        public bool autoFrame = true;
+        [Tooltip("Le (do) quanh moi diem can thay: than enemy + vong target")] public float frameMargin = 5f;
+        [Tooltip("Xoay ngang toi da khi can giua (do)")] public float frameMaxYaw = 15f;
+        [Tooltip("Lui ra sau toi da (m); dung truoc vat can")] public float frameMaxPullBack = 8f;
 
         [Header("Shake khi trung dan")]
         public float hitShakeDuration = 0.2f;

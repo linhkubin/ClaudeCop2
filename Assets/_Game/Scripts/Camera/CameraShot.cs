@@ -41,6 +41,11 @@ namespace ClaudeCop.Camera
         public EncounterBase encounter;
         public float fov = 60f;
         public List<SubAngle> subAngles = new List<SubAngle>();
+        [Tooltip("Diem world phai nam trong khung (cho lo ra cua enemy/con tin/thung). Level01Assembler dien; dung cho AutoFrame.")]
+        public List<Vector3> frameTargets = new List<Vector3>();
+
+        /// <summary>Da can khung theo man that: CameraFeelApplier khong quy doi FOV nua.</summary>
+        public bool AutoFramed { get; private set; }
 
         CinemachineCamera vcam;
         public CinemachineCamera VCam => vcam != null ? vcam : (vcam = GetComponent<CinemachineCamera>());
@@ -74,5 +79,70 @@ namespace ClaudeCop.Camera
         }
 
         public float ResolveBlend(CameraFeelProfile p) => blendTime >= 0f ? blendTime : p.defaultBlend;
+
+        /// <summary>
+        /// Can khung goc Combat cho ti le man aspect (rong/cao): xoay ngang de frameTargets vao giua (<= frameMaxYaw),
+        /// noi FOV doc vua du (<= maxVerticalFov, chua cho dolly-in), con thieu thi lui ra sau (<= frameMaxPullBack, dung truoc vat can).
+        /// Goi mot lan sau EnsureCameras.
+        /// </summary>
+        public void AutoFrame(CameraFeelProfile p, float aspect)
+        {
+            if (kind != ShotKind.Combat || p == null || !p.autoFrame || aspect <= 0f || frameTargets.Count == 0) return;
+            var cam = VCam;
+            if (cam == null) return;
+
+            Vector3 pos = transform.position;
+            Quaternion rot = transform.rotation;
+            Vector3 flat = Vector3.ProjectOnPlane(rot * Vector3.forward, Vector3.up);
+            if (flat.sqrMagnitude < 1e-4f) return;
+            flat.Normalize();
+
+            // 1) Xoay ngang cho cum diem vao giua.
+            float minH = float.MaxValue, maxH = float.MinValue;
+            Vector3 right = Vector3.Cross(Vector3.up, flat);
+            foreach (var t in frameTargets)
+            {
+                Vector3 d = t - pos;
+                float h = Mathf.Atan2(Vector3.Dot(d, right), Vector3.Dot(d, flat)) * Mathf.Rad2Deg;
+                minH = Mathf.Min(minH, h); maxH = Mathf.Max(maxH, h);
+            }
+            float yaw = Mathf.Clamp((minH + maxH) * 0.5f, -p.frameMaxYaw, p.frameMaxYaw);
+            rot = Quaternion.AngleAxis(yaw, Vector3.up) * rot;
+            Vector3 back = -Vector3.ProjectOnPlane(rot * Vector3.forward, Vector3.up).normalized;
+
+            // 2) Lui ra sau den khi vua FOV toi da (khong xuyen vat can).
+            float maxBack = p.frameMaxPullBack;
+            if (maxBack > 0f && Physics.SphereCast(pos, 0.3f, back, out RaycastHit hit, maxBack, ~0, QueryTriggerInteraction.Ignore))
+                maxBack = Mathf.Max(0f, hit.distance - 0.2f);
+            float extra = UserSettings.ReduceMotion ? 0f : p.dollyInFov;
+            float dist = 0f, need = RequiredFov(pos, rot, aspect, p.frameMargin) + extra;
+            while (need > p.maxVerticalFov && dist < maxBack)
+            {
+                dist = Mathf.Min(maxBack, dist + 0.25f);
+                need = RequiredFov(pos + back * dist, rot, aspect, p.frameMargin) + extra;
+            }
+
+            transform.SetPositionAndRotation(pos + back * dist, rot);
+            var l = cam.Lens; l.FieldOfView = Mathf.Clamp(Mathf.Max(fov, need), 1f, p.maxVerticalFov); cam.Lens = l;
+            AutoFramed = true;
+        }
+
+        /// <summary>FOV doc nho nhat de moi frameTargets (cong le) nam trong khung tu pose nay voi ti le aspect.</summary>
+        float RequiredFov(Vector3 pos, Quaternion rot, float aspect, float margin)
+        {
+            var inv = Quaternion.Inverse(rot);
+            float hMax = 0f, vMax = 0f;
+            foreach (var t in frameTargets)
+            {
+                Vector3 d = inv * (t - pos);
+                if (d.z < 0.1f) return 180f; // sau camera: khong the vua
+                hMax = Mathf.Max(hMax, Mathf.Abs(Mathf.Atan2(d.x, d.z)) * Mathf.Rad2Deg);
+                vMax = Mathf.Max(vMax, Mathf.Abs(Mathf.Atan2(d.y, d.z)) * Mathf.Rad2Deg);
+            }
+            float halfH = Mathf.Min(89f, hMax + margin) * Mathf.Deg2Rad;
+            float fromH = 2f * Mathf.Atan(Mathf.Tan(halfH) / aspect) * Mathf.Rad2Deg;
+            float fromV = 2f * Mathf.Min(89f, vMax + margin);
+            return Mathf.Max(fromH, fromV);
+        }
     }
 }

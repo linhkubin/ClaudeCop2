@@ -290,6 +290,12 @@ MonoBehaviour:
   encounter: {fileID: 1627352144}
   fov: 58
   subAngles: []
+  frameTargets:
+  - {x: 211, y: 2.1, z: 14.2}
+  - {x: 211, y: 2.1, z: 19.9}
+  - {x: 205.6, y: 1.5, z: 17}
+  - {x: 211, y: 2.1, z: 17}
+  - {x: 203.4, y: 0.5, z: 15.4}
 --- !u!1001 &147454497
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1016,6 +1022,10 @@ MonoBehaviour:
   encounter: {fileID: 1735317888}
   fov: 58
   subAngles: []
+  frameTargets:
+  - {x: 109.6, y: 5, z: 14}
+  - {x: 109.6, y: 5, z: 17.5}
+  - {x: 105.8, y: 1.5, z: 14.9}
 --- !u!1 &653533082
 GameObject:
   m_ObjectHideFlags: 0
@@ -1502,6 +1512,12 @@ MonoBehaviour:
   encounter: {fileID: 1078155948}
   fov: 60
   subAngles: []
+  frameTargets:
+  - {x: 13, y: 1.5, z: 32.3}
+  - {x: 16.8, y: 1.5, z: 30.2}
+  - {x: 18.6, y: 1.5, z: 25.9}
+  - {x: 11.8, y: 1.5, z: 25.7}
+  - {x: 16.8, y: 1.5, z: 31.4}
 --- !u!1 &940871889
 GameObject:
   m_ObjectHideFlags: 0
@@ -1612,6 +1628,9 @@ MonoBehaviour:
   encounter: {fileID: 2124959635}
   fov: 58
   subAngles: []
+  frameTargets:
+  - {x: 10.3, y: 4.3, z: 24.6}
+  - {x: 13.6, y: 4.3, z: 24.6}
 --- !u!1 &941377630
 GameObject:
   m_ObjectHideFlags: 0
@@ -1831,6 +1850,12 @@ MonoBehaviour:
   encounter: {fileID: 407302552}
   fov: 60
   subAngles: []
+  frameTargets:
+  - {x: 196.8, y: 1.5, z: 17.4}
+  - {x: 201.6, y: 1.5, z: 19.6}
+  - {x: 192.4, y: 1.5, z: 21}
+  - {x: 199, y: 1.5, z: 17.4}
+  - {x: 201, y: 0.5, z: 16.3}
 --- !u!1 &1078155946
 GameObject:
   m_ObjectHideFlags: 0
@@ -2002,6 +2027,10 @@ MonoBehaviour:
   encounter: {fileID: 1824216523}
   fov: 58
   subAngles: []
+  frameTargets:
+  - {x: 95.4, y: 1.5, z: 39}
+  - {x: 91.6, y: 1.5, z: 33}
+  - {x: 88.27, y: 1.5, z: 29.91}
 --- !u!1 &1134318577
 GameObject:
   m_ObjectHideFlags: 0
@@ -2445,6 +2474,9 @@ MonoBehaviour:
   encounter: {fileID: 1375194871}
   fov: 58
   subAngles: []
+  frameTargets:
+  - {x: -10.8, y: 1.5, z: 17.5}
+  - {x: -8.3, y: 1.5, z: 18.8}
 --- !u!1 &1208704580
 GameObject:
   m_ObjectHideFlags: 0
@@ -3285,6 +3317,12 @@ MonoBehaviour:
   encounter: {fileID: 2087208867}
   fov: 60
   subAngles: []
+  frameTargets:
+  - {x: 104, y: 5.5, z: 38.7}
+  - {x: 106.2, y: 1.5, z: 35.6}
+  - {x: 96.5, y: 1.5, z: 33.1}
+  - {x: 98.7, y: 1.5, z: 38.8}
+  - {x: 101.8, y: 0.5, z: 32}
 --- !u!1 &1504414560
 GameObject:
   m_ObjectHideFlags: 0
@@ -3395,6 +3433,12 @@ MonoBehaviour:
   encounter: {fileID: 1134318579}
   fov: 60
   subAngles: []
+  frameTargets:
+  - {x: -2, y: 1.5, z: 23.6}
+  - {x: 2.3, y: 1.5, z: 26}
+  - {x: -5.2, y: 1.5, z: 26}
+  - {x: 0.2, y: 1.5, z: 23.6}
+  - {x: 2.8, y: 0.5, z: 20}
 --- !u!1 &1627352142
 GameObject:
   m_ObjectHideFlags: 0
@@ -3698,6 +3742,12 @@ MonoBehaviour:
   encounter: {fileID: 1208704582}
   fov: 60
   subAngles: []
+  frameTargets:
+  - {x: 96.4, y: 1.5, z: 16.75}
+  - {x: 97, y: 1.5, z: 21.4}
+  - {x: 102.2, y: 1.5, z: 18.6}
+  - {x: 105.2, y: 1.5, z: 20.7}
+  - {x: 98.5, y: 0.5, z: 14}
 --- !u!1 &1735317886
 GameObject:
   m_ObjectHideFlags: 0
@@ -4251,6 +4301,12 @@ MonoBehaviour:
   encounter: {fileID: 62846698}
   fov: 58
   subAngles: []
+  frameTargets:
+  - {x: 221.7, y: 2.1, z: 23.4}
+  - {x: 228.5, y: 2.1, z: 21.3}
+  - {x: 222.6, y: 2.1, z: 21.1}
+  - {x: 225, y: 2.1, z: 21.1}
+  - {x: 219.5, y: 1.1, z: 18.4}
 --- !u!1001 &2025725459
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4589,6 +4645,15 @@ MonoBehaviour:
   encounter: {fileID: 577127589}
   fov: 60
   subAngles: []
+  frameTargets:
+  - {x: 229.3, y: 2.1, z: 4}
+  - {x: 225.6, y: 2.1, z: 8.9}
+  - {x: 228, y: 2.1, z: 13}
+  - {x: 226.6, y: 2.1, z: 14.6}
+  - {x: 230.3, y: 4.7, z: 17.2}
+  - {x: 225.6, y: 2.1, z: 11.2}
+  - {x: 226.6, y: 2.1, z: 17.2}
+  - {x: 224, y: 1.1, z: 13.2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

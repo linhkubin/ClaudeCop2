@@ -81,9 +81,16 @@ namespace ClaudeCop.Camera
                 ap.profile = profile;
                 railCamera.Priority.Enabled = true; railCamera.Priority.Value = 0;
             }
+            var outCam = brain != null ? brain.GetComponent<UnityEngine.Camera>() : UnityEngine.Camera.main;
+            float aspect = outCam != null ? outCam.aspect : (Screen.height > 0 ? (float)Screen.width / Screen.height : 0f);
             for (int i = 0; i < phases.Count; i++)
                 for (int j = 0; j < phases[i].shots.Count; j++)
-                    if (phases[i].shots[j] != null) phases[i].shots[j].EnsureCameras(profile);
+                {
+                    var shot = phases[i].shots[j];
+                    if (shot == null) continue;
+                    shot.EnsureCameras(profile);
+                    shot.AutoFrame(profile, aspect); // man doc: can khung theo ti le man that
+                }
         }
 
         void Start()

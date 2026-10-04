@@ -120,6 +120,7 @@ namespace ClaudeCop.Game.Editor
                         var wave = wg.AddComponent<EncounterWave>();
                         WireWave(wave, p, s, def, points, enemyPrefab, hostagePrefab, config);
                         shot.encounter = wave;
+                        shot.frameTargets = FrameTargets(p, s, points, config);
                         shot.EnsureCameras(profile);
                     }
                     phase.shots.Add(shot);
@@ -185,6 +186,22 @@ namespace ClaudeCop.Game.Editor
             }
             so.FindProperty("description").stringValue = "P" + p + " W" + w + " (" + def.preset + ")";
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>Diem can thay cua goc giao tranh (man doc - CameraShot.AutoFrame): diem ngam cua enemy/con tin tai Peek, tam thung vu khi.</summary>
+        static List<Vector3> FrameTargets(int p, int w, Dictionary<string, Transform> pts, EnemyConfig config)
+        {
+            string key = "P" + p + "_W" + w + "_";
+            float aim = config != null ? config.aimHeight : 1.5f;
+            var list = new List<Vector3>();
+            foreach (var prefix in new[] { "EnemySpawn_", "HostageSpawn_" })
+                foreach (var sp in Find(pts, prefix + key))
+                {
+                    var peek = sp.Find("Peek");
+                    list.Add((peek != null ? peek.position : sp.position) + Vector3.up * aim);
+                }
+            foreach (var sp in Find(pts, "PickupSpawn_" + key)) list.Add(sp.position + Vector3.up * 0.5f);
+            return list;
         }
 
         static void SetList(SerializedProperty prop, List<Transform> items)
