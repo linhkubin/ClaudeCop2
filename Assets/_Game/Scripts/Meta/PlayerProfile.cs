@@ -8,10 +8,23 @@ namespace ClaudeCop.Meta
     public sealed class GunState
     {
         public string id;
-        public int scope;
-        public int silencer;
         public List<string> skins = new List<string>();
         public string skin = "";
+    }
+
+    /// <summary>Cap cua mot nhanh nang cap, khoa = UpgradeKey (vd. "pistol/scope", "gear/vest").</summary>
+    [Serializable]
+    public sealed class UpgradeLevel
+    {
+        public string key;
+        public int level;
+    }
+
+    /// <summary>Khoa luu cap nang cap trong ho so.</summary>
+    public static class UpgradeKey
+    {
+        public static string Gun(string gunId, string upgradeId) => gunId + "/" + upgradeId;
+        public static string Gear(string gearId) => "gear/" + gearId;
     }
 
     [Serializable]
@@ -31,13 +44,12 @@ namespace ClaudeCop.Meta
     [Serializable]
     public sealed class ProfileData
     {
-        public int version = 1;
+        public int version = 2;
         public int coins;
         public int badges;
         public string equippedGun = "";
         public List<GunState> guns = new List<GunState>();
-        // Cap trang bi tren ban: Vest, Helmet, Gloves, Glasses, Radio (thu tu enum GearItem).
-        public List<int> gear = new List<int>();
+        public List<UpgradeLevel> upgrades = new List<UpgradeLevel>();
         /// <summary>Sung thue cho tran ke (rong = khong). Dung xong thi xoa.</summary>
         public string rentedGun = "";
         /// <summary>Giap them cho tran ke (xem quang cao). Dung xong thi ve 0.</summary>
@@ -59,17 +71,17 @@ namespace ClaudeCop.Meta
             return g;
         }
 
-        public int GearLevel(GearItem item)
+        public int GetLevel(string key)
         {
-            int i = (int)item;
-            return i < gear.Count ? gear[i] : 0;
+            var u = upgrades.Find(x => x.key == key);
+            return u != null ? u.level : 0;
         }
 
-        public void SetGearLevel(GearItem item, int level)
+        public void SetLevel(string key, int level)
         {
-            int i = (int)item;
-            while (gear.Count <= i) gear.Add(0);
-            gear[i] = level;
+            var u = upgrades.Find(x => x.key == key);
+            if (u == null) { u = new UpgradeLevel { key = key }; upgrades.Add(u); }
+            u.level = level;
         }
 
         public LevelRecord Level(int level, bool create)
@@ -85,7 +97,8 @@ namespace ClaudeCop.Meta
         public void Sanitize(MetaCatalog catalog)
         {
             if (guns == null) guns = new List<GunState>();
-            if (gear == null) gear = new List<int>();
+            if (upgrades == null) upgrades = new List<UpgradeLevel>();
+            upgrades.RemoveAll(u => u == null || string.IsNullOrEmpty(u.key));
             if (levels == null) levels = new List<LevelRecord>();
             guns.RemoveAll(g => g == null || string.IsNullOrEmpty(g.id));
             foreach (var g in guns) { if (g.skins == null) g.skins = new List<string>(); if (g.skin == null) g.skin = ""; }

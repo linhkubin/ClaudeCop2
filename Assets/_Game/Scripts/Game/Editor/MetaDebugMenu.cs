@@ -22,9 +22,9 @@ namespace ClaudeCop.Game.Editor
             var p = PlayerProfile.Data; var c = PlayerProfile.Catalog;
             Shop.BuyGun(p, c, "revolver");
             Shop.EquipGun(p, c, "revolver");
-            Shop.UpgradeGun(p, c, "revolver", GunUpgrade.Scope);
-            Shop.UpgradeGun(p, c, "revolver", GunUpgrade.Scope);
-            Shop.UpgradeGun(p, c, "revolver", GunUpgrade.Silencer);
+            Shop.UpgradeGun(p, c, "revolver", "scope");
+            Shop.UpgradeGun(p, c, "revolver", "scope");
+            Shop.UpgradeGun(p, c, "revolver", "silencer");
             PlayerProfile.Save();
             Log();
         }
@@ -43,7 +43,7 @@ namespace ClaudeCop.Game.Editor
         static void Gear()
         {
             var p = PlayerProfile.Data; var c = PlayerProfile.Catalog;
-            foreach (GearItem g in System.Enum.GetValues(typeof(GearItem))) Shop.UpgradeGear(p, c, g);
+            foreach (var g in c.Gear) Shop.UpgradeGear(p, c, g.Id);
             PlayerProfile.Save();
             Log();
         }

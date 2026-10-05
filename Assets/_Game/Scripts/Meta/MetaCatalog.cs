@@ -3,13 +3,39 @@ using ClaudeCop.Core;
 
 namespace ClaudeCop.Meta
 {
-    /// <summary>Nhanh nang cap cua sung (note: ong ngam, giam thanh, ngoai hinh).</summary>
-    public enum GunUpgrade { Scope, Silencer }
+    /// <summary>Chi so ma nang cap tac dong. Them chi so moi: them vao day + cach ap trong Loadout.Build.</summary>
+    public enum Stat
+    {
+        HitRadius,        // +% vung trung cua sung
+        Magazine,         // +vien dan moi bang
+        ReloadSpeed,      // -% thoi gian thay dan
+        EnemyReticle,     // +% thoi gian vong target cua enemy (enemy ngam cham hon)
+        ArmorPerStage,    // giap nap lai moi Stage
+        ExtraLives,       // tim them
+        MissForgiveness,  // so lan truot khong mat combo moi Stage
+        JusticeRadius,    // +% vung Justice
+        CoinBonus,        // +% xu cuoi level
+    }
 
-    /// <summary>Mon tren ban (man Home): chon mon nao thi nang cap mon do.</summary>
-    public enum GearItem { Vest, Helmet, Gloves, Glasses, Radio }
+    /// <summary>Mot nhanh nang cap: moi cap cong PerLevel vao Stat. So cap toi da = so phan tu Prices.</summary>
+    public sealed class UpgradeDef
+    {
+        public readonly string Id, Name;
+        public readonly Stat Stat;
+        public readonly float PerLevel;
+        public readonly int[] Prices;
 
-    /// <summary>Chi so goc cua mot sung mua duoc (khong can asset: LoadoutBuilder tao WeaponData luc chay).</summary>
+        public UpgradeDef(string id, string name, Stat stat, float perLevel, params int[] prices)
+        {
+            Id = id; Name = name; Stat = stat; PerLevel = perLevel; Prices = prices;
+        }
+
+        public int MaxLevel => Prices.Length;
+        /// <summary>Gia de len cap ke tu cap hien tai; -1 neu da toi da.</summary>
+        public int PriceFrom(int level) => level >= 0 && level < Prices.Length ? Prices[level] : -1;
+    }
+
+    /// <summary>Chi so goc cua mot sung (khong can asset: Loadout tao WeaponData luc chay).</summary>
     public sealed class GunDef
     {
         public string Id, Name;
@@ -19,7 +45,6 @@ namespace ClaudeCop.Meta
         public float HitRadiusPx, ShotsPerSecond, ReloadTime, ImpulseScale;
         public int MaxTargets = 1;
         public bool HoldToFire;
-        /// <summary>Gia thue 1 tran bang xu.</summary>
         public int RentPrice => Price / 5;
     }
 
@@ -30,27 +55,18 @@ namespace ClaudeCop.Meta
         public int BadgePrice;            // > 0: mua bang huy hieu (rank S)
     }
 
-    /// <summary>Bang gia + so lieu cua tat ca do trong man Home. Mot nguon duy nhat; chinh can bang o day.</summary>
+    /// <summary>
+    /// Bang gia + so lieu cua man Home: mot nguon duy nhat. Them sung / nang cap / mon trang bi = them 1 dong o CreateDefault.
+    /// </summary>
     public sealed class MetaCatalog
     {
         public readonly List<GunDef> Guns = new List<GunDef>();
+        /// <summary>Nang cap ap cho moi sung (moi sung co cap rieng).</summary>
+        public readonly List<UpgradeDef> GunUpgrades = new List<UpgradeDef>();
+        /// <summary>Mon trang bi tren ban (moi mon la mot nhanh nang cap).</summary>
+        public readonly List<UpgradeDef> Gear = new List<UpgradeDef>();
         public readonly List<SkinDef> Skins = new List<SkinDef>();
         public string DefaultGunId = "pistol";
-
-        // Nang cap sung: gia moi cap (do dai = so cap toi da).
-        public int[] ScopePrices = { 150, 250, 400, 650, 1000 };
-        public int[] SilencerPrices = { 200, 350, 550, 800, 1200 };
-        public float ScopeRadiusPerLevel = 0.06f;      // +6% vung trung moi cap
-        public float SilencerReticlePerLevel = 0.04f;  // vong target cua enemy thu cham hon 4% moi cap
-
-        // Trang bi tren ban: gia moi cap.
-        public int[] VestPrices = { 600, 1500 };              // giap nap lai moi Stage = cap
-        public int[] HelmetPrices = { 1200, 3000 };           // tim them = cap
-        public int[] GlovesPrices = { 400, 900, 1600 };       // so lan truot khong mat combo moi Stage = cap
-        public int[] GlassesPrices = { 300, 700, 1300 };      // ban kinh Justice +GlassesJusticePerLevel moi cap
-        public int[] RadioPrices = { 500, 1200, 2500 };       // +RadioCoinPerLevel xu cuoi tran moi cap
-        public float GlassesJusticePerLevel = 0.15f;
-        public float RadioCoinPerLevel = 0.10f;
 
         // Xu cuoi moi level.
         public int ScorePerCoin = 50;
@@ -60,52 +76,39 @@ namespace ClaudeCop.Meta
         public int ComboBonus = 100;
         public float ComboBonusAt = 5f;
         public int AdMultiplier = 2;
-        /// <summary>Huy hieu: lan dau dat rank S o moi level.</summary>
-        public int BadgesPerFirstS = 1;
-        /// <summary>Giap them khi xem quang cao truoc tran.</summary>
-        public int AdArmor = 1;
+        public int BadgesPerFirstS = 1;   // lan dau rank S o moi level
+        public int AdArmor = 1;           // giap them khi xem quang cao truoc tran
 
-        public GunDef Gun(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return null;
-            foreach (var g in Guns) if (g.Id == id) return g;
-            return null;
-        }
-
-        public SkinDef Skin(string id)
-        {
-            if (string.IsNullOrEmpty(id)) return null;
-            foreach (var s in Skins) if (s.Id == id) return s;
-            return null;
-        }
-
+        public GunDef Gun(string id) => Guns.Find(g => g.Id == id);
+        public SkinDef Skin(string id) => Skins.Find(s => s.Id == id);
+        public UpgradeDef GunUpgrade(string id) => GunUpgrades.Find(u => u.Id == id);
+        public UpgradeDef GearItem(string id) => Gear.Find(u => u.Id == id);
         public GunDef DefaultGun => Gun(DefaultGunId) ?? (Guns.Count > 0 ? Guns[0] : null);
 
-        public int[] Prices(GunUpgrade u) => u == GunUpgrade.Scope ? ScopePrices : SilencerPrices;
-
-        public int[] Prices(GearItem g)
-        {
-            switch (g)
-            {
-                case GearItem.Vest: return VestPrices;
-                case GearItem.Helmet: return HelmetPrices;
-                case GearItem.Gloves: return GlovesPrices;
-                case GearItem.Glasses: return GlassesPrices;
-                default: return RadioPrices;
-            }
-        }
-
         static MetaCatalog def;
-        /// <summary>Bang gia mac dinh cua game.</summary>
         public static MetaCatalog Default => def ?? (def = CreateDefault());
 
         public static MetaCatalog CreateDefault()
         {
             var c = new MetaCatalog();
-            // Pistol khop Weapon_Pistol.asset (6 vien, 90 px, thay dan 0.5 s).
+
+            // Sung. Pistol khop Weapon_Pistol.asset.
             c.Guns.Add(new GunDef { Id = "pistol", Name = "Pistol", Kind = WeaponKind.Pistol, Price = 0, Magazine = 6, HitRadiusPx = 90f, ShotsPerSecond = 10f, ReloadTime = 0.5f, ImpulseScale = 1f });
             c.Guns.Add(new GunDef { Id = "revolver", Name = "Revolver", Kind = WeaponKind.Revolver, Price = 1500, Magazine = 6, HitRadiusPx = 110f, ShotsPerSecond = 3f, ReloadTime = 0.9f, ImpulseScale = 1.4f, MaxTargets = 2 });
             c.Guns.Add(new GunDef { Id = "smg", Name = "SMG", Kind = WeaponKind.SMG, Price = 3000, Magazine = 20, HitRadiusPx = 75f, ShotsPerSecond = 8f, ReloadTime = 0.8f, ImpulseScale = 0.6f, HoldToFire = true });
+
+            // Nang cap sung:            id          ten            chi so               moi cap   gia tung cap
+            c.GunUpgrades.Add(new UpgradeDef("scope",    "Ống ngắm",    Stat.HitRadius,     0.06f,    150, 250, 400, 650, 1000));
+            c.GunUpgrades.Add(new UpgradeDef("silencer", "Giảm thanh",  Stat.EnemyReticle,  0.04f,    200, 350, 550, 800, 1200));
+
+            // Trang bi tren ban:
+            c.Gear.Add(new UpgradeDef("vest",    "Áo chống đạn", Stat.ArmorPerStage,   1f,    600, 1500));
+            c.Gear.Add(new UpgradeDef("helmet",  "Mũ",           Stat.ExtraLives,      1f,    1200, 3000));
+            c.Gear.Add(new UpgradeDef("gloves",  "Găng tay",     Stat.MissForgiveness, 1f,    400, 900, 1600));
+            c.Gear.Add(new UpgradeDef("glasses", "Kính",         Stat.JusticeRadius,   0.15f, 300, 700, 1300));
+            c.Gear.Add(new UpgradeDef("radio",   "Bộ đàm",       Stat.CoinBonus,       0.10f, 500, 1200, 2500));
+
+            // Ngoai hinh sung:
             c.Skins.Add(new SkinDef { Id = "matte", Name = "Đen nhám", CoinPrice = 300 });
             c.Skins.Add(new SkinDef { Id = "camo", Name = "Rằn ri", CoinPrice = 600 });
             c.Skins.Add(new SkinDef { Id = "gold", Name = "Vàng", BadgePrice = 3 });

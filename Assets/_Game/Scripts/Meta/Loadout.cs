@@ -1,25 +1,39 @@
+using System;
 using UnityEngine;
 using ClaudeCop.Combat;
 
 namespace ClaudeCop.Meta
 {
-    /// <summary>Trang bi cho mot tran, tinh tu ho so (thuan, test duoc). Game (LoadoutApplier) ap vao TapShooter/PlayerHealth/ComboSystem/EnemyActor.</summary>
-    public struct Loadout
+    /// <summary>Tong chi so tu moi nang cap dang co hieu luc (trang bi tren ban + nang cap cua sung dang dung).</summary>
+    public sealed class StatTotals
+    {
+        readonly float[] values = new float[Enum.GetValues(typeof(Stat)).Length];
+
+        public float this[Stat s] => values[(int)s];
+        public int Int(Stat s) => Mathf.RoundToInt(values[(int)s]);
+        public void Add(UpgradeDef u, int level) { if (level > 0) values[(int)u.Stat] += u.PerLevel * level; }
+    }
+
+    /// <summary>Trang bi cho mot tran, tinh tu ho so (thuan, test duoc). Game.LoadoutApplier ap vao tran.</summary>
+    public sealed class Loadout
     {
         public GunDef Gun;
         public bool Rented;
-        public int ScopeLevel, SilencerLevel;
-        public string Skin;
-        public int Magazine;
-        public float HitRadiusPx;
-        /// <summary>He so thoi gian vong target cua enemy (giam thanh). 1 = chuan.</summary>
-        public float EnemyReticleScale;
-        public int ArmorPerStage;     // ao
-        public int ExtraLives;        // mu
-        public int MissForgiveness;   // gang tay (moi Stage)
-        public float JusticeRadiusScale; // kinh
-        public float CoinBonus;       // bo dam (+% xu cuoi tran)
-        public int StartArmor;        // quang cao truoc tran
+        public string Skin = "";
+        public readonly StatTotals Stats = new StatTotals();
+
+        // Chi so suy ra (cach ap moi Stat nam het o day).
+        public int Magazine => Gun == null ? 0 : Gun.Magazine + Stats.Int(Stat.Magazine);
+        public float HitRadiusPx => Gun == null ? 0f : Gun.HitRadiusPx * (1f + Stats[Stat.HitRadius]);
+        public float ReloadTime => Gun == null ? 0f : Gun.ReloadTime * Mathf.Max(0.2f, 1f - Stats[Stat.ReloadSpeed]);
+        public float EnemyReticleScale => 1f + Stats[Stat.EnemyReticle];
+        public int ArmorPerStage => Stats.Int(Stat.ArmorPerStage);
+        public int ExtraLives => Stats.Int(Stat.ExtraLives);
+        public int MissForgiveness => Stats.Int(Stat.MissForgiveness);
+        public float JusticeRadiusScale => 1f + Stats[Stat.JusticeRadius];
+        public float CoinBonus => Stats[Stat.CoinBonus];
+        /// <summary>Giap them cho ca tran (xem quang cao truoc tran).</summary>
+        public int StartArmor;
 
         /// <summary>Tao WeaponData luc chay voi chi so da nang cap (khong can asset).</summary>
         public WeaponData CreateWeapon()
@@ -27,36 +41,29 @@ namespace ClaudeCop.Meta
             if (Gun == null) return null;
             var w = ScriptableObject.CreateInstance<WeaponData>();
             w.name = "Loadout_" + Gun.Id;
-            w.Configure(Gun.Kind, Magazine, HitRadiusPx, Gun.MaxTargets, Gun.ShotsPerSecond, Gun.ReloadTime, Gun.ImpulseScale, Gun.HoldToFire);
+            w.Configure(Gun.Kind, Magazine, HitRadiusPx, Gun.MaxTargets, Gun.ShotsPerSecond, ReloadTime, Gun.ImpulseScale, Gun.HoldToFire);
             return w;
         }
     }
 
     public static class LoadoutBuilder
     {
-        /// <summary>Tinh trang bi; khong doi ho so (xem Consume).</summary>
+        /// <summary>Tinh trang bi tu ho so; khong doi ho so (xem Consume).</summary>
         public static Loadout Build(ProfileData p, MetaCatalog c)
         {
             var l = new Loadout();
             bool rented = !string.IsNullOrEmpty(p.rentedGun) && c.Gun(p.rentedGun) != null && !p.OwnsGun(p.rentedGun);
             l.Gun = rented ? c.Gun(p.rentedGun) : (c.Gun(p.equippedGun) ?? c.DefaultGun);
             l.Rented = rented;
-            var state = l.Gun != null ? p.Gun(l.Gun.Id) : null;
-            l.ScopeLevel = state != null ? state.scope : 0;
-            l.SilencerLevel = state != null ? state.silencer : 0;
-            l.Skin = state != null ? state.skin : "";
+            l.StartArmor = p.pendingArmor;
+
+            foreach (var u in c.Gear) l.Stats.Add(u, p.GetLevel(UpgradeKey.Gear(u.Id)));
             if (l.Gun != null)
             {
-                l.Magazine = l.Gun.Magazine;
-                l.HitRadiusPx = l.Gun.HitRadiusPx * (1f + c.ScopeRadiusPerLevel * l.ScopeLevel);
+                foreach (var u in c.GunUpgrades) l.Stats.Add(u, p.GetLevel(UpgradeKey.Gun(l.Gun.Id, u.Id)));
+                var state = p.Gun(l.Gun.Id);
+                if (state != null) l.Skin = state.skin;
             }
-            l.EnemyReticleScale = 1f + c.SilencerReticlePerLevel * l.SilencerLevel;
-            l.ArmorPerStage = p.GearLevel(GearItem.Vest);
-            l.ExtraLives = p.GearLevel(GearItem.Helmet);
-            l.MissForgiveness = p.GearLevel(GearItem.Gloves);
-            l.JusticeRadiusScale = 1f + c.GlassesJusticePerLevel * p.GearLevel(GearItem.Glasses);
-            l.CoinBonus = c.RadioCoinPerLevel * p.GearLevel(GearItem.Radio);
-            l.StartArmor = p.pendingArmor;
             return l;
         }
 

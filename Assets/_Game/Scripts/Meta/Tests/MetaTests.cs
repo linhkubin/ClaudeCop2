@@ -36,14 +36,15 @@ namespace ClaudeCop.Meta.Tests
         public void Json_RoundTrip_KeepsData()
         {
             p.coins = 1234; p.badges = 2;
-            p.AddGun("revolver").scope = 3;
-            p.SetGearLevel(GearItem.Gloves, 2);
+            p.AddGun("revolver");
+            p.SetLevel(UpgradeKey.Gun("revolver", "scope"), 3);
+            p.SetLevel(UpgradeKey.Gear("gloves"), 2);
             p.Level(1, true).bestRank = 0;
             var d = ProfileData.FromJson(p.ToJson(), c);
             Assert.AreEqual(1234, d.coins);
             Assert.AreEqual(2, d.badges);
-            Assert.AreEqual(3, d.Gun("revolver").scope);
-            Assert.AreEqual(2, d.GearLevel(GearItem.Gloves));
+            Assert.AreEqual(3, d.GetLevel(UpgradeKey.Gun("revolver", "scope")));
+            Assert.AreEqual(2, d.GetLevel(UpgradeKey.Gear("gloves")));
             Assert.AreEqual(0, d.Level(1, false).bestRank);
         }
 
@@ -61,13 +62,37 @@ namespace ClaudeCop.Meta.Tests
         }
 
         [Test]
-        public void UpgradeScope_UntilMax()
+        public void UpgradeScope_UntilMax_PerGunLevels()
         {
             p.coins = 100000;
-            for (int i = 0; i < c.ScopePrices.Length; i++) Assert.AreEqual(ShopResult.Ok, Shop.UpgradeGun(p, c, "pistol", GunUpgrade.Scope));
-            Assert.AreEqual(ShopResult.MaxLevel, Shop.UpgradeGun(p, c, "pistol", GunUpgrade.Scope));
-            Assert.AreEqual(-1, Shop.UpgradePrice(p, c, "pistol", GunUpgrade.Scope));
-            Assert.AreEqual(ShopResult.NotOwned, Shop.UpgradeGun(p, c, "smg", GunUpgrade.Silencer));
+            var scope = c.GunUpgrade("scope");
+            for (int i = 0; i < scope.MaxLevel; i++) Assert.AreEqual(ShopResult.Ok, Shop.UpgradeGun(p, c, "pistol", "scope"));
+            Assert.AreEqual(ShopResult.MaxLevel, Shop.UpgradeGun(p, c, "pistol", "scope"));
+            Assert.AreEqual(-1, Shop.NextPrice(p, scope, UpgradeKey.Gun("pistol", "scope")));
+            Assert.AreEqual(ShopResult.NotOwned, Shop.UpgradeGun(p, c, "smg", "silencer"));
+            Assert.AreEqual(ShopResult.Unknown, Shop.UpgradeGun(p, c, "pistol", "laser"));
+            p.AddGun("revolver");
+            Assert.AreEqual(0, p.GetLevel(UpgradeKey.Gun("revolver", "scope"))); // moi sung co cap rieng
+        }
+
+        [Test]
+        public void Upgrade_PaysPriceOfCurrentLevel()
+        {
+            p.coins = 1000;
+            var vest = c.GearItem("vest");
+            Assert.AreEqual(ShopResult.Ok, Shop.UpgradeGear(p, c, "vest"));
+            Assert.AreEqual(1000 - vest.Prices[0], p.coins);
+            Assert.AreEqual(vest.Prices[1], Shop.NextPrice(p, vest, UpgradeKey.Gear("vest")));
+        }
+
+        [Test]
+        public void NewUpgrade_IsOneLine_AndAppliesThroughStats()
+        {
+            c.GunUpgrades.Add(new UpgradeDef("mag", "Băng đạn", Stat.Magazine, 2f, 100, 200));
+            p.coins = 300;
+            Assert.AreEqual(ShopResult.Ok, Shop.UpgradeGun(p, c, "pistol", "mag"));
+            Assert.AreEqual(ShopResult.Ok, Shop.UpgradeGun(p, c, "pistol", "mag"));
+            Assert.AreEqual(10, LoadoutBuilder.Build(p, c).Magazine);
         }
 
         [Test]
@@ -100,21 +125,22 @@ namespace ClaudeCop.Meta.Tests
         [Test]
         public void Loadout_AppliesUpgradesAndGear()
         {
-            var g = p.Gun("pistol"); g.scope = 2; g.silencer = 3;
-            p.SetGearLevel(GearItem.Vest, 1);
-            p.SetGearLevel(GearItem.Helmet, 1);
-            p.SetGearLevel(GearItem.Gloves, 2);
-            p.SetGearLevel(GearItem.Glasses, 1);
-            p.SetGearLevel(GearItem.Radio, 1);
+            p.SetLevel(UpgradeKey.Gun("pistol", "scope"), 2);
+            p.SetLevel(UpgradeKey.Gun("pistol", "silencer"), 3);
+            p.SetLevel(UpgradeKey.Gear("vest"), 1);
+            p.SetLevel(UpgradeKey.Gear("helmet"), 1);
+            p.SetLevel(UpgradeKey.Gear("gloves"), 2);
+            p.SetLevel(UpgradeKey.Gear("glasses"), 1);
+            p.SetLevel(UpgradeKey.Gear("radio"), 1);
             Assert.AreEqual(ShopResult.Ok, Shop.GrantAdArmor(p, c));
             var l = LoadoutBuilder.Build(p, c);
-            Assert.AreEqual(90f * (1f + 2 * c.ScopeRadiusPerLevel), l.HitRadiusPx, 1e-3f);
-            Assert.AreEqual(1f + 3 * c.SilencerReticlePerLevel, l.EnemyReticleScale, 1e-4f);
+            Assert.AreEqual(90f * (1f + 2 * c.GunUpgrade("scope").PerLevel), l.HitRadiusPx, 1e-3f);
+            Assert.AreEqual(1f + 3 * c.GunUpgrade("silencer").PerLevel, l.EnemyReticleScale, 1e-4f);
             Assert.AreEqual(1, l.ArmorPerStage);
             Assert.AreEqual(1, l.ExtraLives);
             Assert.AreEqual(2, l.MissForgiveness);
-            Assert.AreEqual(1f + c.GlassesJusticePerLevel, l.JusticeRadiusScale, 1e-4f);
-            Assert.AreEqual(c.RadioCoinPerLevel, l.CoinBonus, 1e-4f);
+            Assert.AreEqual(1f + c.GearItem("glasses").PerLevel, l.JusticeRadiusScale, 1e-4f);
+            Assert.AreEqual(c.GearItem("radio").PerLevel, l.CoinBonus, 1e-4f);
             Assert.AreEqual(c.AdArmor, l.StartArmor);
             var w = l.CreateWeapon();
             Assert.AreEqual(6, w.MagazineSize);
@@ -139,9 +165,11 @@ namespace ClaudeCop.Meta.Tests
         public void GearUpgrade_PricesAndMax()
         {
             p.coins = 100000;
-            for (int i = 0; i < c.VestPrices.Length; i++) Assert.AreEqual(ShopResult.Ok, Shop.UpgradeGear(p, c, GearItem.Vest));
-            Assert.AreEqual(ShopResult.MaxLevel, Shop.UpgradeGear(p, c, GearItem.Vest));
-            Assert.AreEqual(c.VestPrices.Length, p.GearLevel(GearItem.Vest));
+            var vest = c.GearItem("vest");
+            for (int i = 0; i < vest.MaxLevel; i++) Assert.AreEqual(ShopResult.Ok, Shop.UpgradeGear(p, c, "vest"));
+            Assert.AreEqual(ShopResult.MaxLevel, Shop.UpgradeGear(p, c, "vest"));
+            Assert.AreEqual(vest.MaxLevel, p.GetLevel(UpgradeKey.Gear("vest")));
+            Assert.AreEqual(ShopResult.Unknown, Shop.UpgradeGear(p, c, "jetpack"));
         }
 
         [Test]
