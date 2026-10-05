@@ -22,6 +22,7 @@ namespace ClaudeCop.Viewmodel.Tests
             var c = Load();
             foreach (WeaponKind k in System.Enum.GetValues(typeof(WeaponKind)))
             {
+                if (ViewmodelConfig.VisualKind(k) != k) continue; // Revolver/SMG dung chung mo hinh
                 var e = c.Get(k);
                 Assert.IsNotNull(e, "Thieu entry " + k);
                 Assert.IsNotNull(e.prefab, "Thieu prefab " + k);
@@ -34,6 +35,7 @@ namespace ClaudeCop.Viewmodel.Tests
             var c = Load();
             foreach (WeaponKind k in System.Enum.GetValues(typeof(WeaponKind)))
             {
+                if (ViewmodelConfig.VisualKind(k) != k) continue; // Revolver/SMG dung chung mo hinh
                 var t = c.Get(k).prefab.transform;
                 Assert.AreEqual("Viewmodel_" + k, c.Get(k).prefab.name);
                 Assert.IsNotNull(t.GetComponent<Animator>(), k + ": thieu Animator");
@@ -56,6 +58,7 @@ namespace ClaudeCop.Viewmodel.Tests
             Assert.GreaterOrEqual(layer, 0, "Chua co layer Viewmodel");
             foreach (WeaponKind k in System.Enum.GetValues(typeof(WeaponKind)))
             {
+                if (ViewmodelConfig.VisualKind(k) != k) continue; // Revolver/SMG dung chung mo hinh
                 var go = c.Get(k).prefab;
                 foreach (var tr in go.GetComponentsInChildren<Transform>(true))
                     Assert.AreEqual(layer, tr.gameObject.layer, k + "/" + tr.name + " sai layer");

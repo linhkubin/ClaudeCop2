@@ -12,6 +12,8 @@ namespace ClaudeCop.Combat
     {
         readonly int maxMultiplier, hitsPerStep;
         public int Streak { get; private set; }
+        /// <summary>So lan truot/ban moi truong duoc bo qua khong reset combo (gang tay). Tru dan khi dung.</summary>
+        public int ForgiveCharges { get; set; }
 
         public ComboTracker(int maxMultiplier = CombatConfig.DefaultComboMaxMultiplier, int hitsPerStep = CombatConfig.DefaultComboHitsPerStep)
         {
@@ -34,12 +36,22 @@ namespace ClaudeCop.Combat
                 case TapOutcome.Blocked:
                     break;
                 case TapOutcome.Environment:
-                    if (!envKeepsCombo) Streak = 0;
+                    if (!envKeepsCombo && !Forgive()) Streak = 0;
                     break;
-                default: // Miss, HostageHit
+                case TapOutcome.Miss:
+                    if (!Forgive()) Streak = 0;
+                    break;
+                default: // HostageHit: khong bao gio duoc bo qua
                     Streak = 0; break;
             }
             return Streak != before;
+        }
+
+        bool Forgive()
+        {
+            if (Streak <= 0 || ForgiveCharges <= 0) return false;
+            ForgiveCharges--;
+            return true;
         }
 
         public bool Reset()

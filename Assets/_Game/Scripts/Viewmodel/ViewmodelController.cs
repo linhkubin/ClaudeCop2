@@ -173,7 +173,7 @@ namespace ClaudeCop.Viewmodel
             hasPrevCam = false;
 
             var snap = CombatEvents.Current;
-            SetActiveWeapon(snap.Weapon, true);
+            SetActiveWeapon(ViewmodelConfig.VisualKind(snap.Weapon), true);
             if (snap.Reloading) OnReloadStateChanged(true);
             ApplyTransform();
         }
@@ -194,7 +194,7 @@ namespace ClaudeCop.Viewmodel
 
         // ---------- Su kien ----------
 
-        void OnWeaponChanged(WeaponKind kind) { SetActiveWeapon(kind, true); }
+        void OnWeaponChanged(WeaponKind kind) { SetActiveWeapon(ViewmodelConfig.VisualKind(kind), true); }
 
         void SetActiveWeapon(WeaponKind kind, bool playEquip)
         {
@@ -218,7 +218,7 @@ namespace ClaudeCop.Viewmodel
 
         void OnShotFired(WeaponKind kind, Vector2 screenPos)
         {
-            if (active == null || kind != ActiveKind) return;
+            if (active == null || ViewmodelConfig.VisualKind(kind) != ActiveKind) return;
             lastShotTime = Time.unscaledTime;
             var e = active.entry;
             motion.OnShot(screenPos, Screen.width, Screen.height, e.recoilImpulseScale);

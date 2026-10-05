@@ -52,7 +52,8 @@ Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham 
 | `ClaudeCop.Enemy` | `Scripts/Enemy/` | Core | enemy-coder |
 | `ClaudeCop.Camera` | `Scripts/Camera/` | Core, Unity.Cinemachine, Unity.Splines, Unity.Mathematics | gameplay-coder |
 | `ClaudeCop.RankScore` | `Scripts/RankScore/` (gồm `RankScoreDirector`; chỉ offline) | Core, Enemy | gameplay-coder |
-| `ClaudeCop.Game` | `Scripts/Game/` | Core, Combat, Props, Enemy, Camera, RankScore, Unity.Cinemachine (Camera/RankScore/Cinemachine dùng cho bot debug, bọc define) | gameplay-coder |
+| `ClaudeCop.Meta` | `Scripts/Meta/` (hồ sơ người chơi lưu PlayerPrefs `cc_profile_v1`, cửa hàng, trang bị, kết quả level) | Core, Combat, RankScore | gameplay-coder |
+| `ClaudeCop.Game` | `Scripts/Game/` | Core, Combat, Meta, Props, Enemy, Camera, RankScore, Unity.Cinemachine (Camera/RankScore/Cinemachine dùng cho bot debug, bọc define) | gameplay-coder |
 | `ClaudeCop.Viewmodel` | `Scripts/Viewmodel/` (W8; namespace `ClaudeCop.Viewmodel`; **không ai tham chiếu ngược**) | Core, Combat, Unity.RenderPipelines.Universal | gameplay-coder |
 | `ClaudeCop.Ads` | `Scripts/Ads/` | Unity.ugui, Unity.TextMeshPro (**không** ref Core/module game) | ui-coder |
 | `ClaudeCop.UI` | `Scripts/UI/` | Core, Combat, Ads, RankScore, Unity.ugui, Unity.TextMeshPro | ui-coder |

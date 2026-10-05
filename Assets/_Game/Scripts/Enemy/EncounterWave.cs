@@ -68,6 +68,8 @@ namespace ClaudeCop.Enemy
         float reticleTimeOverride = -1f, hideTimeOverride = -1f, staggerMinOverride = -1f, staggerMaxOverride = -1f;
         bool? justiceOverride;
         float justiceFractionOverride = -1f;
+        float armoredFraction;
+        int armorHits = 1;
         bool useHostages = true;
 
         public override bool IsActive => active;
@@ -133,6 +135,8 @@ namespace ClaudeCop.Enemy
             justiceOverride = p.justiceEnabled;
             justiceFractionOverride = p.justiceFraction;
             useHostages = p.useHostages;
+            armoredFraction = p.armoredFraction;
+            armorHits = Mathf.Max(1, p.armorHits);
             foreach (var e in queue) if (e != null) e.SetHideTime(p.hideTime);
         }
 
@@ -267,9 +271,16 @@ namespace ClaudeCop.Enemy
 
             // Ghi de theo dot + Justice point cho ~justiceFraction enemy.
             bool justice = JusticeActive;
-            float frac = JusticeFraction, acc = 0.5f;
+            float frac = JusticeFraction, acc = 0.5f, armorAcc = 0.5f;
             foreach (var e in queue)
             {
+                if (armoredFraction > 0f)
+                {
+                    armorAcc += armoredFraction;
+                    bool armored = armorAcc >= 1f;
+                    if (armored) armorAcc -= 1f;
+                    e.SetArmor(armored ? armorHits : 0);
+                }
                 if (reticleTimeOverride > 0f) e.SetReticleTime(reticleTimeOverride);
                 if (hideTimeOverride >= 0f) e.SetHideTime(hideTimeOverride);
                 if (justice)

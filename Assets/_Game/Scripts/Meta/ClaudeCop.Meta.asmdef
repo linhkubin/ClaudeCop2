@@ -1,10 +1,7 @@
 {
-    "name": "ClaudeCop.Game",
-    "rootNamespace": "ClaudeCop.Game",
-    "references": ["ClaudeCop.Core", "ClaudeCop.Combat", "ClaudeCop.Enemy", "ClaudeCop.Meta",
-        "ClaudeCop.Camera",
-        "ClaudeCop.RankScore",
-        "Unity.Cinemachine"],
+    "name": "ClaudeCop.Meta",
+    "rootNamespace": "ClaudeCop.Meta",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Combat", "ClaudeCop.RankScore"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

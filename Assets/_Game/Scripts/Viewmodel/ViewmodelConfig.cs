@@ -55,9 +55,21 @@ namespace ClaudeCop.Viewmodel
         [Header("Chuyen dong")]
         public ViewmodelMotionSettings motion = new ViewmodelMotionSettings();
 
+        /// <summary>Sung mua o man Home chua co mo hinh rieng: Revolver dung mo hinh Pistol, SMG dung mo hinh MachineGun.</summary>
+        public static WeaponKind VisualKind(WeaponKind kind)
+        {
+            switch (kind)
+            {
+                case WeaponKind.Revolver: return WeaponKind.Pistol;
+                case WeaponKind.SMG: return WeaponKind.MachineGun;
+                default: return kind;
+            }
+        }
+
         public ViewmodelWeaponEntry Get(WeaponKind kind)
         {
             if (weapons == null) return null;
+            kind = VisualKind(kind);
             for (int i = 0; i < weapons.Length; i++)
                 if (weapons[i] != null && weapons[i].kind == kind) return weapons[i];
             return null;

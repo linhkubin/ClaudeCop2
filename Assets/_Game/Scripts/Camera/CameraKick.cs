@@ -29,7 +29,8 @@ namespace ClaudeCop.Camera
             switch (k)
             {
                 case WeaponKind.Shotgun: return p.kickScaleShotgun;
-                case WeaponKind.MachineGun: return p.kickScaleMachineGun;
+                case WeaponKind.MachineGun:
+                case WeaponKind.SMG: return p.kickScaleMachineGun;
                 default: return p.kickScalePistol;
             }
         }

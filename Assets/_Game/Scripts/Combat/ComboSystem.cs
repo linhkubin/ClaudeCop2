@@ -12,6 +12,7 @@ namespace ClaudeCop.Combat
     {
         [SerializeField] CombatConfig config;
         ComboTracker tracker;
+        int forgivePerStage;
 
         public int Streak => Tracker.Streak;
         public float Multiplier => Tracker.Multiplier;
@@ -22,10 +23,20 @@ namespace ClaudeCop.Combat
         void OnEnable()
         {
             GameEvents.PlayerDamaged += OnPlayerDamaged;
+            RailEvents.PhaseStarted += OnPhaseStarted;
             ResetCombo();
         }
 
-        void OnDisable() { GameEvents.PlayerDamaged -= OnPlayerDamaged; }
+        void OnDisable() { GameEvents.PlayerDamaged -= OnPlayerDamaged; RailEvents.PhaseStarted -= OnPhaseStarted; }
+
+        /// <summary>Trang bi (gang tay): moi Stage duoc bo qua n lan truot khong mat combo.</summary>
+        public void SetMissForgivenessPerStage(int n)
+        {
+            forgivePerStage = Mathf.Max(0, n);
+            Tracker.ForgiveCharges = forgivePerStage;
+        }
+
+        void OnPhaseStarted(int index, string title) { Tracker.ForgiveCharges = forgivePerStage; }
 
         void OnPlayerDamaged(DamageSource s, Vector3 p, int livesLeft) { ResetCombo(); }
 

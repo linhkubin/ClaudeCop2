@@ -4,7 +4,7 @@ namespace ClaudeCop.Core
     public enum SurfaceMaterial { Concrete = 0, Wood, Metal, Glass, Foliage, Flesh }
 
     /// <summary>C3. Loai vu khi. Dung boi Combat, Enemy, RankScore, UI.</summary>
-    public enum WeaponKind { Pistol = 0, Shotgun, MachineGun }
+    public enum WeaponKind { Pistol = 0, Shotgun, MachineGun, Revolver, SMG }
 
     /// <summary>C6. Loai muc tieu co the tap. Grenade du tru.</summary>
     public enum TargetKind { Enemy = 0, Hostage, Pickup, Grenade }

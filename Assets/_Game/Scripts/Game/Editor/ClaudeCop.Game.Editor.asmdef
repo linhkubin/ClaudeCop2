@@ -3,6 +3,7 @@
     "rootNamespace": "ClaudeCop.Game.Editor",
     "references": [
         "ClaudeCop.Core",
+        "ClaudeCop.Meta",
         "ClaudeCop.Camera",
         "ClaudeCop.Camera.Editor",
         "ClaudeCop.Enemy",

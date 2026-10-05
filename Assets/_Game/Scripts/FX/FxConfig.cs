@@ -68,7 +68,8 @@ namespace ClaudeCop.FX
             switch (k)
             {
                 case WeaponKind.Shotgun: return tracerShotgun;
-                case WeaponKind.MachineGun: return tracerMachineGun;
+                case WeaponKind.MachineGun:
+                case WeaponKind.SMG: return tracerMachineGun;
                 default: return tracerPistol;
             }
         }

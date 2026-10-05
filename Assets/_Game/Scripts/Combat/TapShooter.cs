@@ -47,6 +47,10 @@ namespace ClaudeCop.Combat
         readonly List<Collider> keepScratch = new List<Collider>(8);
         Func<ITapTarget, float> depthFunc;
         Vector3 depthCamPos;
+        float justiceRadiusScale = 1f;
+        int swipeTouchId = -1;          // ngon da kich hoat reload bang vuot (khong lap lai trong cung lan cham)
+        bool mouseSwipeArmed;
+        Vector2 mouseDownPos;
 
         void OnTargetUnregistered(ITapTarget t) { if (t != null) bodyColliders.Remove(t.Id); }
 
@@ -57,6 +61,25 @@ namespace ClaudeCop.Combat
         public bool IsReloading => reloading;
         /// <summary>Vu khi khoi dau (Pistol): quay ve khi het dan vu khi dac biet.</summary>
         public WeaponData StartingWeapon => startingWeapon;
+
+        /// <summary>Doi vu khi khoi dau (sung mua/thue/nang cap tu man Home). Dang cam vu khi khoi dau cu thi doi luon.</summary>
+        public void SetStartingWeapon(WeaponData data)
+        {
+            if (data == null) return;
+            bool holdingStart = weapon == null || weapon == startingWeapon;
+            startingWeapon = data;
+            if (holdingStart && isActiveAndEnabled) Equip(data, true);
+        }
+
+        /// <summary>He so ban kinh diem Justice (trang bi: kinh). 1 = chuan.</summary>
+        public void SetJusticeRadiusScale(float scale) { justiceRadiusScale = Mathf.Max(0.1f, scale); }
+
+        /// <summary>Vuot xuong du xa (theo canh ngan man hinh) va doc xuong ro rang.</summary>
+        public static bool IsSwipeDown(Vector2 start, Vector2 now, float shortSide, float minFraction)
+        {
+            Vector2 d = now - start;
+            return -d.y >= shortSide * minFraction && -d.y > Mathf.Abs(d.x) * 1.5f;
+        }
 
         void Awake() { projectFunc = Project; bodyRectFunc = BodyRect; depthFunc = Depth; }
 
@@ -99,6 +122,8 @@ namespace ClaudeCop.Combat
             if (reloading && Time.time >= reloadEndTime) FinishReload();
             if (weapon == null) return;
 
+            DetectSwipeReload();
+
             // Cam ung: doc tung ngon (F-108). Ngon thu hai cham khi ngon dau con giu van ban duoc.
             bool anyTouch = false;
             var ts = Touchscreen.current;
@@ -136,6 +161,42 @@ namespace ClaudeCop.Combat
 
             // F-202: sau khi nhat thung, bo qua lan giu hien tai den khi nha tay.
             if (holdLocked && !anyTouch && !mousePressed) holdLocked = false;
+        }
+
+        /// <summary>Vuot xuong de thay dan (giong chia sung ra ngoai man hinh o may arcade). Phat dau cua cu cham van ban nhu tap thuong.</summary>
+        void DetectSwipeReload()
+        {
+            if (config == null || !config.SwipeDownReload || weapon == null || reloading) return;
+            float shortSide = Mathf.Min(Screen.width, Screen.height);
+            float frac = config.SwipeMinFraction;
+            var ts = Touchscreen.current;
+            if (ts != null)
+            {
+                bool swipeTouchAlive = false;
+                var touches = ts.touches;
+                for (int i = 0; i < touches.Count; i++)
+                {
+                    var t = touches[i];
+                    if (!t.isInProgress) continue;
+                    int tid = t.touchId.ReadValue();
+                    if (tid == swipeTouchId) { swipeTouchAlive = true; continue; }
+                    if (IsSwipeDown(t.startPosition.ReadValue(), t.position.ReadValue(), shortSide, frac))
+                    {
+                        swipeTouchId = tid; swipeTouchAlive = true;
+                        StartReload();
+                        return;
+                    }
+                }
+                if (!swipeTouchAlive) swipeTouchId = -1;
+            }
+            if (tapAction == null || tapPositionAction == null) return;
+            if (tapAction.WasPressedThisFrame()) { mouseSwipeArmed = true; mouseDownPos = tapPositionAction.ReadValue<Vector2>(); }
+            if (!tapAction.IsPressed()) { mouseSwipeArmed = false; return; }
+            if (mouseSwipeArmed && IsSwipeDown(mouseDownPos, tapPositionAction.ReadValue<Vector2>(), shortSide, frac))
+            {
+                mouseSwipeArmed = false;
+                StartReload();
+            }
         }
 
         void OnTapPerformed(InputAction.CallbackContext ctx)
@@ -348,7 +409,7 @@ namespace ClaudeCop.Combat
 
             float scale = Mathf.Min(Screen.width, Screen.height) / (config != null ? config.ReferenceScreenHeight : CombatConfig.DefaultReferenceScreenHeight);
             float radius = weapon.HitRadiusPx * scale;
-            float justice = (config != null ? config.JusticeRadiusPx : CombatConfig.DefaultJusticeRadiusPx) * scale;
+            float justice = (config != null ? config.JusticeRadiusPx : CombatConfig.DefaultJusticeRadiusPx) * scale * justiceRadiusScale;
 
             bool bodyHit = config == null || config.EnemyBodyHit;
             bodyPadPx = (config != null ? config.BodyHitPaddingPx : CombatConfig.DefaultBodyHitPaddingPx) * scale;

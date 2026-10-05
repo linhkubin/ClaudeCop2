@@ -19,3 +19,5 @@ MonoBehaviour:
   justiceEnabled: 0
   justiceFraction: 0
   useHostages: 1
+  armoredFraction: 0.2
+  armorHits: 1

@@ -16,5 +16,7 @@ namespace ClaudeCop.Enemy
         [Tooltip("Bat Justice point cho enemy trong dot")] public bool justiceEnabled = true;
         [Range(0f, 1f)] public float justiceFraction = 0.34f;
         [Tooltip("Kich hoat con tin / thung vu khi da dat trong dot (tat de dot khong co con tin)")] public bool useHostages = true;
+        [Range(0f, 1f), Tooltip("Ti le enemy mac giap trong dot (0 = khong co)")] public float armoredFraction = 0f;
+        [Min(1), Tooltip("So phat giap do them (1 = can 2 phat de ha)")] public int armorHits = 1;
     }
 }

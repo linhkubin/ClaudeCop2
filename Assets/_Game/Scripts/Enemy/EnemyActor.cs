@@ -51,6 +51,26 @@ namespace ClaudeCop.Enemy
         bool surrendered;
         float reticleTimeOverride = -1f, hideTimeOverride = -1f;
 
+        /// <summary>He so thoi gian vong target cho moi enemy (trang bi giam thanh cua nguoi choi). 1 = chuan. Dat truoc khi dot bat dau.</summary>
+        public static float GlobalReticleScale = 1f;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetGlobalScale() { GlobalReticleScale = 1f; }
+
+        // Giap: so phat do them truoc khi chet (Justice Shot va vu no bo qua giap).
+        int armorHits;
+        float flinchTimer;
+        Vector3 flinchDir;
+        const float FlinchTime = 0.14f, FlinchDistance = 0.12f;
+        static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"), ColorId = Shader.PropertyToID("_Color");
+        static readonly Color ArmorTint = new Color(0.55f, 0.58f, 0.65f, 1f);
+        MaterialPropertyBlock mpb;
+
+        // Kieu nga (thay doi theo cho trung dan).
+        public enum DeathStyle { FallBack, Crumple, Spin }
+        DeathStyle deathStyle;
+        Vector3 deadFromPos, deadToPos;
+        public DeathStyle LastDeathStyle => deathStyle;
+
         /// <summary>Phat khi enemy chet (enemy, vi tri world).</summary>
         public event Action<EnemyActor, Vector3> Died;
         /// <summary>Phat khi enemy ban nguoi choi.</summary>
@@ -58,6 +78,33 @@ namespace ClaudeCop.Enemy
 
         public EnemyState State => brain != null ? brain.State : EnemyState.Hidden;
         public bool IsDead => dead;
+        /// <summary>So phat giap con do duoc.</summary>
+        public int ArmorHits => armorHits;
+
+        /// <summary>Mac giap: can them n phat (Justice Shot / vu no bo qua). EncounterWave goi theo preset. Than enemy sam mau lai.</summary>
+        public void SetArmor(int hits)
+        {
+            armorHits = Mathf.Max(0, hits);
+            ApplyArmorTint(armorHits > 0);
+        }
+
+        void ApplyArmorTint(bool on)
+        {
+            if (mpb == null) mpb = new MaterialPropertyBlock();
+            foreach (var r in GetComponentsInChildren<Renderer>(true))
+            {
+                if (r == null) continue;
+                if (justiceMarker != null && r.transform.IsChildOf(justiceMarker.transform)) continue;
+                if (handsUpMarker != null && r.transform.IsChildOf(handsUpMarker.transform)) continue;
+                if (!on) { r.SetPropertyBlock(null); continue; }
+                var m = r.sharedMaterial;
+                if (m == null) continue;
+                r.GetPropertyBlock(mpb);
+                if (m.HasProperty(BaseColorId)) mpb.SetColor(BaseColorId, m.GetColor(BaseColorId) * ArmorTint);
+                if (m.HasProperty(ColorId)) mpb.SetColor(ColorId, m.GetColor(ColorId) * ArmorTint);
+                r.SetPropertyBlock(mpb);
+            }
+        }
         public bool IsSurrendered => surrendered;
         public bool JusticeEnabled => justiceEnabled;
         /// <summary>Con o trang thai Hidden va chua duoc kich hoat (con doi duoc cau hinh lai).</summary>
@@ -179,7 +226,7 @@ namespace ClaudeCop.Enemy
             var c = Cfg;
             brain = new EnemyBrain(
                 entryRunTime > 0f ? entryRunTime : (sceneStanding ? Mathf.Max(c.peekDuration, MaxRunTime) : c.peekDuration),
-                reticleTimeOverride > 0f ? reticleTimeOverride : c.reticleTime,
+                (reticleTimeOverride > 0f ? reticleTimeOverride : c.reticleTime) * Mathf.Max(0.1f, GlobalReticleScale),
                 entryRunTime > 0f ? entryRunTime : c.retreatDuration,
                 sceneStanding ? 0f : (hideTimeOverride >= 0f ? hideTimeOverride : c.hideTime),
                 entryThreshold >= 0f ? entryThreshold : c.targetableThreshold);
@@ -276,7 +323,14 @@ namespace ClaudeCop.Enemy
             if (dead || brain == null) return;
             brain.Tick(dt);
             float t = brain.PeekT;
-            transform.SetPositionAndRotation(Vector3.Lerp(hidePos, peekPos, t), Quaternion.Slerp(hideRot, peekRot, t));
+            Vector3 pos = Vector3.Lerp(hidePos, peekPos, t);
+            if (flinchTimer > 0f)
+            {
+                flinchTimer = Mathf.Max(0f, flinchTimer - dt);
+                float k = Mathf.Sin(flinchTimer / FlinchTime * Mathf.PI); // giat lui roi ve
+                pos += flinchDir * (FlinchDistance * k);
+            }
+            transform.SetPositionAndRotation(pos, Quaternion.Slerp(hideRot, peekRot, t));
         }
 
         void OnAimStarted()
@@ -309,6 +363,17 @@ namespace ClaudeCop.Enemy
         {
             if (dead || !IsTargetable) return TapOutcome.Miss;
             bool justice = isJustice && HasJusticePoint;
+            bool blast = float.IsNaN(shot.ScreenPosition.x);
+            if (armorHits > 0 && !justice && !blast)
+            {
+                // Giap do: giat lui, van dang ngam (khong mat combo, khong tinh truot).
+                armorHits--;
+                Vector3 fd = Vector3.ProjectOnPlane(shot.Direction, Vector3.up);
+                flinchDir = fd.sqrMagnitude > 1e-4f ? fd.normalized : -transform.forward;
+                flinchTimer = FlinchTime;
+                if (armorHits == 0) ApplyArmorTint(false);
+                return TapOutcome.Blocked;
+            }
             Vector3 pos = transform.position;
             brain.Kill();           // goi AimEnded -> huy dang ky
             dead = true;
@@ -317,12 +382,33 @@ namespace ClaudeCop.Enemy
             if (justice) RefreshMarkers();
             else
             {
-                // Nga quanh chan (pivot o chan): xoay ca root.
+                // Nga quanh chan (pivot o chan): xoay ca root. Kieu nga theo cho trung: thap = khuyu, lech ngang = xoay, con lai = nga ngua.
                 deadFromRot = transform.rotation;
+                deadFromPos = transform.position;
                 Vector3 dir = shot.Direction.sqrMagnitude > 0.001f ? shot.Direction : transform.forward;
-                Vector3 axis = Vector3.Cross(Vector3.up, dir);
+                Vector3 flat = Vector3.ProjectOnPlane(dir, Vector3.up);
+                flat = flat.sqrMagnitude > 1e-4f ? flat.normalized : -transform.forward;
+                Vector3 axis = Vector3.Cross(Vector3.up, flat);
                 if (axis.sqrMagnitude < 0.001f) axis = transform.right;
-                deadToRot = Quaternion.AngleAxis(Cfg.fallAngle, axis.normalized) * deadFromRot;
+                axis.Normalize();
+                deathStyle = PickDeathStyle(shot.HitPoint - transform.position, Vector3.Cross(Vector3.up, flat), blast);
+                float push = 0.35f * Mathf.Clamp(shot.ImpulseScale, 0.3f, 2.5f);
+                switch (deathStyle)
+                {
+                    case DeathStyle.Crumple:
+                        deadToRot = Quaternion.AngleAxis(25f, axis) * deadFromRot;
+                        deadToPos = deadFromPos + Vector3.down * 0.7f + flat * (push * 0.3f);
+                        break;
+                    case DeathStyle.Spin:
+                        float side = Vector3.Dot(shot.HitPoint - transform.position, Vector3.Cross(Vector3.up, flat)) >= 0f ? 1f : -1f;
+                        deadToRot = Quaternion.AngleAxis(Cfg.fallAngle * 0.85f, axis) * Quaternion.AngleAxis(110f * side, Vector3.up) * deadFromRot;
+                        deadToPos = deadFromPos + flat * push;
+                        break;
+                    default:
+                        deadToRot = Quaternion.AngleAxis(Cfg.fallAngle, axis) * deadFromRot;
+                        deadToPos = deadFromPos + flat * push;
+                        break;
+                }
                 if (justiceMarker != null) justiceMarker.SetActive(false);
             }
             OnKilled(justice);
@@ -340,8 +426,20 @@ namespace ClaudeCop.Enemy
                 return;
             }
             float linger = Cfg.deathLinger;
-            transform.rotation = Quaternion.Slerp(deadFromRot, deadToRot, Mathf.Clamp01(deadTimer / Cfg.fallDuration));
+            float dur = Cfg.fallDuration * (deathStyle == DeathStyle.Crumple ? 1.5f : deathStyle == DeathStyle.Spin ? 1.3f : 1f);
+            float k = Mathf.Clamp01(deadTimer / dur);
+            k = k * (2f - k); // ease-out
+            transform.SetPositionAndRotation(Vector3.Lerp(deadFromPos, deadToPos, k), Quaternion.Slerp(deadFromRot, deadToRot, k));
             if (deadTimer >= linger) gameObject.SetActive(false);
+        }
+
+        /// <summary>Chon kieu nga theo diem trung (so voi chan) va truc ngang cua dan. Vu no: luon nga ngua.</summary>
+        public static DeathStyle PickDeathStyle(Vector3 hitFromFeet, Vector3 shotRight, bool blast)
+        {
+            if (blast) return DeathStyle.FallBack;
+            if (hitFromFeet.y < 0.9f) return DeathStyle.Crumple;
+            if (shotRight.sqrMagnitude > 1e-4f && Mathf.Abs(Vector3.Dot(hitFromFeet, shotRight.normalized)) > 0.2f) return DeathStyle.Spin;
+            return DeathStyle.FallBack;
         }
 
         void SetCollider(bool on) { if (hitCollider != null) hitCollider.enabled = on; }
