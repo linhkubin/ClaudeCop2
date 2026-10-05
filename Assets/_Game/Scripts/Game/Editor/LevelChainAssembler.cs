@@ -100,6 +100,12 @@ namespace ClaudeCop.Game.Editor
                 pso.ApplyModifiedPropertiesWithoutUndo();
                 UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(ui, scene);
             }
+            if (Object.FindFirstObjectByType<ReloadHintPresenter>() == null)
+            {
+                var hint = new GameObject("ReloadHintUI");
+                hint.AddComponent<ReloadHintPresenter>();
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(hint, scene);
+            }
             if (Object.FindFirstObjectByType<ChainStartSetup>() == null)
             {
                 var cs = new GameObject("ChainStartSetup").AddComponent<ChainStartSetup>();

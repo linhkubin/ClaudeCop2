@@ -25,6 +25,8 @@ namespace ClaudeCop.Combat
         [SerializeField] string actionMapName = "Gameplay";
         [SerializeField] string tapActionName = "Tap";
         [SerializeField] string tapPositionActionName = "TapPosition";
+        [Header("Vuot xuong de thay dan (chi khi het dan)")]
+        [Tooltip("Quang vuot xuong toi thieu theo ty le chieu cao man hinh")] [SerializeField, Range(0.05f, 0.5f)] float swipeReloadMinScreenFraction = 0.12f;
 
         InputAction tapAction;
         InputAction tapPositionAction;
@@ -35,6 +37,8 @@ namespace ClaudeCop.Combat
         float nextFireTime;
         Camera cam;
         int holdTouchId = -1;
+        int swipeDoneTouchId = -1;          // ngon tay da kich hoat vuot (khong kich hoat lai)
+        Vector2 mouseDownPos; bool prevMouseDown, mouseSwipeDone;
 
         readonly List<TargetHit> hits = new List<TargetHit>(8);
         readonly List<ShotResult> pending = new List<ShotResult>(8);
@@ -111,6 +115,12 @@ namespace ClaudeCop.Combat
                     var t = touches[i];
                     if (!t.isInProgress) continue;
                     anyTouch = true;
+                    int touchId = t.touchId.ReadValue();
+                    if (touchId != swipeDoneTouchId && SwipeReloadAllowed && IsSwipeDown(t.startPosition.ReadValue(), t.position.ReadValue()))
+                    {
+                        swipeDoneTouchId = touchId;
+                        StartReload();
+                    }
                     if (!weapon.HoldToFire)
                     {
                         if (t.press.wasPressedThisFrame) TryFire(t.position.ReadValue());
@@ -127,15 +137,31 @@ namespace ClaudeCop.Combat
                     TryFire(touches[holdIdx].position.ReadValue());
                 }
             }
-            if (!anyTouch) holdTouchId = -1;
+            if (!anyTouch) { holdTouchId = -1; swipeDoneTouchId = -1; }
 
             // Chuot/but: giu de ban (Sung may).
             bool mousePressed = !anyTouch && tapAction != null && tapAction.IsPressed();
+            if (mousePressed && tapPositionAction != null)
+            {
+                Vector2 mp = tapPositionAction.ReadValue<Vector2>();
+                if (!prevMouseDown) { mouseDownPos = mp; mouseSwipeDone = false; }
+                if (!mouseSwipeDone && SwipeReloadAllowed && IsSwipeDown(mouseDownPos, mp)) { mouseSwipeDone = true; StartReload(); }
+            }
+            prevMouseDown = mousePressed;
             if (mousePressed && weapon.HoldToFire && !holdLocked)
                 TryFire(tapPositionAction.ReadValue<Vector2>());
 
             // F-202: sau khi nhat thung, bo qua lan giu hien tai den khi nha tay.
             if (holdLocked && !anyTouch && !mousePressed) holdLocked = false;
+        }
+
+        /// <summary>Vuot xuong chi thay dan khi het dan (luc do tap chi la nhat khong, khong ton phat nao).</summary>
+        bool SwipeReloadAllowed => weapon != null && !reloading && ammo <= 0 && !CombatPauseSignal.IsPaused;
+
+        bool IsSwipeDown(Vector2 start, Vector2 now)
+        {
+            Vector2 d = now - start;
+            return d.y <= -Screen.height * swipeReloadMinScreenFraction && Mathf.Abs(d.x) <= -d.y * 0.8f; // chu yeu doc
         }
 
         void OnTapPerformed(InputAction.CallbackContext ctx)
