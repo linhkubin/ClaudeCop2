@@ -62,6 +62,7 @@ namespace ClaudeCop.RankScore
             subscribed = true;
             RailEvents.MoveSegmentStarted += OnMoveSegmentStarted;
             RailEvents.LevelCompleted += OnLevelCompleted;
+            RailEvents.StageCompleted += OnStageCompleted;
             GameEvents.GameStateChanged += OnGameState;
         }
 
@@ -71,6 +72,7 @@ namespace ClaudeCop.RankScore
             subscribed = false;
             RailEvents.MoveSegmentStarted -= OnMoveSegmentStarted;
             RailEvents.LevelCompleted -= OnLevelCompleted;
+            RailEvents.StageCompleted -= OnStageCompleted;
             GameEvents.GameStateChanged -= OnGameState;
             CancelPending();
         }
@@ -151,6 +153,8 @@ namespace ClaudeCop.RankScore
             r != null && r.Answers != null && r.Answers.ContainsKey(q);
 
         // ---------- Rank cuoi man ----------
+
+        void OnStageCompleted(int phaseIndex, string title) { OnLevelCompleted(); } // rank hien tren bang ket qua giua chuoi
 
         /// <summary>Danh gia rank khi thang (LevelCompleted). Public de test.</summary>
         public void OnLevelCompleted()

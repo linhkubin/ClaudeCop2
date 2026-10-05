@@ -16,11 +16,15 @@ namespace ClaudeCop.Enemy
         public float ExposedTime { get; private set; }
         /// <summary>Ban duoc khi da lo du thay: Peeking (PeekT &gt;= nguong), Aiming, Retreating (PeekT &gt;= nguong). Dead/Hidden: khong.</summary>
         public bool IsTargetable => targetable;
-        public bool ShowsReticle => State == EnemyState.Aiming;
+        public bool ShowsReticle => State == EnemyState.Aiming && !waiting;
         public bool IsActivated => activated;
         public int Volleys { get; private set; }
         /// <summary>Enemy dung san (SceneStanding): ActivateStanding bo qua pha lo, vao thang Aiming; het vong thi ban roi ngam lai (khong rut xuong).</summary>
         public bool StandsGround { get; set; }
+        /// <summary>Enemy dung tai cho (StandsGround): sau moi phat ban dung im StandWaitMin..StandWaitMax giay (khong vong target, van ban duoc) roi ngam phat ke.</summary>
+        public float StandWaitMin = 3f, StandWaitMax = 5f;
+        bool waiting; float waitTimer;
+        static readonly System.Random rng = new System.Random();
 
         /// <summary>Goi khi enemy vua tro nen ban duoc (de dang ky target). Luon di cap voi AimEnded.</summary>
         public System.Action AimStarted;
@@ -52,7 +56,7 @@ namespace ClaudeCop.Enemy
             if (State != EnemyState.Hidden || activated) return;
             activated = true;
             State = EnemyState.Aiming;
-            PeekT = 1f; timer = 0f; ReticleProgress = 0f; ExposedTime = 0f;
+            PeekT = 1f; timer = 0f; ReticleProgress = 0f; ExposedTime = 0f; waiting = false;
             BeginTargetable();
         }
 
@@ -86,13 +90,25 @@ namespace ClaudeCop.Enemy
                     break;
                 case EnemyState.Aiming:
                     ExposedTime += dt;
+                    if (waiting)
+                    {
+                        waitTimer -= dt;
+                        if (waitTimer <= 0f) { waiting = false; timer = 0f; ReticleProgress = 0f; }
+                        break;
+                    }
                     timer += dt;
                     ReticleProgress = timer >= reticleTime ? 1f : timer / reticleTime;
                     if (ReticleProgress >= 1f)
                     {
                         Volleys++;
                         timer = 0f;
-                        if (StandsGround) { ReticleProgress = 0f; Fired?.Invoke(); break; }
+                        if (StandsGround)
+                        {
+                            ReticleProgress = 0f;
+                            waiting = true; waitTimer = StandWaitMin + (float)rng.NextDouble() * NonNeg(StandWaitMax - StandWaitMin);
+                            Fired?.Invoke();
+                            break;
+                        }
                         State = EnemyState.Retreating;
                         Fired?.Invoke();
                     }
@@ -105,6 +121,8 @@ namespace ClaudeCop.Enemy
                     break;
             }
         }
+
+        static float NonNeg(float v) => v > 0f ? v : 0f;
 
         void BeginTargetable()
         {
@@ -120,6 +138,6 @@ namespace ClaudeCop.Enemy
             AimEnded?.Invoke();
         }
 
-        void StartPeek() { State = EnemyState.Peeking; timer = 0f; PeekT = 0f; ReticleProgress = 0f; ExposedTime = 0f; }
+        void StartPeek() { State = EnemyState.Peeking; timer = 0f; PeekT = 0f; ReticleProgress = 0f; ExposedTime = 0f; waiting = false; }
     }
 }

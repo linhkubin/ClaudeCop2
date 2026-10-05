@@ -38,6 +38,14 @@ namespace ClaudeCop.Game.Editor
             /// <summary>true: shot Move co lookKeys (giu huong nhin cua shot Combat truoc, den cuoi rail xoay dan ve huong shot Combat ke) -
             /// rail khong can tiep tuyen khop yaw shot (truot ngang). Mac dinh false (Level_01).</summary>
             public bool keyedMoves;
+            /// <summary>true: noi them vao scene da co (giu Rails/Encounters/Shots/Props va cac Phase cu, them Phase moi o cuoi) - chuoi level lien mach.</summary>
+            public bool append;
+            /// <summary>Tien to ten Shot/Rail/Wave/Prop khi append (tranh trung ten voi level truoc).</summary>
+            public string namePrefix = "";
+            /// <summary>Huong nhin (yaw, do) cua +Z cua level khi level bi xoay (mac dinh 0).</summary>
+            public float baseYaw;
+            /// <summary>&gt; 0: toc do (m/s) cua shot Move dau Phase 2+ (ray noi Phase, dai hon ray thuong) va camera nhin theo tiep tuyen ray.</summary>
+            public float linkSpeed;
         }
 
         public static void Run(LevelSpec spec)
@@ -57,17 +65,26 @@ namespace ClaudeCop.Game.Editor
             // Bat tat ca nhom cha cua Area (neu Level_01 hoac con bi tat)
             level.SetActive(true);
 
-            foreach (var n in new[] { "Rails", "Encounters", "Shots" })
+            string pre = spec.namePrefix ?? "";
+            Transform rails, encounters, shots;
+            if (spec.append)
             {
-                var g = Root(n); if (g != null) Object.DestroyImmediate(g);
+                rails = Root("Rails").transform; encounters = Root("Encounters").transform; shots = Root("Shots").transform;
             }
-            var rails = new GameObject("Rails").transform;
-            var encounters = new GameObject("Encounters").transform;
-            var shots = new GameObject("Shots").transform;
+            else
+            {
+                foreach (var n in new[] { "Rails", "Encounters", "Shots" })
+                {
+                    var g = Root(n); if (g != null) Object.DestroyImmediate(g);
+                }
+                rails = new GameObject("Rails").transform;
+                encounters = new GameObject("Encounters").transform;
+                shots = new GameObject("Shots").transform;
+            }
 
             var rig = Root("CameraRig").GetComponent<PhaseDirector>();
             var profile = rig.profile;
-            var phases = new List<RailPhase>();
+            var phases = spec.append ? new List<RailPhase>(rig.phases) : new List<RailPhase>();
 
             var enemyPrefab = AssetDatabase.LoadAssetAtPath<EnemyActor>(Pre + "Enemies/Enemy.prefab");
             var hostagePrefab = AssetDatabase.LoadAssetAtPath<HostageActor>(Pre + "Enemies/Hostage.prefab");
@@ -81,7 +98,7 @@ namespace ClaudeCop.Game.Editor
                 {
                     var cp = points["CamPoint_P" + p + "_S" + s];
                     bool isMove = System.Array.IndexOf(MoveShots, s) >= 0;
-                    var go = new GameObject("Shot_P" + p + "_S" + s + (isMove ? "_Move" : "_Combat"));
+                    var go = new GameObject(pre + "Shot_P" + p + "_S" + s + (isMove ? "_Move" : "_Combat"));
                     go.transform.SetParent(shots, false);
                     go.transform.SetPositionAndRotation(cp.position, cp.rotation);
                     var shot = go.AddComponent<CameraShot>();
@@ -91,13 +108,20 @@ namespace ClaudeCop.Game.Editor
                         shot.entry = s == 1 ? ShotEntry.Cut : ShotEntry.Blend;
                         shot.blendTime = -1f; // Combat->Move: blend dai hon de giam dinh toc do xoay (rail cam cung dang xoay)
                         var hints = CameraRigBuilder.FindHints(level.transform, "RailHint_P" + p + "_S" + s + "_");
-                        var sc = CameraRigBuilder.BuildSplineFromPoints("Rail_P" + p + "_S" + s, hints, rails);
+                        var sc = CameraRigBuilder.BuildSplineFromPoints(pre + "Rail_P" + p + "_S" + s, hints, rails);
                         shot.spline = sc;
                         if (spec.keyedMoves)
                         {
                             // Giu huong cua shot Combat truoc (hoac +Z khi vao Phase) den 40% rail, roi xoay dan ve huong shot Combat ke (SetNextLook).
-                            float holdYaw = prevShot != null && prevShot.kind == ShotKind.Combat ? prevShot.transform.eulerAngles.y : 0f;
+                            float holdYaw = prevShot != null && prevShot.kind == ShotKind.Combat ? prevShot.transform.eulerAngles.y : spec.baseYaw;
                             shot.lookKeys = new List<LookKey> { new LookKey(0.4f, holdYaw) };
+                            if (s == 1 && p > 1 && spec.linkSpeed > 0f)
+                            {
+                                // Ray noi Phase: camera nhin THEO HUONG DI (tiep tuyen ray, khong lookKeys) - khong truot ngang; dau/cuoi ray khop huong shot truoc/sau.
+                                shot.lookKeys = new List<LookKey>();
+                                shot.speedOverride = spec.linkSpeed;
+                                shot.lookDampingOverride = 0.3f; shot.maxYawRateOverride = 70f; shot.lookAheadOverride = 10f; // bam tiep tuyen sat: camera luon nhin ve phia truoc luc di
+                            }
                         }
                     }
                     else
@@ -117,7 +141,7 @@ namespace ClaudeCop.Game.Editor
                         else prevFwd = prevShot.transform.forward;
                         float ang = Vector3.Angle(Flat(prevFwd), Flat(go.transform.forward));
                         shot.blendTime = Mathf.Max(def.blend >= 0f ? def.blend : profile.defaultBlend, Mathf.Ceil(ang / 40f / 0.05f) * 0.05f);
-                        var wg = new GameObject("Wave_P" + p + "_W" + s);
+                        var wg = new GameObject(pre + "Wave_P" + p + "_W" + s);
                         wg.transform.SetParent(encounters, false);
                         var wave = wg.AddComponent<EncounterWave>();
                         WireWave(wave, p, s, def, points, enemyPrefab, hostagePrefab, config);
@@ -138,7 +162,7 @@ namespace ClaudeCop.Game.Editor
             EnsurePrefab(roots, "FxSystems", Pre + "FX/FxSystems.prefab");
             EnsurePrefab(roots, "RankScoreSystems", Pre + "Game/RankScoreSystems.prefab");
 
-            AssembleM3(scene, roots, level, points, encounters);
+            AssembleM3(scene, roots, level, points, encounters, spec.append, pre);
 
             // F-210: luu lai CameraFeelProfile de lo cac field M2
             
@@ -152,13 +176,18 @@ namespace ClaudeCop.Game.Editor
         }
 
         // ---- M3 (T-702): Props, Grenadier, HumanShield, PropSystems, RankScoreDirector ----
-        static void AssembleM3(Scene scene, List<GameObject> roots, GameObject level, Dictionary<string, Transform> points, Transform encounters)
+        static void AssembleM3(Scene scene, List<GameObject> roots, GameObject level, Dictionary<string, Transform> points, Transform encounters, bool append = false, string pre = "")
         {
-            // Don dep ban cu (Props do menu tao)
+            // Don dep ban cu (Props do menu tao); append: giu Props cua level truoc, them vao
             var oldProps = roots.Find(g => g != null && g.name == "Props");
-            if (oldProps != null) Object.DestroyImmediate(oldProps);
-            var propsRoot = new GameObject("Props").transform;
-            SceneManager.MoveGameObjectToScene(propsRoot.gameObject, scene);
+            Transform propsRoot;
+            if (append && oldProps != null) propsRoot = oldProps.transform;
+            else
+            {
+                if (oldProps != null) Object.DestroyImmediate(oldProps);
+                propsRoot = new GameObject("Props").transform;
+                SceneManager.MoveGameObjectToScene(propsRoot.gameObject, scene);
+            }
 
             var barrel = AssetDatabase.LoadAssetAtPath<GameObject>(Pre + "Props/Prop_Barrel.prefab");
             var box = AssetDatabase.LoadAssetAtPath<GameObject>(Pre + "Props/Prop_Box.prefab");
@@ -173,7 +202,7 @@ namespace ClaudeCop.Game.Editor
                 else if (n.StartsWith("PropSlot_Glass_")) { pf = glass; ng++; }
                 if (pf == null) continue;
                 var inst = (GameObject)PrefabUtility.InstantiatePrefab(pf, scene);
-                inst.name = n.Replace("PropSlot_", "Prop_");
+                inst.name = pre + n.Replace("PropSlot_", "Prop_");
                 inst.transform.SetParent(propsRoot, true);
                 inst.transform.SetPositionAndRotation(m.position, m.rotation);
                 if (pf == glass)
@@ -186,7 +215,7 @@ namespace ClaudeCop.Game.Editor
             // Grenadier / HumanShield vao EncounterWave
             var gPrefab = AssetDatabase.LoadAssetAtPath<EnemyActor>(Pre + "Enemies/Enemy_Grenadier.prefab");
             var hsPrefab = AssetDatabase.LoadAssetAtPath<HumanShieldEnemy>(Pre + "Enemies/Enemy_HumanShield.prefab");
-            foreach (var wave in encounters.GetComponentsInChildren<EncounterWave>(true))
+            if (!append) foreach (var wave in encounters.GetComponentsInChildren<EncounterWave>(true))
             {
                 // ten Wave_P{p}_W{w}
                 var parts = wave.name.Split('_'); if (parts.Length < 3) continue;
@@ -209,6 +238,8 @@ namespace ClaudeCop.Game.Editor
             }
 
             EnsurePrefab(roots, "PropSystems", Pre + "Props/PropSystems.prefab");
+
+            if (append) { Debug.Log("[LevelAssembler] M3 (append): props barrel=" + nb + " box=" + nx + " glass=" + ng); return; }
 
             // RankScoreDirector
             var rsRoot = roots.Find(g => g != null && g.name == "RankScoreSystems");

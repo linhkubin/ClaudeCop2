@@ -22,14 +22,14 @@ namespace ClaudeCop.Game.Editor
         static LevelAssembler.WaveDef W(int p, int s, float fov, float blend = -1f, int conc = 2) =>
             new LevelAssembler.WaveDef { phase = p, shot = s, preset = "L2", pickup = null, fov = fov, blend = blend, maxConcurrent = conc };
 
-        static readonly LevelAssembler.WaveDef[] Waves =
+        internal static readonly LevelAssembler.WaveDef[] Waves =
         {
             W(1,2,40f), W(1,3,36f,0.7f), W(1,5,38f), W(1,6,32f,0.7f),
             W(2,2,40f), W(2,3,36f,0.7f), W(2,5,38f), W(2,6,32f,0.7f),
             W(3,2,40f), W(3,3,36f,0.7f), W(3,5,38f), W(3,6,32f,0.7f,3),
         };
 
-        static readonly string[] Titles = { "STAGE 2-1", "STAGE 2-2", "STAGE 2-3" };
+        internal static readonly string[] Titles = { "STAGE 2-1", "STAGE 2-2", "STAGE 2-3" };
 
         [MenuItem("ClaudeCop/Game/Assemble Level_02")]
         public static void Assemble()
@@ -51,12 +51,12 @@ namespace ClaudeCop.Game.Editor
             LevelAssembler.Run(new LevelAssembler.LevelSpec
             {
                 scenePath = ScenePath, rootName = "Level_02", logName = "Level02Assembler",
-                waves = Waves, titles = Titles, moveShots = new[] { 1, 4 }, keyedMoves = true,
+                waves = Waves, titles = Titles, moveShots = new[] { 1, 4 }, keyedMoves = true, linkSpeed = 7.6f,
             });
         }
 
         // Preset Level 2: reticle 2.5 s, khong Justice (luat moi cua level 3), co con tin.
-        static void EnsurePreset()
+        internal static void EnsurePreset()
         {
             if (AssetDatabase.LoadAssetAtPath<EnemyPreset>(PresetPath) != null) return;
             var p = ScriptableObject.CreateInstance<EnemyPreset>();

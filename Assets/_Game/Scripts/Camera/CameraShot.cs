@@ -47,6 +47,9 @@ namespace ClaudeCop.Camera
         [Tooltip("<=0 = lay railSpeed trong profile")] public float speedOverride = 0f;
         [Tooltip("Rong = ray nhin theo tiep tuyen (mac dinh). Co moc = huong nhin do cac moc quyet dinh (smoothstep giua cac moc, bat dau tu huong camera luc vao ray, ket thuc o huong Shot Combat ke) - dung cho doan noi 2 Phase de khong phai quay dau gap.")]
         public List<LookKey> lookKeys = new List<LookKey>();
+        [Tooltip("> 0: damping (s) nhin theo tiep tuyen cua doan Move nay thay cho profile.lookDamping (nho = bam huong di sat hon).")] public float lookDampingOverride = 0f;
+        [Tooltip("> 0: nhin truoc doc ray bao nhieu m (thay profile.lookAhead): lon hon = camera nhin xa hon ve phia di chuyen.")] public float lookAheadOverride = 0f;
+        [Tooltip("> 0: toc do xoay toi da (do/giay) cua doan Move nay thay cho profile.maxYawRate.")] public float maxYawRateOverride = 0f;
 
         [Header("Combat")]
         public EncounterBase encounter;

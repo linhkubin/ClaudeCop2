@@ -46,6 +46,10 @@ namespace ClaudeCop.Camera
         public void ClearNextLook() { hasNext = false; }
 
         /// <summary>SEAMLESS: dung moc huong nhin thay cho nhin theo tiep tuyen (rong/null = tat). Goi sau Prepare + SetNextLook, truoc StartMoving.</summary>
+        float lookDampingOverride, yawRateCapOverride, lookAheadOverride;
+        /// <summary>Doan Move noi Phase: camera bam tiep tuyen sat hon (damping nho, toc do xoay toi da cao). 0 = dung CameraFeelProfile. Goi sau Prepare, truoc StartMoving.</summary>
+        public void SetLookTuning(float damping, float yawRateCap, float lookAhead = 0f) { lookDampingOverride = damping; yawRateCapOverride = yawRateCap; lookAheadOverride = lookAhead; }
+
         public void SetLookKeys(System.Collections.Generic.List<LookKey> k) { keys = k != null && k.Count > 0 ? k : null; }
 
         static float Smooth(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
@@ -91,7 +95,7 @@ namespace ClaudeCop.Camera
                 ti *= k; to *= k; da *= k; db *= k;
             }
             total = ti + to + (length - da - db) / v;
-            curve = null; hasNext = false; keys = null;
+            curve = null; hasNext = false; keys = null; lookDampingOverride = 0f; yawRateCapOverride = 0f; lookAheadOverride = 0f;
             if (p.railCurveEnabled)
             {
                 // Giu tong thoi gian bang hinh thang cu; duong cong chi doi phan bo toc do (nhanh ra dau, giam mem o cuoi).
@@ -146,7 +150,7 @@ namespace ClaudeCop.Camera
 
             // Huong nhin: nhin truoc doc ray (qua cuoi spline thi keo dai theo tiep tuyen cuoi)
             Vector3 camPos = PositionAt(dist);
-            float l = dist + p.lookAhead;
+            float l = dist + (lookAheadOverride > 0f ? lookAheadOverride : p.lookAhead);
             Vector3 look = l <= length ? PositionAt(l) : PositionAt(length) + TangentAt(length) * (l - length);
             Vector3 dir = look - camPos;
             if (dir.sqrMagnitude < 1e-6f) dir = TangentAt(dist);
@@ -154,7 +158,7 @@ namespace ClaudeCop.Camera
             float wantPitch = Mathf.Clamp(-Mathf.Asin(Mathf.Clamp(dir.normalized.y, -1f, 1f)) * Mathf.Rad2Deg, -p.maxPitch, p.maxPitch);
 
             // CAM-VC2: 30% cuoi doan Move nghieng dan ve huong shot ke (smoothstep), khop dung khi toi; khong xoay muon roi giat lai.
-            float damping = p.lookDamping, rateCap = p.maxYawRate;
+            float damping = lookDampingOverride > 0f ? lookDampingOverride : p.lookDamping, rateCap = yawRateCapOverride > 0f ? yawRateCapOverride : p.maxYawRate;
             if (keys != null)
             {
                 float prog = length > 0.01f ? dist / length : 1f;

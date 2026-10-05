@@ -28,7 +28,7 @@ namespace ClaudeCop.Game.Editor
             S(1,2, 2.3f,24.2f), E(1,2,-1.0f,27.9f),
             H(1,3, 5.2f,27.9f,"Planter"), E(1,3, 8.5f,27.9f,"Kiosk"), E(1,3, 9.9f,28.7f,"Kiosk"),
             S(1,5,-7.4f,32.4f),
-            E(1,6,-5.8f,31.5f,"Planter"), E(1,6,-2.2f,27.9f),
+            E(1,6,-5.8f,31.5f), E(1,6,-2.2f,27.9f),
             // P2 - day quay giao dich (6 quay tai z=60, tam x -10.5..10.5 buoc 4.2)
             E(2,2,-10.5f,61.3f), S(2,2,-8.9f,57.0f),
             E(2,3,-2.9f,61.3f),
@@ -73,8 +73,9 @@ namespace ClaudeCop.Game.Editor
                 switch (p)
                 {
                     case 1: return new[] { V(0, 1.6f, -6f), V(0, 1.6f, -1.5f), V(0, 1.62f, 2f), CamPos(1, 2) };
-                    case 2: return new[] { V(-12.6f, 1.6f, 30f), V(-12.4f, 1.6f, 35f), V(-12.2f, 1.62f, 40f), CamPos(2, 2) };
-                    default: return new[] { V(0, 1.6f, 60f), V(0, 1.6f, 66f), V(0, 1.62f, 72f), CamPos(3, 2) };
+                    // Noi lien mach tu goc cuoi Phase truoc (CamPos x,6): ray di bo tu do toi khu moi, camera quay theo huong di (khong blend xuyen khong gian).
+                    case 2: return new[] { CamPos(1, 6), V(-3.5f, 1.62f, 17f), V(-8.5f, 1.6f, 25f), V(-12.6f, 1.6f, 33f), V(-12.3f, 1.62f, 40f), CamPos(2, 2) };
+                    default: return new[] { CamPos(2, 6), V(-2.2f, 1.62f, 50f), V(-0.8f, 1.6f, 55.5f), V(0, 1.6f, 60f), V(0, 1.6f, 66f), V(0, 1.62f, 72f), CamPos(3, 2) };
                 }
             }
             switch (p)
@@ -184,6 +185,30 @@ namespace ClaudeCop.Game.Editor
                 foreach (int s in new[] { 1, 4 })
                 {
                     var pts = Rail(p, s);
+                    if (s == 1 && p > 1)
+                    {
+                        // Ray noi Phase (camera nhin theo tiep tuyen): duong cong Hermite MEM tu huong shot truoc toi huong shot ke (khong gap khuc:
+                        // toc do xoay camera bi gioi han maxYawRate nen duong gap khuc lam camera tre va nhin lech huong di), 12 m cuoi thang hang voi huong shot ke.
+                        Vector3 Fwd(float yawDeg) => Quaternion.Euler(0f, yawDeg, 0f) * Vector3.forward;
+                        float py = camYaw[(p - 1) * 10 + 6], ny = camYaw[p * 10 + 2];
+                        Vector3 start = pts[0], end = pts[pts.Length - 1];
+                        float rise = Mathf.Tan(CamPitch(p, 2) * Mathf.Deg2Rad) * 6f; // CamPitch am = ngang len: 6 m cuoi ngang len cho khop pitch shot
+                        var list = new List<Vector3> { start };
+                        if (p == 2)
+                        {
+                            AddHermite(list, start, py, end - Fwd(ny) * 6f, ny, 5);
+                            list[list.Count - 1] = new Vector3(list[list.Count - 1].x, end.y + rise, list[list.Count - 1].z);
+                        }
+                        else
+                        {
+                            AddHermite(list, start, py, pts[3], 0f, 3);           // pts[3] = (0, 60): khe giua quay 3 va 4
+                            list.Add(end - Fwd(ny) * 12f); list[list.Count - 1] = new Vector3(list[list.Count - 1].x, end.y + rise, list[list.Count - 1].z);
+                        }
+                        if (p == 2) list.Add(end - Fwd(ny) * 3f); else list.Add(end - Fwd(ny) * 6f);
+                        list[list.Count - 1] = new Vector3(list[list.Count - 1].x, end.y + rise, list[list.Count - 1].z);
+                        list.Add(end);
+                        pts = list.ToArray();
+                    }
                     Marker(camPts, "CamPoint_P" + p + "_S" + s, pts[0], Quaternion.identity);
                     for (int i = 0; i < pts.Length; i++)
                         Marker(hints, "RailHint_P" + p + "_S" + s + "_" + (i + 1).ToString("00"), pts[i], Quaternion.identity);
@@ -221,6 +246,21 @@ namespace ClaudeCop.Game.Editor
             AssetDatabase.SaveAssets();
             Debug.Log("[Level02Builder] Da luu " + PrefabPath + " (" + Spawns.Length + " diem enemy/con tin).");
             LogFraming(camYaw);
+        }
+
+        /// <summary>Them cac diem noi suy Hermite (tiep tuyen theo yaw dau/cuoi) tu a toi b: n diem giua roi b.</summary>
+        static void AddHermite(List<Vector3> list, Vector3 a, float yawA, Vector3 b, float yawB, int n)
+        {
+            float len = Vector3.Distance(new Vector3(a.x, 0, a.z), new Vector3(b.x, 0, b.z));
+            Vector3 m0 = Quaternion.Euler(0f, yawA, 0f) * Vector3.forward * len, m1 = Quaternion.Euler(0f, yawB, 0f) * Vector3.forward * len; // he so 1.0: duong cong mem nhat (yaw doi <= ~5 do/m)
+            for (int i = 1; i <= n; i++)
+            {
+                float t = i / (float)(n + 1), t2 = t * t, t3 = t2 * t;
+                Vector3 pt = (2f * t3 - 3f * t2 + 1f) * a + (t3 - 2f * t2 + t) * m0 + (-2f * t3 + 3f * t2) * b + (t3 - t2) * m1;
+                pt.y = 1.62f;
+                list.Add(pt);
+            }
+            b.y = 1.6f; list.Add(b);
         }
 
         static void LogFraming(Dictionary<int, float> camYaw)

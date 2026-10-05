@@ -131,10 +131,15 @@ namespace ClaudeCop.Enemy.Tests
         [Test]
         public void Standing_FiresThenKeepsAiming_NeverRetreats()
         {
-            var b = Make(); b.StandsGround = true; int fired = 0, ended = 0; b.Fired = () => fired++; b.AimEnded = () => ended++;
+            var b = Make(); b.StandsGround = true; b.StandWaitMin = b.StandWaitMax = 4f; int fired = 0, ended = 0; b.Fired = () => fired++; b.AimEnded = () => ended++;
             b.ActivateStanding(); b.Tick(2.6f);
             Assert.AreEqual(1, fired); Assert.AreEqual(0, ended);
             Assert.AreEqual(EnemyState.Aiming, b.State); Assert.AreEqual(0f, b.ReticleProgress, 0.001f); Assert.IsTrue(b.IsTargetable);
+            Assert.IsFalse(b.ShowsReticle, "sau khi ban: dung im cho 3-5 s, khong vong target");
+            b.Tick(3.9f);
+            Assert.IsFalse(b.ShowsReticle); Assert.AreEqual(1, fired);
+            b.Tick(0.2f);
+            Assert.IsTrue(b.ShowsReticle);
             b.Tick(1.25f);
             Assert.AreEqual(0.5f, b.ReticleProgress, 0.01f);
             Assert.IsTrue(b.Kill());

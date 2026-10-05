@@ -65,6 +65,7 @@ namespace ClaudeCop.RankScore
             GameEvents.GameStateChanged += OnGameState;
             BlastEvents.Blasted += OnBlast;
             RailEvents.PhaseStarted += OnPhaseStarted;
+            GameCommands.ContinueRequested += ResetLevel; // Continue sang level ke: moi level co rank rieng
         }
 
         public void Unsubscribe()
@@ -77,6 +78,7 @@ namespace ClaudeCop.RankScore
             GameEvents.GameStateChanged -= OnGameState;
             BlastEvents.Blasted -= OnBlast;
             RailEvents.PhaseStarted -= OnPhaseStarted;
+            GameCommands.ContinueRequested -= ResetLevel;
         }
 
         void OnFired(WeaponKind weapon, Vector2 screenPos) { shotOpen = true; }

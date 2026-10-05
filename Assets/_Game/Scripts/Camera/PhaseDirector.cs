@@ -12,6 +12,8 @@ namespace ClaudeCop.Camera
     {
         public string title = "Phase";
         public List<CameraShot> shots = new List<CameraShot>();
+        [Tooltip("Het Phase nay: hien bang ket qua (RailEvents.StageCompleted) va cho Continue roi chay tiep Phase ke - cung scene, khong ngat quang.")]
+        public bool showResultsAfter;
     }
 
     /// <summary>
@@ -163,6 +165,7 @@ namespace ClaudeCop.Camera
             reaction?.Cancel(); kick?.Cancel(); CameraFeelState.KickTarget = Vector2.zero; CameraFeelState.ReactTarget = Vector3.zero; CameraFeelState.ComboDolly = 0f;
             ReleasePause();
             ReleaseTransitionPause();
+            if (CombatPauseSignal.HasReason(StageResultsPauseReason)) CombatPauseSignal.Pop(StageResultsPauseReason);
             SlowZoom.EndKill();
             // F-205: coroutine bi Unity dung ngam khi disable -> don dang ky, cho phep StartLevel lai.
             if (activeEnc != null && activeOnCleared != null) activeEnc.Cleared -= activeOnCleared;
@@ -249,10 +252,20 @@ namespace ClaudeCop.Camera
             TickLiveliness();
         }
 
+        /// <summary>Chuoi level trong mot scene: level k bat dau sau Phase co showResultsAfter thu k. Tra ve chi so Phase dau cua GameCommands.SelectedLevel (ngoai khoang -> 0).</summary>
+        int FirstPhaseOfSelectedLevel()
+        {
+            int want = GameCommands.SelectedLevel, level = 0;
+            if (want <= 0) return 0;
+            for (int i = 0; i < phases.Count - 1; i++)
+                if (phases[i].showResultsAfter && ++level == want) return i + 1;
+            return 0;
+        }
+
         // ---------------- Luong chay ----------------
         IEnumerator Run()
         {
-            for (int pi = 0; pi < phases.Count; pi++)
+            for (int pi = FirstPhaseOfSelectedLevel(); pi < phases.Count; pi++)
             {
                 CurrentPhaseIndex = pi;
                 var phase = phases[pi];
@@ -275,11 +288,27 @@ namespace ClaudeCop.Camera
                 }
                 FlushPhaseBanner();
             if (transitionPending) yield return FinishPhaseTransition(); // Phase khong co Shot chay duoc
+                if (phase.showResultsAfter && pi < phases.Count - 1) yield return WaitStageResults(pi, phase.title);
             }
             CurrentShot = null;
             LevelFinished = true;
             routine = null;
             RailEvents.RaiseLevelCompleted();
+        }
+
+        public const string StageResultsPauseReason = "StageResults";
+
+        /// <summary>Het mot man giua chuoi: dung combat, bao UI hien ket qua, cho Continue roi chay tiep (camera/scene giu nguyen).</summary>
+        IEnumerator WaitStageResults(int phaseIndex, string title)
+        {
+            bool go = false;
+            Action h = () => go = true;
+            GameCommands.ContinueRequested += h;
+            CombatPauseSignal.Push(StageResultsPauseReason);
+            RailEvents.RaiseStageCompleted(phaseIndex, title);
+            while (!go) yield return null;
+            GameCommands.ContinueRequested -= h;
+            CombatPauseSignal.Pop(StageResultsPauseReason);
         }
 
         /// <summary>
@@ -345,7 +374,7 @@ namespace ClaudeCop.Camera
             // Camera ray dat san theo huong tiep tuyen dau ray; viec xoay tu goc Combat sang huong ray do blend Cinemachine
             // (EaseInOut, thoi gian tu co gian theo goc) thuc hien - truoc day ray tu xoay sau khi toi noi voi toc do/gia toc cao.
             bool keyed = shot.lookKeys != null && shot.lookKeys.Count > 0; // huong nhin theo moc: giu huong camera luc vao ray, khong xoay ve tiep tuyen
-            if (!sameCam && !keyed) driver.Prepare(shot.spline, shot.speedOverride, Quaternion.LookRotation(startFwd));
+            if (!sameCam && (!keyed || !hasPrev)) driver.Prepare(shot.spline, shot.speedOverride, Quaternion.LookRotation(startFwd)); // vao level/chuoi lan dau: bat dau theo tiep tuyen ray
             if (snap) smoother?.RequestSnap(railCamera);
             float bt = ScaleBlend(shot.ResolveBlend(profile), railCamera, cut);
             Activate(railCamera, cut, bt);
@@ -361,6 +390,7 @@ namespace ClaudeCop.Camera
                 driver.SetNextLook(Mathf.Atan2(nf.x, nf.z) * Mathf.Rad2Deg, -Mathf.Asin(Mathf.Clamp(nf.y, -1f, 1f)) * Mathf.Rad2Deg);
             }
             driver.SetLookKeys(keyed ? shot.lookKeys : null);
+            driver.SetLookTuning(shot.lookDampingOverride, shot.maxYawRateOverride, shot.lookAheadOverride);
             driver.StartMoving();
             FlushPhaseBanner();
             while (!driver.Finished) yield return null;

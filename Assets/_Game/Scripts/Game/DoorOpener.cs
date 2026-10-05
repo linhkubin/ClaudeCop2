@@ -11,7 +11,7 @@ namespace ClaudeCop.Game
     public sealed class DoorOpener : MonoBehaviour
     {
         [System.Serializable]
-        public struct Leaf { public Transform pivot; public float yawDelta; }
+        public struct Leaf { public Transform pivot; public float yawDelta; [Tooltip("Truot: dich pivot (local) them vector nay khi mo (cua truot). Co the ket hop yawDelta.")] public Vector3 slide; }
 
         [SerializeField] EncounterBase trigger;
         [SerializeField] Leaf[] leaves;
@@ -19,6 +19,7 @@ namespace ClaudeCop.Game
         [SerializeField] float delay = 0f;
 
         Quaternion[] start;
+        Vector3[] startPos;
         bool opened;
 
         public bool Opened => opened;
@@ -36,10 +37,20 @@ namespace ClaudeCop.Game
             StartCoroutine(Run());
         }
 
+        /// <summary>Mo ngay lap tuc (bat dau o level sau cua chuoi: cua level truoc da mo san).</summary>
+        public void OpenImmediate()
+        {
+            if (opened) return;
+            opened = true;
+            start = new Quaternion[leaves.Length]; startPos = new Vector3[leaves.Length];
+            for (int i = 0; i < leaves.Length; i++) { start[i] = leaves[i].pivot != null ? leaves[i].pivot.localRotation : Quaternion.identity; startPos[i] = leaves[i].pivot != null ? leaves[i].pivot.localPosition : Vector3.zero; }
+            Apply(1f);
+        }
+
         IEnumerator Run()
         {
-            start = new Quaternion[leaves.Length];
-            for (int i = 0; i < leaves.Length; i++) start[i] = leaves[i].pivot != null ? leaves[i].pivot.localRotation : Quaternion.identity;
+            start = new Quaternion[leaves.Length]; startPos = new Vector3[leaves.Length];
+            for (int i = 0; i < leaves.Length; i++) { start[i] = leaves[i].pivot != null ? leaves[i].pivot.localRotation : Quaternion.identity; startPos[i] = leaves[i].pivot != null ? leaves[i].pivot.localPosition : Vector3.zero; }
             if (delay > 0f) yield return new WaitForSeconds(delay);
             float t = 0f;
             while (t < duration)
@@ -55,7 +66,10 @@ namespace ClaudeCop.Game
         {
             for (int i = 0; i < leaves.Length; i++)
                 if (leaves[i].pivot != null)
+                {
                     leaves[i].pivot.localRotation = start[i] * Quaternion.AngleAxis(leaves[i].yawDelta * k, Vector3.up);
+                    if (leaves[i].slide != Vector3.zero) leaves[i].pivot.localPosition = startPos[i] + leaves[i].slide * k;
+                }
         }
     }
 }

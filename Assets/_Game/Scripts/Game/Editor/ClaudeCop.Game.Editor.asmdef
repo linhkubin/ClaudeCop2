@@ -10,6 +10,7 @@
         "ClaudeCop.Game",
         "ClaudeCop.Props",
         "ClaudeCop.RankScore",
+        "ClaudeCop.UI",
         "Unity.Cinemachine",
         "Unity.Splines",
         "Unity.Mathematics"

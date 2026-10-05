@@ -35,7 +35,11 @@ namespace ClaudeCop.Enemy
         [Tooltip("Tay nem (tuy chon). Trong thi dung chan + EnemyConfig.grenadeThrowHeight.")]
         [SerializeField] Transform throwOrigin;
 
-        const float RunInTime = 2.2f, RunInDistance = 10f;
+        // Moi enemy chay vao tu ngoai man hinh (khong moc tu duoi dat): toc do chay, khoang ngoai man hinh them, gioi han thoi gian.
+        const float RunSpeed = 4.5f, OffscreenMargin = 1.2f, MinRunTime = 0.5f, MaxRunTime = 2.2f, FallbackRunDistance = 10f;
+        float entryRunTime = -1f, entryThreshold = -1f;
+        bool runner;                                   // chay vao tu ngoai man hinh (khong co vat nap che >= 1/2 nguoi): ban xong dung im 3-5 s roi ban tiep
+        const float CoverFractionToRise = 0.5f, BodyHeight = 1.8f;
         static int nextId = 1;
         EnemyBrain brain;
         Vector3 hidePos, peekPos;
@@ -68,7 +72,6 @@ namespace ClaudeCop.Enemy
             sceneStanding = on;
             if (IsActivated || dead) return;
             if (on) { peekPos = hidePos; peekRot = hideRot; }
-            SetRenderers(!on);
             BuildBrain();
         }
 
@@ -107,7 +110,7 @@ namespace ClaudeCop.Enemy
             CachePositions();
             BuildBrain();
             SetCollider(false);
-            if (sceneStanding) SetRenderers(false);
+            SetRenderers(false); // an hoan toan cho toi khi kich hoat (khong hien o vi tri spawn roi moi chay vao)
             RefreshMarkers();
         }
 
@@ -175,12 +178,12 @@ namespace ClaudeCop.Enemy
         {
             var c = Cfg;
             brain = new EnemyBrain(
-                sceneStanding ? Mathf.Max(c.peekDuration, RunInTime) : c.peekDuration,
+                entryRunTime > 0f ? entryRunTime : (sceneStanding ? Mathf.Max(c.peekDuration, MaxRunTime) : c.peekDuration),
                 reticleTimeOverride > 0f ? reticleTimeOverride : c.reticleTime,
-                c.retreatDuration,
+                entryRunTime > 0f ? entryRunTime : c.retreatDuration,
                 sceneStanding ? 0f : (hideTimeOverride >= 0f ? hideTimeOverride : c.hideTime),
-                c.targetableThreshold);
-            brain.StandsGround = sceneStanding;
+                entryThreshold >= 0f ? entryThreshold : c.targetableThreshold);
+            brain.StandsGround = sceneStanding || runner;
             brain.AimStarted = OnAimStarted;
             brain.AimEnded = OnAimEnded;
             brain.Fired = OnFired;
@@ -192,24 +195,67 @@ namespace ClaudeCop.Enemy
         {
             EnsureInit();
             if (dead) return;
-            if (sceneStanding && !brain.IsActivated) StartRunIn();
+            if (!brain.IsActivated) StartRunIn();
             brain.Activate();
         }
 
-        /// <summary>Enemy dung san: xuat phat ngoai man hinh (lech ngang theo phia cua camera) roi chay vao vi tri dung khi wave bat dau (player da dung).</summary>
+        /// <summary>
+        /// Xuat phat NGOAI man hinh (lech ngang theo phia cua camera, qua mep man hinh o do sau cua enemy) roi chay vao vi tri (peekPos) khi wave bat dau.
+        /// Thoi gian chay = quang duong / RunSpeed; enemy ban duoc tu khi vao man hinh. Khong camera (test) -> enemy thuong giu cach cu (an duoi dat), dung san lech 10 m.
+        /// </summary>
         void StartRunIn()
         {
-            var cam = UnityEngine.Camera.main;
+            var cam = Application.isPlaying ? UnityEngine.Camera.main : null; // edit-mode test: khong chay vao theo camera dang mo
+            // Enemy bi vat nap che >= 1/2 chieu cao nguoi thi chui tu duoi len sau vat nap (hide/peek theo marker); con lai chay vao tu ngoai man hinh.
+            if (cam != null && !sceneStanding && CoveredFraction(cam) >= CoverFractionToRise) cam = null;
+            else if (cam != null) runner = true;
             if (cam != null)
             {
                 Vector3 right = cam.transform.right; right.y = 0f;
                 right = right.sqrMagnitude < 1e-4f ? Vector3.right : right.normalized;
-                float side = Vector3.Dot(peekPos - cam.transform.position, right) >= 0f ? 1f : -1f;
-                hidePos = peekPos + right * side * RunInDistance;
+                Vector3 toE = peekPos - cam.transform.position;
+                float side = Vector3.Dot(toE, right) >= 0f ? 1f : -1f;
+                float depth = Mathf.Max(1f, Vector3.Dot(toE, cam.transform.forward));
+                Vector3 edge = cam.ViewportToWorldPoint(new Vector3(side > 0f ? 1f : 0f, 0.5f, depth));
+                float toEdge = Vector3.Dot(edge - peekPos, right * side);          // > 0: enemy con trong man hinh
+                float dist = Mathf.Clamp(Mathf.Max(0f, toEdge) + OffscreenMargin, 2f, 14f);
+                hidePos = peekPos + right * side * dist;
                 hideRot = Quaternion.LookRotation(-right * side);
+                entryRunTime = Mathf.Clamp(dist / RunSpeed, MinRunTime, MaxRunTime);
+                entryThreshold = Mathf.Clamp(OffscreenMargin / dist + 0.1f, 0.15f, 0.9f); // ban duoc khi vao man hinh
+                BuildBrain();
+            }
+            else if (sceneStanding)
+            {
+                hidePos = peekPos + Vector3.right * FallbackRunDistance;
+                hideRot = peekRot;
             }
             transform.SetPositionAndRotation(hidePos, hideRot);
             SetRenderers(true);
+        }
+
+        /// <summary>Ty le chieu cao nguoi (5 diem tu chan toi dau) tai peekPos bi vat can (khong phai enemy/con tin/kinh bat vo) che khuat tu camera.</summary>
+        float CoveredFraction(UnityEngine.Camera cam)
+        {
+            const int N = 5;
+            int hidden = 0;
+            Vector3 from = cam.transform.position;
+            for (int i = 0; i < N; i++)
+            {
+                Vector3 p = peekPos + Vector3.up * (BodyHeight * (0.1f + 0.8f * i / (N - 1)));
+                Vector3 d = p - from; float dist = d.magnitude;
+                if (dist < 0.2f) continue;
+                var hits = Physics.RaycastAll(from, d / dist, dist - 0.05f, ~0, QueryTriggerInteraction.Ignore);
+                bool blocked = false;
+                for (int k = 0; k < hits.Length && !blocked; k++)
+                {
+                    var col = hits[k].collider;
+                    if (col.GetComponentInParent<ITapTarget>() != null || col.GetComponentInParent<IShootable>() != null) continue; // enemy/con tin/kinh: khong che
+                    blocked = true;
+                }
+                if (blocked) hidden++;
+            }
+            return hidden / (float)N;
         }
 
         void SetRenderers(bool on)

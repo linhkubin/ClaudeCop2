@@ -19,6 +19,8 @@ namespace ClaudeCop.Core
         public static event Action<EncounterBase> EncounterStarted;
         public static event Action<EncounterBase> EncounterCleared;
         public static event Action LevelCompleted;
+        /// <summary>Het mot man giua chuoi level (RailPhase.showResultsAfter): (phaseIndex, title). Camera dung cho den GameCommands.ContinueRequested.</summary>
+        public static event Action<int, string> StageCompleted;
 
         public static void RaisePhaseStarted(int index, string title) => PhaseStarted?.Invoke(index, title);
         public static void RaisePhaseTransition(string title, float fadeOut, float hold, float fadeIn) => PhaseTransition?.Invoke(title, fadeOut, hold, fadeIn);
@@ -27,12 +29,13 @@ namespace ClaudeCop.Core
         public static void RaiseEncounterStarted(EncounterBase e) => EncounterStarted?.Invoke(e);
         public static void RaiseEncounterCleared(EncounterBase e) => EncounterCleared?.Invoke(e);
         public static void RaiseLevelCompleted() => LevelCompleted?.Invoke();
+        public static void RaiseStageCompleted(int phaseIndex, string title) => StageCompleted?.Invoke(phaseIndex, title);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
             PhaseStarted = null; PhaseTransition = null; PhaseBanner = null; MoveSegmentStarted = null;
-            EncounterStarted = null; EncounterCleared = null; LevelCompleted = null;
+            EncounterStarted = null; EncounterCleared = null; LevelCompleted = null; StageCompleted = null;
         }
     }
 }

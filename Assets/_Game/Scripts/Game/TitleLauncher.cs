@@ -22,10 +22,14 @@ namespace ClaudeCop.Game
             if (GameEvents.Current.State != GameState.Title) GameEvents.RaiseGameStateChanged(GameState.Title);
         }
 
-        void OnEnable() => GameCommands.StartGameRequested += OnStart;
-        void OnDisable() => GameCommands.StartGameRequested -= OnStart;
+        void OnEnable() { GameCommands.StartGameRequested += OnStart; GameCommands.LevelSelectRequested += OnSelectLevel; }
+        void OnDisable() { GameCommands.StartGameRequested -= OnStart; GameCommands.LevelSelectRequested -= OnSelectLevel; }
 
-        void OnStart()
+        void OnSelectLevel(int level) { Load(); } // SelectedLevel da duoc GameCommands.RequestSelectLevel dat
+
+        void OnStart() { GameCommands.SelectedLevel = 0; Load(); }
+
+        void Load()
         {
             if (loading) return;
             loading = true;

@@ -187,9 +187,11 @@ MonoBehaviour:
   trigger: {fileID: 428389222}
   leaves:
   - pivot: {fileID: 467437558}
-    yawDelta: -90
+    yawDelta: 0
+    slide: {x: 0, y: 0, z: 1.5}
   - pivot: {fileID: 467437542}
-    yawDelta: 90
+    yawDelta: 0
+    slide: {x: 0, y: 0, z: -1.5}
   duration: 1.2
   delay: 0
 --- !u!4 &81388600
@@ -499,6 +501,7 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
@@ -896,6 +899,7 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
@@ -945,6 +949,7 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
@@ -1462,6 +1467,7 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
@@ -1865,6 +1871,7 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
@@ -2011,6 +2018,7 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
@@ -2213,6 +2221,7 @@ MonoBehaviour:
     - {fileID: 1876769544}
     - {fileID: 1784936732}
     - {fileID: 2102438766}
+    showResultsAfter: 0
   - title: STAGE 1-2
     shots:
     - {fileID: 2056187589}
@@ -2220,6 +2229,7 @@ MonoBehaviour:
     - {fileID: 1554608549}
     - {fileID: 538565499}
     - {fileID: 238085437}
+    showResultsAfter: 0
   - title: STAGE 1-3
     shots:
     - {fileID: 1663665704}
@@ -2227,6 +2237,7 @@ MonoBehaviour:
     - {fileID: 1446584970}
     - {fileID: 829133797}
     - {fileID: 757563675}
+    showResultsAfter: 0
   autoStart: 0
   startOnGamePlaying: 1
 --- !u!4 &1323871428
@@ -2835,6 +2846,7 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
@@ -3123,6 +3135,7 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
@@ -3173,7 +3186,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ClaudeCop.Enemy::ClaudeCop.Enemy.EncounterWave
   config: {fileID: 11400000, guid: 5dd16820d35a74c498c722e55a5b420a, type: 2}
-  preset: {fileID: 11400000, guid: 1041e0e2c2661e04a9927ec3dc69ba52, type: 2}
+  preset: {fileID: 11400000, guid: 61409a5b975c17b419014444e2b0f847, type: 2}
   sceneEnemies: []
   spawnPoints:
   - {fileID: 467437544}
@@ -3188,10 +3201,11 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 0}
+  hostagesStandStill: 1
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
-  maxConcurrent: 1
+  maxConcurrent: 2
   description: Wave_P2_W5 L1 (2 enemy, max 1)
 --- !u!1 &1773871934
 GameObject:

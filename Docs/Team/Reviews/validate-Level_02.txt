@@ -3,17 +3,17 @@
 (b) PASS Vua khung 9:16 + 9:19.5 :: |h| max 5.4 (<=5.5), rong max 10.2 (<=21), FOV can 36.0/43.2 (<=45)
 (c) PASS Tam nhin (raycast) :: 0/26 tia bi chan
 (d) PASS Noi shot/rail :: 15 cap, lech vi tri max 0.000 m (rail), goc max 18.0
-(e) PASS Thoi gian Move <= 6 s :: 6 rail, max 5.4 s
+(e) PASS Thoi gian Move <= 6 s :: 6 rail, max 5.7 s
            Shot_P1_S1_Move: 11.0 m, 4.1 s
            Shot_P1_S4_Move: 6.7 m, 2.9 s
-           Shot_P2_S1_Move: 14.0 m, 5.0 s
+           Shot_P2_S1_Move: 35.7 m, 5.7 s
            Shot_P2_S4_Move: 8.6 m, 3.5 s
-           Shot_P3_S1_Move: 18.0 m, 5.4 s
+           Shot_P3_S1_Move: 34.6 m, 5.6 s
            Shot_P3_S4_Move: 4.0 m, 2.2 s
-(f) PASS Tuyen (yaw, dao chieu, cat cheo) :: yaw rong max 10 (<=150), dao chieu max 1 (<=4), cat cheo 0
+(f) PASS Tuyen (yaw, dao chieu, cat cheo) :: yaw rong max 27 (<=150), dao chieu max 2 (<=4), cat cheo 0
            Phase 1: yaw rong -10, tong 70, dao chieu 1
-           Phase 2: yaw rong 6, tong 204, dao chieu 1
-           Phase 3: yaw rong 7, tong 49, dao chieu 0
+           Phase 2: yaw rong 27, tong 266, dao chieu 2
+           Phase 3: yaw rong -5, tong 91, dao chieu 0
 (g) PASS So luong enemy + marker cam (Level_02) :: 23 enemy (max/wave 3 <=4, tong <=28), marker cam: 0
            Wave_P1_W2: 2 enemy, maxConcurrent 2
            Wave_P1_W3: 2 enemy, maxConcurrent 2
