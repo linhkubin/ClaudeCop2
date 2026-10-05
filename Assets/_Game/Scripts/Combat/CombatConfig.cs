@@ -49,14 +49,6 @@ namespace ClaudeCop.Combat
         [Tooltip("Het dan vu khi dac biet (Shotgun/MG) thi ve vu khi khoi dau (Pistol) day bang.")]
         [SerializeField] bool revertToStartingWeaponWhenEmpty = true;
 
-        [Header("Vuot xuong de thay dan")]
-        [Tooltip("Vuot xuong (cam ung/chuot) de reload, ngoai nut RELOAD.")]
-        [SerializeField] bool swipeDownReload = true;
-        [Tooltip("Quang vuot toi thieu, ti le canh ngan man hinh.")]
-        [SerializeField, Range(0.03f, 0.5f)] float swipeMinFraction = 0.12f;
-        public bool SwipeDownReload => swipeDownReload;
-        public float SwipeMinFraction => swipeMinFraction;
-
         public float EmptyClickCooldown => emptyClickCooldown;
         public int ComboMaxMultiplier => comboMaxMultiplier;
         public int ComboHitsPerStep => comboHitsPerStep;

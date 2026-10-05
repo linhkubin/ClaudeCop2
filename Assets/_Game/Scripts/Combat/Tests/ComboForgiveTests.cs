@@ -5,18 +5,8 @@ using ClaudeCop.Combat;
 
 namespace ClaudeCop.Combat.Tests
 {
-    public class SwipeAndForgiveTests
+    public class ComboForgiveTests
     {
-        [Test]
-        public void SwipeDown_NeedsDistanceAndVerticalDirection()
-        {
-            float side = 1080f, frac = 0.12f; // >= 129.6 px
-            Assert.IsTrue(TapShooter.IsSwipeDown(new Vector2(500, 1200), new Vector2(510, 1000), side, frac));
-            Assert.IsFalse(TapShooter.IsSwipeDown(new Vector2(500, 1200), new Vector2(500, 1100), side, frac)); // qua ngan
-            Assert.IsFalse(TapShooter.IsSwipeDown(new Vector2(500, 1000), new Vector2(500, 1300), side, frac)); // vuot len
-            Assert.IsFalse(TapShooter.IsSwipeDown(new Vector2(200, 1200), new Vector2(500, 1000), side, frac)); // cheo ngang
-        }
-
         [Test]
         public void Gloves_ForgiveMiss_ButNotHostage()
         {

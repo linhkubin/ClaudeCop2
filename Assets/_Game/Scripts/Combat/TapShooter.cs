@@ -25,6 +25,8 @@ namespace ClaudeCop.Combat
         [SerializeField] string actionMapName = "Gameplay";
         [SerializeField] string tapActionName = "Tap";
         [SerializeField] string tapPositionActionName = "TapPosition";
+        [Header("Vuot xuong de thay dan (chi khi het dan)")]
+        [Tooltip("Quang vuot xuong toi thieu theo ty le chieu cao man hinh")] [SerializeField, Range(0.05f, 0.5f)] float swipeReloadMinScreenFraction = 0.12f;
 
         InputAction tapAction;
         InputAction tapPositionAction;
@@ -35,6 +37,8 @@ namespace ClaudeCop.Combat
         float nextFireTime;
         Camera cam;
         int holdTouchId = -1;
+        int swipeDoneTouchId = -1;          // ngon tay da kich hoat vuot (khong kich hoat lai)
+        Vector2 mouseDownPos; bool prevMouseDown, mouseSwipeDone;
 
         readonly List<TargetHit> hits = new List<TargetHit>(8);
         readonly List<ShotResult> pending = new List<ShotResult>(8);
@@ -48,9 +52,6 @@ namespace ClaudeCop.Combat
         Func<ITapTarget, float> depthFunc;
         Vector3 depthCamPos;
         float justiceRadiusScale = 1f;
-        int swipeTouchId = -1;          // ngon da kich hoat reload bang vuot (khong lap lai trong cung lan cham)
-        bool mouseSwipeArmed;
-        Vector2 mouseDownPos;
 
         void OnTargetUnregistered(ITapTarget t) { if (t != null) bodyColliders.Remove(t.Id); }
 
@@ -73,13 +74,6 @@ namespace ClaudeCop.Combat
 
         /// <summary>He so ban kinh diem Justice (trang bi: kinh). 1 = chuan.</summary>
         public void SetJusticeRadiusScale(float scale) { justiceRadiusScale = Mathf.Max(0.1f, scale); }
-
-        /// <summary>Vuot xuong du xa (theo canh ngan man hinh) va doc xuong ro rang.</summary>
-        public static bool IsSwipeDown(Vector2 start, Vector2 now, float shortSide, float minFraction)
-        {
-            Vector2 d = now - start;
-            return -d.y >= shortSide * minFraction && -d.y > Mathf.Abs(d.x) * 1.5f;
-        }
 
         void Awake() { projectFunc = Project; bodyRectFunc = BodyRect; depthFunc = Depth; }
 
@@ -122,8 +116,6 @@ namespace ClaudeCop.Combat
             if (reloading && Time.time >= reloadEndTime) FinishReload();
             if (weapon == null) return;
 
-            DetectSwipeReload();
-
             // Cam ung: doc tung ngon (F-108). Ngon thu hai cham khi ngon dau con giu van ban duoc.
             bool anyTouch = false;
             var ts = Touchscreen.current;
@@ -136,6 +128,12 @@ namespace ClaudeCop.Combat
                     var t = touches[i];
                     if (!t.isInProgress) continue;
                     anyTouch = true;
+                    int touchId = t.touchId.ReadValue();
+                    if (touchId != swipeDoneTouchId && SwipeReloadAllowed && IsSwipeDown(t.startPosition.ReadValue(), t.position.ReadValue()))
+                    {
+                        swipeDoneTouchId = touchId;
+                        StartReload();
+                    }
                     if (!weapon.HoldToFire)
                     {
                         if (t.press.wasPressedThisFrame) TryFire(t.position.ReadValue());
@@ -152,10 +150,17 @@ namespace ClaudeCop.Combat
                     TryFire(touches[holdIdx].position.ReadValue());
                 }
             }
-            if (!anyTouch) holdTouchId = -1;
+            if (!anyTouch) { holdTouchId = -1; swipeDoneTouchId = -1; }
 
             // Chuot/but: giu de ban (Sung may).
             bool mousePressed = !anyTouch && tapAction != null && tapAction.IsPressed();
+            if (mousePressed && tapPositionAction != null)
+            {
+                Vector2 mp = tapPositionAction.ReadValue<Vector2>();
+                if (!prevMouseDown) { mouseDownPos = mp; mouseSwipeDone = false; }
+                if (!mouseSwipeDone && SwipeReloadAllowed && IsSwipeDown(mouseDownPos, mp)) { mouseSwipeDone = true; StartReload(); }
+            }
+            prevMouseDown = mousePressed;
             if (mousePressed && weapon.HoldToFire && !holdLocked)
                 TryFire(tapPositionAction.ReadValue<Vector2>());
 
@@ -163,40 +168,13 @@ namespace ClaudeCop.Combat
             if (holdLocked && !anyTouch && !mousePressed) holdLocked = false;
         }
 
-        /// <summary>Vuot xuong de thay dan (giong chia sung ra ngoai man hinh o may arcade). Phat dau cua cu cham van ban nhu tap thuong.</summary>
-        void DetectSwipeReload()
+        /// <summary>Vuot xuong chi thay dan khi het dan (luc do tap chi la nhat khong, khong ton phat nao).</summary>
+        bool SwipeReloadAllowed => weapon != null && !reloading && ammo <= 0 && !CombatPauseSignal.IsPaused;
+
+        bool IsSwipeDown(Vector2 start, Vector2 now)
         {
-            if (config == null || !config.SwipeDownReload || weapon == null || reloading) return;
-            float shortSide = Mathf.Min(Screen.width, Screen.height);
-            float frac = config.SwipeMinFraction;
-            var ts = Touchscreen.current;
-            if (ts != null)
-            {
-                bool swipeTouchAlive = false;
-                var touches = ts.touches;
-                for (int i = 0; i < touches.Count; i++)
-                {
-                    var t = touches[i];
-                    if (!t.isInProgress) continue;
-                    int tid = t.touchId.ReadValue();
-                    if (tid == swipeTouchId) { swipeTouchAlive = true; continue; }
-                    if (IsSwipeDown(t.startPosition.ReadValue(), t.position.ReadValue(), shortSide, frac))
-                    {
-                        swipeTouchId = tid; swipeTouchAlive = true;
-                        StartReload();
-                        return;
-                    }
-                }
-                if (!swipeTouchAlive) swipeTouchId = -1;
-            }
-            if (tapAction == null || tapPositionAction == null) return;
-            if (tapAction.WasPressedThisFrame()) { mouseSwipeArmed = true; mouseDownPos = tapPositionAction.ReadValue<Vector2>(); }
-            if (!tapAction.IsPressed()) { mouseSwipeArmed = false; return; }
-            if (mouseSwipeArmed && IsSwipeDown(mouseDownPos, tapPositionAction.ReadValue<Vector2>(), shortSide, frac))
-            {
-                mouseSwipeArmed = false;
-                StartReload();
-            }
+            Vector2 d = now - start;
+            return d.y <= -Screen.height * swipeReloadMinScreenFraction && Mathf.Abs(d.x) <= -d.y * 0.8f; // chu yeu doc
         }
 
         void OnTapPerformed(InputAction.CallbackContext ctx)

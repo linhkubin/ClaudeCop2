@@ -34,6 +34,9 @@ namespace ClaudeCop.Viewmodel
         [SerializeField] TapShooter tapShooter;
         [Tooltip("Layer gan cho moi doi tuong viewmodel khi khoi tao (Viewmodel).")]
         [SerializeField] string layerName = "Viewmodel";
+        [Header("Vo dan")]
+        [SerializeField] bool ejectShells = true;
+        [SerializeField, Min(0.1f)] float shellLife = 1.5f;
 
         sealed class Slot
         {
@@ -228,6 +231,8 @@ namespace ClaudeCop.Viewmodel
             bool playClip = w == null || !w.HoldToFire || w.FireInterval >= e.fireClipMinInterval;
             if (playClip && active.animator != null) { active.animator.speed = 1f; active.animator.Play(FireHash, 0, 0f); }
 
+            EjectCasing(active);
+
             if (active.flash != null)
             {
                 float sc = Random.Range(config.flashScaleRange.x, config.flashScaleRange.y);
@@ -235,6 +240,75 @@ namespace ClaudeCop.Viewmodel
                 active.flash.transform.localRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
                 active.flash.SetActive(true);
                 flashTimer = config.flashDuration;
+            }
+        }
+
+        // ---------- Vo dan bay ra khoi sung ----------
+        sealed class Casing { public Transform t; public Vector3 vel; public Vector3 spin; public float life; }
+        readonly List<Casing> casings = new List<Casing>(16);
+        static Material brassMat, shellMat;
+
+        static Material MakeMat(Color c, float metallic, float smooth)
+        {
+            var sh = Shader.Find("Universal Render Pipeline/Lit"); if (sh == null) sh = Shader.Find("Standard"); if (sh == null) sh = Shader.Find("Sprites/Default");
+            var m = new Material(sh) { color = c };
+            if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
+            if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", metallic);
+            if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", smooth);
+            return m;
+        }
+
+        /// <summary>Vo dan (hinh tru nho, thau/do cho shotgun) bay ra tu cua nap dan cua sung theo cung len-sang-phai, roi roi xuong theo trong luc va xoay. Mo phong trong khong gian cua viewmodel (di chuyen theo camera).</summary>
+        void EjectCasing(Slot s)
+        {
+            if (!ejectShells || s == null || s.muzzle == null) return;
+            WeaponKind kind = ActiveKind ?? WeaponKind.Pistol;
+            bool shotgun = kind == WeaponKind.Shotgun;
+            float len = shotgun ? 0.085f : (kind == WeaponKind.MachineGun ? 0.050f : 0.058f), rad = shotgun ? 0.019f : (kind == WeaponKind.MachineGun ? 0.010f : 0.011f);
+            if (brassMat == null) brassMat = MakeMat(new Color(0.9f, 0.68f, 0.22f), 0.9f, 0.65f);
+            if (shellMat == null) shellMat = MakeMat(new Color(0.8f, 0.12f, 0.08f), 0.1f, 0.4f);
+
+            Casing c = null;
+            for (int i = 0; i < casings.Count; i++) if (casings[i].life <= 0f) { c = casings[i]; break; }
+            if (c == null)
+            {
+                if (casings.Count >= 16) { c = casings[0]; casings.RemoveAt(0); casings.Add(c); }
+                else
+                {
+                    var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    var col = go.GetComponent<Collider>(); if (col != null) Destroy(col);
+                    go.name = "Casing";
+                    go.transform.SetParent(transform, false);
+                    int layer = LayerMask.NameToLayer(layerName); if (layer >= 0) go.layer = layer;
+                    c = new Casing { t = go.transform };
+                    casings.Add(c);
+                }
+            }
+            var mz = s.muzzle;
+            // Cua nap dan: lui ve sau tu nong ~ nua khoang nong->goc sung, lech len/phai
+            Vector3 portWorld = mz.position - mz.forward * (Mathf.Abs(mz.localPosition.z) * 0.5f) + mz.up * 0.028f + mz.right * 0.015f;
+            Vector3 velWorld = mz.right * Random.Range(0.65f, 1.05f) + mz.up * Random.Range(0.5f, 0.85f) - mz.forward * Random.Range(0.1f, 0.3f);
+            c.t.gameObject.SetActive(true);
+            c.t.GetComponent<Renderer>().sharedMaterial = shotgun ? shellMat : brassMat;
+            c.t.localScale = new Vector3(rad * 2f, len * 0.5f, rad * 2f);
+            c.t.localPosition = transform.InverseTransformPoint(portWorld);
+            c.t.localRotation = Quaternion.LookRotation(transform.InverseTransformDirection(mz.right)) * Quaternion.Euler(90f, 0f, 0f);
+            c.vel = transform.InverseTransformDirection(velWorld);
+            c.spin = new Vector3(Random.Range(-450f, 450f), Random.Range(-450f, 450f), Random.Range(-450f, 450f));
+            c.life = shellLife;
+        }
+
+        void TickCasings(float dt)
+        {
+            for (int i = 0; i < casings.Count; i++)
+            {
+                var c = casings[i];
+                if (c.life <= 0f) continue;
+                c.life -= dt;
+                if (c.life <= 0f) { c.t.gameObject.SetActive(false); continue; }
+                c.vel += Vector3.down * 3.2f * dt;
+                c.t.localPosition += c.vel * dt;
+                c.t.Rotate(c.spin * dt, Space.Self);
             }
         }
 
@@ -269,7 +343,7 @@ namespace ClaudeCop.Viewmodel
 
         // ---------- Moi frame ----------
 
-        void LateUpdate() { Advance(Time.unscaledDeltaTime); }
+        void LateUpdate() { Advance(Time.unscaledDeltaTime); TickCasings(Time.unscaledDeltaTime); }
 
         /// <summary>Tien chuyen dong thu cap + dat lai transform (LateUpdate goi moi frame; test/sandbox co the goi truc tiep).</summary>
         public void Advance(float dt)
