@@ -58,7 +58,7 @@ MonoBehaviour:
     maxInstances: 24
   maxActiveParticles: 300
   reduceMotionScale: 0.4
-  muzzleEnabled: 1
+  muzzleEnabled: 0
   rayMaxDistance: 80
   rayMask:
     serializedVersion: 2

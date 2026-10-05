@@ -114,6 +114,60 @@ namespace ClaudeCop.Camera
         [Tooltip("Blend giua 2 shot: gia toc xoay toi da (do/giay^2) -> thoi gian blend toi thieu = sqrt(6*goc/gia toc)")] public float blendMaxAngAccel = 150f;
         [Tooltip("Blend giua 2 shot: gia toc vi tri toi da (m/s^2)")] public float blendMaxAccel = 14f;
 
+        [Header("Sinh dong (CAM-LIVELY)")]
+        [Tooltip("Rung cam tay: he so roll (0 = khong lac nghieng). Handheld chi chay khi Combat")] [Range(0f, 1f)] public float handheldRollScale = 0f;
+        [Tooltip("'Tho' FOV khi Combat: bien do +- (do). 0 = tat")] [Range(0f, 3f)] public float breathFov = 1.2f;
+        [Tooltip("Chu ky tho FOV (s)")] [Min(0.5f)] public float breathPeriod = 4.5f;
+        [Tooltip("Dolly-in them theo combo: toi da giam FOV (do). 0 = tat")] [Range(0f, 5f)] public float comboDollyFov = 2f;
+        [Tooltip("Moi muc combo giam them FOV (do)")] [Min(0f)] public float comboDollyPerCombo = 0.25f;
+        [Tooltip("Thoi gian lam muot dolly-in theo combo / ease ra khi het dot (s)")] [Min(0.05f)] public float comboDollySmooth = 0.9f;
+        [Tooltip("GIAT MINH QUAY SANG: bat/tat")] public bool reactEnabled = true;
+        [Tooltip("Enemy moi lo ra lech truc camera it nhat goc nay (do) moi phan ung")] [Min(0f)] public float reactMinOffset = 2.5f;
+        [Tooltip("Ti le goc lech duoc quay ve (0..1)")] [Range(0f, 1f)] public float reactGain = 0.85f;
+        [Tooltip("Bien do yaw nho nhat (do) khi da phan ung")] [Min(0f)] public float reactMinAngle = 4.5f;
+        [Tooltip("Bien do yaw toi da (do)")] public float reactMaxYaw = 8f;
+        [Tooltip("Bien do pitch toi da (do)")] public float reactMaxPitch = 4f;
+        [Tooltip("Thoi gian vao (giat) (s)")] [Min(0.02f)] public float reactIn = 0.15f;
+        [Tooltip("Giu ngan (s)")] [Min(0f)] public float reactHold = 0.12f;
+        [Tooltip("Thoi gian ease ve (s)")] [Min(0.05f)] public float reactOut = 0.8f;
+        [Tooltip("Punch FOV kem theo (do giam)")] [Range(0f, 4f)] public float reactFov = 1.5f;
+        [Tooltip("Cooldown giua 2 phan ung (s, tinh tu luc bat dau)")] [Min(0f)] public float reactCooldown = 1.6f;
+        [Tooltip("Gop cac enemy lo ra trong cua so nay (s) thanh MOT phan ung huong ve trong tam")] [Min(0f)] public float reactGatherWindow = 0.12f;
+        [Tooltip("Gioi han rieng cua kenh reaction trong CameraPoseSmoother: van toc xoay (do/s)")] public float reactMaxAngVel = 170f;
+        [Tooltip("... gia toc xoay (do/s^2)")] public float reactMaxAngAcc = 2200f;
+        [Tooltip("... toc do doi FOV (do/s)")] public float reactMaxFovRate = 40f;
+        [Tooltip("... gia toc FOV (do/s^2)")] public float reactMaxFovAcc = 500f;
+        [Tooltip("Giam chuyen dong: he so bien do reaction (0 = tat)")] [Range(0f, 1f)] public float reactReduceMotionScale = 0f;
+
+        [Header("Giat khi ban (CAM-VC2)")]
+        [Tooltip("Bat/tat giat nhe camera moi phat ban")] public bool kickEnabled = true;
+        [Tooltip("Ngang len (pitch) moi phat o he so vu khi = 1 (do). Plan: 0.3-0.6")] [Range(0f, 1.5f)] public float kickPitch = 0.4f;
+        [Tooltip("Punch FOV (giam FOV) moi phat o he so vu khi = 1 (do). <= 0.5")] [Range(0f, 1f)] public float kickFov = 0.3f;
+        [Tooltip("Thoi gian vao (s)")] [Min(0.005f)] public float kickRise = 0.03f;
+        [Tooltip("Thoi gian hoi ve (s); rise + fall ~ 0.1 s")] [Min(0.01f)] public float kickFall = 0.09f;
+        [Tooltip("He so Pistol / Shotgun / MachineGun (nhan kickPitch, kickFov)")] [Min(0f)] public float kickScalePistol = 1f;
+        [Min(0f)] public float kickScaleShotgun = 1.5f;
+        [Min(0f)] public float kickScaleMachineGun = 0.45f;
+        [Tooltip("Tran cong don pitch (do) khi ban lien thanh")] [Range(0f, 2f)] public float kickMaxPitch = 0.8f;
+        [Tooltip("Tran cong don punch FOV (do)")] [Range(0f, 1f)] public float kickMaxFov = 0.5f;
+        [Tooltip("Giam chuyen dong: he so bien do giat (0 = tat)")] [Range(0f, 1f)] public float kickReduceMotionScale = 0f;
+        [Tooltip("Khi CameraReaction dang chay (target > nay, do): giam giat toi kickReactDamp de khong chong len")] [Min(0.1f)] public float kickReactRef = 2f;
+        [Tooltip("He so con lai cua giat khi reaction/kill-zoom dang o muc toi da (0..1)")] [Range(0f, 1f)] public float kickReactDamp = 0.3f;
+        [Tooltip("Kenh giat rieng trong CameraPoseSmoother: van toc pitch toi da (do/s)")] public float kickMaxAngVel = 120f;
+        [Tooltip("... gia toc pitch (do/s^2)")] public float kickMaxAngAcc = 6000f;
+        [Tooltip("... toc do doi FOV (do/s)")] public float kickMaxFovRate = 20f;
+        [Tooltip("... gia toc FOV (do/s^2)")] public float kickMaxFovAcc = 1500f;
+
+        [Header("Nhip ray VC2 (CAM-VC2)")]
+        [Tooltip("Bat: duong cong toc do ray (tang toc nhanh o dau, giam toc mem o cuoi) thay hinh thang cu. Tong thoi gian giu bang hinh thang cu")] public bool railCurveEnabled = true;
+        [Tooltip("Thoi gian tang toc ra dau ray (s, smoothstep)")] [Min(0.05f)] public float railAccelTime = 0.8f;
+        [Tooltip("Ti le quang duong cuoi dung de giam toc mem (0.25 = 25% cuoi)")] [Range(0.05f, 0.6f)] public float railDecelFraction = 0.25f;
+        [Tooltip("Tran toc do ray khi duong cong tang toc de giu tong thoi gian (m/s)")] public float railCurveMaxSpeed = 5.5f;
+        [Tooltip("Nhin truoc encounter ke: bat dau xoay huong nhin khi ray da di toi ti le nay (0.7 = 30% cuoi)")] [Range(0.3f, 0.95f)] public float lookNextStart = 0.7f;
+        [Tooltip("Muc do huong ve huong shot ke o cuoi ray (0 = tat, 1 = khop dung huong shot)")] [Range(0f, 1f)] public float lookNextWeight = 1f;
+        [Tooltip("Lam muot huong nhin trong doan nhin truoc (s) - nho hon lookDamping de kip khop huong shot")] [Min(0.05f)] public float lookNextDamping = 0.55f;
+        [Tooltip("Van toc xoay yaw toi da trong doan nhin truoc (do/s), <= maxYawRate CAM-SMOOTH ~44")] public float lookNextMaxYawRate = 40f;
+
         [Header("Khac")]
         [Tooltip("Lam muot roll theo toc do xoay (s)")] [Min(0.01f)] public float rollSmoothTime = 0.3f;
         [Tooltip("Cho them (s) sau blend truoc khi nha CombatPause")] [Min(0f)] public float blendWaitMargin = 0.5f;

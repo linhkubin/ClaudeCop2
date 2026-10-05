@@ -66,3 +66,47 @@ Khong dung toi `Combat/`, `Enemy/`, scene, map. Khong commit.
 
 ## 6. Cach do lai
 Vao Play `Level_01`, gan `DebugCamTrace` (outPath) + `DebugM2Bot` bang `execute_code`, doi `LEVEL_COMPLETED`, phan tich CSV. `PhaseDirector.Smoother` lo ra `MaxAngVel/MaxAngAcc/MaxVel/MaxAcc/MaxFovRate/MaxLagAngle/MaxLagPos`.
+
+## 7. CAM-LIVELY (gameplay-coder) - sinh dong: Move mem, Combat co nhip + "giat minh quay sang"
+Do bang Play mode that, Level_01 + DebugM2Bot + DebugCamTrace (them cot rx,ry,rz = target reaction, cd = dolly combo), ReduceMotion = false, cua so 0.1 s. Du lieu: `Temp/trace_livelybefore.csv`, `Temp/trace_livelyafter.csv`.
+
+**Move (bo lac 2 ben):** bob chi con nhun DOC (bobAmplitude 0.025 -> 0.006, bo thanh phan x); roll rail tat (maxRoll 2 -> 0) va roll cam tay = handheldRollScale 0; cam tay chi chay khi Combat (nhan CombatWeight, nen mat dan khi Move/blend); ray xoay mem hon (maxYawRate 45 -> 26, lookDamping 0.5 -> 1.1).
+**Combat:** (a) tho FOV +-1.2 deg chu ky 4.5 s (breathFov/breathPeriod); dolly-in theo combo (toi da 2 deg, 0.25/combo, smooth 0.9 s, ease ra khi het dot); push-in cu giu. (b) Reaction (`CameraReaction.cs`, logic thuan): nghe `TargetRegistry.Registered` (enemy vua targetable), do lech so voi truc camera, gop trong 0.12 s thanh 1 lan huong ve trong tam, vao 0.15 s (ease-out) - giu 0.12 - ve 0.8 s (smoothstep), punch FOV 1.5 deg, cooldown 1.6 s, bien do ~4.5-8 yaw / <=4 pitch. Khong chay khi Move/blend/CombatPause/man den/kill-zoom; punch FOV cua reaction giam theo punch ha enemy dang chay. `CameraPoseSmoother` co KENH reaction rieng (gioi han rieng 170 deg/s, 2200 deg/s^2, FOV 40 deg/s) ap SAU luoi chinh nen luoi chinh van chan spike ngoai y muon. ReduceMotion: reaction/tho/dolly/cam tay tat (reactReduceMotionScale 0). Moi so nam trong CameraFeelProfile (header "Sinh dong (CAM-LIVELY)"). Camera.main that bi xoay nen tap/reticle/sung (con cua Main Camera) di theo; screenshot Game view luc reaction dang len dinh: sung khong xuyen/lech, reticle bam enemy (`Assets/Screenshots/CAMLIVELY_reaction.png`).
+
+| Chi so | Truoc | Sau |
+|---|---|---|
+| Move: van toc xoay toi da (deg/s, ngoai blend) | 44.5 | 26.1 |
+| Move: |roll| toi da (deg) | 0.04 | 0.10 (nhieu, ~0) |
+| Move: dao dong doc/ngang vi tri y (std, m) | 0.0152 | 0.0059 (x bob bo) |
+| Move: dinh toc do xoay trong 1 doan (deg/s) | 44 | 31 |
+| Combat: roll toi da (deg) | 0.45 | 0.77 (handheld khong con roll; so do tang do reaction lam nghieng nhe khi pitch) |
+| Reaction / level (bot ban het) | 0 | 18 (yaw toi da 6.2, pitch 4.0, punch FOV 1.5; tat ca luc blend=0) |
+| Van toc xoay kenh reaction toi da | - | 111 deg/s (gioi han 170) ; FOV 25.7 deg/s |
+| Van toc xoay luoi chinh toi da | 44-45 | 43 (Move+blend khong doi so CAM-SMOOTH) |
+| FOV khi Combat | 39.0-45.0 | 37.7-45.0 (tho + dolly combo) |
+Ghi chu: gia tri "gia toc toi da" ca hai ben bi nhieu boi Cut luc man den giua Phase, bo qua.
+Pitch hay cham tran 4 deg vi nhieu enemy o tang cao/thap; neu qua "nhao" co the ha reactMaxPitch. Yaw nho vi phan lon enemy gan giua khung ngang.
+Test: `Game/Tests/CameraReactionTests.cs` (10 test). EditMode 262/262. Asset `Settings/CameraFeelProfile.asset` them cac truong moi (neu mo editor thay gia tri cu, re-import). File: Camera/{CameraReaction(moi),CameraFeelApplier,CameraFeelProfile,CameraFeelState,CameraPoseSmoother,PhaseDirector}.cs, Game/Debug/DebugCamTrace.cs, Game/Tests/CameraReactionTests.cs.
+
+
+## 8. CAM-VC2 (gameplay-coder) - sung khop dan, giat khi ban, nhip ray + nhin truoc kieu VC2
+Do bang Play mode that (Level_01, DebugM2Bot + DebugCamTrace, ReduceMotion = false set bang reflection tren static, KHONG ghi PlayerPrefs). Du lieu: `Temp/trace_vc2before.csv`, `trace_vc2after.csv`, anh `Temp/vc2b_*.png`.
+
+**A. Sung - dan khop.** `MuzzleAnchor.TryAimAt(diemTrung, out goc)` (Core, moi): FxSystem goi truoc khi sinh vet; ViewmodelController (ngam trong CUNG lan goi, nen khong phu thuoc thu tu ShotFired/ShotResolved) xoay `AimRoot` (cha moi cua cac sung, khong dung Animator) 3 vong lap de truc nong (+Z cua Muzzle) chi vao diem trung; diem ngam dung cung toa do man hinh qua camera overlay (FOV 45 co dinh khac FOV camera chinh) nen tren man hinh nong va vet dan thang hang. Vet dan xuat phat tu nong quy ve camera chinh. `PreAim` luc ShotFired (raycast) giup sung quay ca khi khong co FX. Kep `aimMaxAngle` 30 do (trong game dung toi ~28, chua kep lan nao trong 98 phat); hold 0.10 s, ve nghi 0.22 s (smoothstep). Snap la TUC THOI (1 frame) de vet va nong khop dung frame ban; khong dung aimSnapTime 0.04-0.06. Huong theo di chuyen: `ViewmodelMotion.TickMove` - vao cua mui sung tre nguoc huong re (0.10 do/(do/s), toi da 3.5 do) + roll 0.05/(do/s) toi da 2.5 do + hat mui 1.2 do theo toc do tien, SmoothDamp 0.18 s, nhan reduceMotionScale; Cut/hitch bi bo qua. So: `ViewmodelConfig` (aim*) va `ViewmodelMotionSettings` (move*).
+Do (98 phat, bot): lech goc tren man hinh giua huong nong va vet dan: luc ngam max 0.30 do, cuoi frame ban (da tinh giat spring) 0.32 do; 9:16 5 diem (giua/trai/phai/tren/duoi + goc) = 0.00-0.15 do. Goc 3D 0.1-2.2 do chi do FOV overlay khac FOV camera chinh (khong thay tren man hinh). 9:19.5: anh chup xac nhan nong va vet cung huong; so do 2D cua cach chup RT 1080x2340 sai do overlay camera dung pixel man hinh that (artifact cua cach do, khong co tren thiet bi).
+Anh: `Temp/vc2b_1080x1920_{center,left,right,top,bottom}.png`, `vc2b_1080x2340_*`. Dau + xanh = diem tap.
+
+**B. Giat khi ban.** `CameraKick` (thuan) + `CameraFeelState.KickTarget` + kenh rieng trong `CameraPoseSmoother` (gioi han 120 do/s, 6000 do/s^2, FOV 20 do/s). Moi phat: pitch 0.4 do x he so (Pistol 1, Shotgun 1.5, MG 0.45), FOV 0.3 x he so, vao 0.03 s - ve 0.09 s (smoothstep), cong don co tran 0.8 do / 0.5 do. Giam 70% khi CameraReaction/kill-zoom dang chay (`kickReactDamp`). Giam chuyen dong: tat (`kickReduceMotionScale` 0). Tap van dung Camera.main hien tai. Do: 49 phat -> dinh pitch 0.60 do (Shotgun), FOV 0.45, van toc kenh 23 do/s; luoi chinh khong doi (xoay toi da 40 do/s, gia toc 485 do/s^2 la nhieu cua Cut man den nhu truoc). Plan da sua mot dong.
+
+**C. Nhip ray VC2.** `RailSpeedCurve` (thuan) thay hinh thang khi `railCurveEnabled`: tang toc smoothstep 0.8 s, chay deu, giam toc mem tren 25% quang duong cuoi (v*(1-smoothstep), gia toc lien tuc); toc do deu chon sao cho TONG THOI GIAN BANG hinh thang cu (maxMoveSeconds 5.4 giu nguyen; speedOverride van la toc do goc). Nhin truoc: `RailCameraDriver.SetNextLook` (PhaseDirector.RunMove truyen huong cua shot Combat ke trong cung Phase), tu 70% quang duong nghieng dan (smoothstep) ve dung huong shot, damping 0.55, tran xoay 40 do/s. Reaction giu nguyen. Khong doi map/rail/ten CamPoint.
+| Chi so (Move, ngoai cac Cut man den) | Truoc | Sau |
+|---|---|---|
+| Thoi gian doan Move P1_S4 / P2_S4 / P3_S4 | 5.90 / 5.93 / 5.24 s | 5.93 / 5.93 / 5.25 s (bang) |
+| Van toc xoay Move toi da | 25.8 do/s | 39.3 do/s (<= 44) |
+| Toc do tai 0.5 s dau (P1_S4) | 1.50 m/s | 2.38 m/s |
+| Toc do 0.3 s cuoi | 0.67-0.98 m/s | 0.10-0.14 m/s (vao diem mem hon) |
+| Toc do dinh | 4.46 m/s | 4.81 m/s |
+| Dao dong ngang (std) | 0.058/0.028/0.054 m | 0.056/0.029/0.054 m (khong doi) |
+| Blend Move->Combat | 0.49-0.51 s | 0.50 s |
+Test: EditMode them `Game/Tests/CameraVc2Tests.cs` (5), `Viewmodel/Tests/ViewmodelAimTests.cs` (4). File: Core/MuzzleAnchor.cs, FX/FxSystem.cs, Viewmodel/{ViewmodelController,ViewmodelConfig,ViewmodelMotion}.cs, Camera/{CameraKick(moi),RailSpeedCurve(moi),RailCameraDriver,PhaseDirector,CameraPoseSmoother,CameraFeelState,CameraFeelProfile}.cs. Asset khong sua (truong moi dung gia tri mac dinh trong script).
+Luu y: ban "truoc" trong bang do voi railCurveEnabled/lookNext/kick tat (doan Move dau tien lo ra 1 lan dung duong cong moi, bi loai khoi so truoc/sau).

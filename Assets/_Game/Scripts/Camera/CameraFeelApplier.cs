@@ -46,7 +46,7 @@ namespace ClaudeCop.Camera
             Vector3 rot = Vector3.zero;
             // Trong so rieng cua camera nay: Combat camera da toi diem = 1 (giu nguyen ca khi blend ra), cam ray = 0.
             float sinceArm = armed ? t - armTime : 0f;
-            float cw = (isRail || !armed) ? 0f : Smooth(sinceArm / Mathf.Max(0.01f, profile.handheldFadeIn));
+            float cw = (isRail || !armed) ? 0f : Smooth(sinceArm / Mathf.Max(0.01f, profile.handheldFadeIn)) * CameraFeelState.CombatWeight; // cam tay chi khi Combat
             float baseFov = state.Lens.FieldOfView; // FOV truoc moi offset tam thoi (on dinh cho lim lia)
 
             if (!reduce)
@@ -57,14 +57,13 @@ namespace ClaudeCop.Camera
                     float a = profile.handheldAmplitude * cw;
                     rot.x += (Mathf.PerlinNoise(x, 11.3f) - 0.5f) * 2f * a;
                     rot.y += (Mathf.PerlinNoise(x, 57.1f) - 0.5f) * 2f * a;
-                    rot.z += (Mathf.PerlinNoise(x, 93.7f) - 0.5f) * 2f * a * 0.5f;
+                    rot.z += (Mathf.PerlinNoise(x, 93.7f) - 0.5f) * 2f * a * profile.handheldRollScale;
                 }
                 float speed01 = profile.railSpeed > 0f ? Mathf.Clamp01(CameraFeelState.MoveSpeed / profile.railSpeed) : 0f;
                 if (speed01 > 0f && profile.bobAmplitude > 0f)
                 {
                     float ph = t * profile.bobStepsPerSecond * Mathf.PI * 2f;
-                    pos.y += Mathf.Sin(ph) * profile.bobAmplitude * speed01;
-                    pos.x += Mathf.Sin(ph * 0.5f) * profile.bobAmplitude * 0.4f * speed01;
+                    pos.y += Mathf.Sin(ph) * profile.bobAmplitude * speed01; // chi nhun doc, khong lac ngang (CAM-LIVELY)
                 }
                 if (!isRail && armed)
                 {
@@ -72,6 +71,9 @@ namespace ClaudeCop.Camera
                     float off = profile.settleFov * Smooth(sinceArm / Mathf.Max(0.05f, profile.settleTime));
                     if (profile.dollyInDuration > 0f)
                         off += Mathf.Min(10f, profile.dollyInFov) * Smooth((sinceArm - profile.settleTime) / profile.dollyInDuration);
+                    // CAM-LIVELY: tho FOV +- breathFov (chu ky breathPeriod) + dolly-in theo combo (da lam muot o PhaseDirector)
+                    if (profile.breathFov > 0f) off += profile.breathFov * Mathf.Sin(t * Mathf.PI * 2f / Mathf.Max(0.5f, profile.breathPeriod)) * cw;
+                    off += CameraFeelState.ComboDolly * cw;
                     state.Lens.FieldOfView = Mathf.Max(20f, state.Lens.FieldOfView - off);
                 }
             }

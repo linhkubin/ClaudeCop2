@@ -2,7 +2,8 @@
 
 > Do **project-manager** duy trì. Trạng thái: TODO · IN PROGRESS · IN REVIEW · DONE · BLOCKED
 > Kế hoạch hiện hành: **M3** (lập 2026-10-04, sau khi chủ dự án chấp nhận demo M1 + M2 + màn dọc + offline; **Q1–Q4 chốt mặc định 2026-10-04**). Nguồn: `Docs/Design/Plan_VirtuaCop2_Mobile.md`. Prompt giao việc: [Prompts/W6.md](Prompts/W6.md), [Prompts/W7.md](Prompts/W7.md). MCP kết nối: stdio port 6400. **Sẵn sàng dispatch W6.**
-> **Đội gọn:** gameplay-coder (Core, Combat, Props, FX, Enemy, Camera, Game, RankScore Offline, ghép scene, tài nguyên dùng chung) · ui-coder (UI/Ads) · level-designer · reviewer = tester (viết test Test Runner + checklist, chủ dự án chạy và phản hồi; không duyệt code). combat-coder, enemy-coder nghỉ (trả thư mục dời M4). rankScore-coder đã giải thể (game offline).
+> **Thêm 2026-10-05 — W8 Viewmodel súng góc nhìn thứ nhất** (plan chủ dự án đã duyệt: `C:\Users\ADMIN\.claude\plans\b-n-c-th-d-ng-moonlit-muffin.md`; luật mới ở Conventions mục 1/2/4). Độc lập với W6/W7, chỉ động tới module `Viewmodel` + camera/layer + 1 field FX.
+> **Đội gọn:** gameplay-coder (Core, Combat, Props, FX, Enemy, Camera, Game, RankScore Offline, Viewmodel, ghép scene, tài nguyên dùng chung) · ui-coder (UI/Ads) · level-designer · reviewer = tester (viết test Test Runner + checklist, chủ dự án chạy và phản hồi; không duyệt code). combat-coder, enemy-coder nghỉ (trả thư mục dời M4). rankScore-coder đã giải thể (game offline).
 > **Cập nhật 2026-10-04 (lập M3):** chủ dự án chấp nhận các màn hiện tại (3 Phase, màn dọc, offline). M3 = Props bắn được + lựu đạn + human shield + RankScore offline mở rộng (rank) + dọn nợ. Báo cáo cũ: [Reports/W1.md](Reports/W1.md), [Reports/W2-W4.md](Reports/W2-W4.md).
 
 ## Quy trình làm việc
@@ -43,9 +44,10 @@ Chủ dự án ⇄ Liaison (agent chính)
 | **G-600** | **Cổng: commit baseline M1+M2+W5** (khuyến nghị, chờ lệnh chủ dự án) | | | | Tách diff M3 |
 | **W6** | Phiên A: T-600 → T-601 → T-605 · Phiên B: T-602 · Phiên C: T-603 (sau T-600) · Phiên D: T-604 | T-611 | T-621 marker M3 | TEST-W6 | Module M3 xong trong sandbox |
 | **W7** | T-701 → T-702 ghép M3 | T-711 Win rank | T-721 (dự phòng) | TEST-W7 | **M3 chơi được** |
+| **W8** | T-801 → T-802 → T-803 Viewmodel | — | — | R-W8 (reviewer, đọc) | **Súng góc nhìn thứ nhất chơi được** |
 | sau W7 | COMMIT M3 (tuần tự theo owner) | | | | |
 
-Lượt Play W6: T-601 → T-602 → T-605 → T-611. Lượt Play W7: T-711 → T-702.
+Lượt Play W6: T-601 → T-602 → T-605 → T-611. Lượt Play W7: T-711 → T-702. Lượt Play W8: T-802 → T-803 (xin lượt qua Liaison).
 
 ## Bảng task — M3 (W6, W7)
 | ID | Wave | Owner | Mục tiêu | Phụ thuộc | Trạng thái |
@@ -66,6 +68,19 @@ Lượt Play W6: T-601 → T-602 → T-605 → T-611. Lượt Play W7: T-711 →
 | T-721 | W7 | level-designer | (Dự phòng) chỉnh marker theo T-702/TEST-W7 | T-702 | TODO (nếu cần) |
 | TEST-W7 | W7 kết | reviewer (tester) | PlayMode smoke Level_01 + `Testing/TEST-W7.md` toàn M3 + hồi quy | W7 | TODO |
 | COMMIT-M3 | sau W7 | từng owner (Liaison điều phối) | Commit sau khi chủ dự án chạy TEST-W7 và đồng ý; loại file F-111 | TEST-W7 | TODO |
+
+## Bảng task — W8 Viewmodel súng góc nhìn thứ nhất
+Nguồn: plan `C:\Users\ADMIN\.claude\plans\b-n-c-th-d-ng-moonlit-muffin.md` (chủ dự án duyệt 2026-10-05). Chỉ súng, không tay; 3 súng (Pistol, Shotgun, MachineGun); low-poly từ primitive/ProBuilder; animation tạo bằng code (AnimationClip + AnimatorController). Luật: Conventions mục 1/2/4 (asmdef `ClaudeCop.Viewmodel`, layer `Viewmodel`, hợp đồng node prefab, `ViewmodelCamera` không tag MainCamera). **Không sửa Core** (chỉ nghe `CombatEvents`/`UserSettings`). Bắn không rung camera — recoil nằm ở viewmodel.
+| ID | Wave | Owner | Mục tiêu | Phụ thuộc | Trạng thái |
+|---|---|---|---|---|---|
+| T-801 | W8 | gameplay-coder | **Nền + dựng asset:** layer `Viewmodel` (ProjectSettings/TagManager); asmdef `ClaudeCop.Viewmodel` + `.Editor` (+ `.Tests`); `ViewmodelConfig` (SO: ánh xạ `WeaponKind`→prefab, vị trí/scale theo aspect, FOV overlay ~45–50, độ nghiêng tối đa, spring recoil, thời gian smooth — không hard-code); lớp thuần `ViewmodelMotion` (recoil spring cộng dồn, tilt kẹp góc, hệ số ReduceMotion); `ViewmodelAssetBuilder` (menu `ClaudeCop/Build Viewmodel`) tạo 3 prefab theo hợp đồng node (`Viewmodel_<Kind>` > `Pivot` > `Body`, `Slide|Pump|Bolt`, `Magazine|ShellTube`, `Muzzle`), material, clip `Idle/Fire/Reload/Equip/DryFire`, `VM_Base.controller` + 3 `AnimatorOverrideController` trong `Prefabs/Viewmodel/`; EditMode test `ViewmodelMotionTests`, `ViewmodelConfigTests` (đủ 3 `WeaponKind`; prefab có `Pivot/Body/Muzzle`) | — | TODO |
+| T-802 | W8 | gameplay-coder | **Controller + sandbox:** `ViewmodelController` nghe `CombatEvents` trong OnEnable/OnDisable (khởi tạo từ `CombatEvents.Current`): `WeaponChanged`→bật prefab + `Equip`; `ShotFired`→`Fire` + recoil + muzzle flash tại `Muzzle` + nghiêng về điểm tap; `ReloadStateChanged`→`Reload`, `animator.speed = clipLength / WeaponData.ReloadTime` (lấy qua `TapShooter.CurrentWeapon`); `OutOfAmmo`→`DryFire`; `UserSettings.ReduceMotion` giảm biên độ. Muzzle flash do viewmodel tự phát. Scene `Scenes/Sandbox/gameplay-coder-viewmodel.unity` (nút bắn/reload, đổi 3 súng, MG giữ). Play thử 9:16 và 9:19.5, chụp Game view | T-801 | TODO |
+| T-803 | W8 | gameplay-coder | **Ghép `Level_01.unity`:** `ViewmodelRoot` (con Main Camera) + `ViewmodelCamera` (URP Overlay, **không tag MainCamera**, chỉ render layer `Viewmodel`, FOV riêng) trong Camera Stack của Main Camera; bỏ layer `Viewmodel` khỏi Culling Mask Main Camera; tắt `FxConfig.muzzleEnabled`; cập nhật assembler `ClaudeCop/Game/Assemble Level_01 (T-403)` để dựng lại được. Không đổi `CameraRig`/`CameraShot`/rail. Dự phòng nếu Camera Stack lỗi với Cinemachine: súng là con trực tiếp Main Camera + bù FOV. Bot Play: súng không xuyên tường/không bị phóng khi dolly-in; `Camera.main` vẫn đúng một camera; PointerBlocker nút Reload vẫn chặn; hit-test không đổi; không cấp phát mỗi frame, không `Find*` trong Update; chạy lại toàn bộ test (hiện 230/230) | T-802 | TODO |
+| R-W8 | W8 kết | reviewer | Review đọc code + scene Viewmodel (chỉ đọc) → `Reviews/R-W8.md`; kiểm vi phạm phạm vi/asmdef (không ai ref ngược Viewmodel), tag MainCamera, hợp đồng node | T-803 | TODO |
+| COMMIT-W8 | sau R-W8 | gameplay-coder (Liaison điều phối) | Commit sau khi chủ dự án chơi thử và đồng ý; chỉ file trong phạm vi Viewmodel + layer/TagManager + scene + 1 field FX | R-W8 | TODO |
+
+**Số liệu W8 (từ plan; coder đưa vào SO):** reload hiện 0.5 s (Pistol/Shotgun/MG, `WeaponData.ReloadTime`), `FireInterval` 0.1 s, MG `HoldToFire` → Fire/MG dùng recoil spring cộng dồn thay vì restart state mỗi 0.1 s; clip `Fire` chỉ chạy cơ khí slide/pump cho Pistol/Shotgun. FOV overlay ~45–50. 3 prefab nhẹ (≈ vài chục mesh); MSAA giữ nguyên.
+**Câu hỏi mở W8 (cho chủ dự án):** có tăng `ReloadTime` lên ~0.8–1.0 s để animation đọc được không (chỉnh asset `Weapon_*.asset`, không bắt buộc, không thuộc W8 nếu chưa duyệt). Vỏ đạn: ngoài phạm vi.
 
 ## Bảng task — M1/M2/W5 (lịch sử)
 | ID | Wave | Owner | Mục tiêu | Phụ thuộc | Trạng thái |
@@ -137,7 +152,7 @@ Assembly `ClaudeCop.Core`, namespace `ClaudeCop.Core`, không tham chiếu assem
 |---|---|---|---|---|
 | C1 | `SurfaceMaterial` (enum) | Concrete (mặc định), Wood, Metal, Glass, Foliage, Flesh | — | FX, Props |
 | C2 | `SurfaceMaterialTag` (component) | Gắn chất liệu cho collider môi trường; thiếu thì coi là Concrete | level-designer, prefab Props | FX |
-| C3 | `WeaponKind` (enum) | Pistol, Shotgun, MachineGun | — | Combat, Enemy, RankScore, UI |
+| C3 | `WeaponKind` (enum) | Pistol, Shotgun, MachineGun | — | Combat, Enemy, RankScore, UI, **Viewmodel** |
 | C4 | `ShotInfo` (struct) | Vị trí tap (screen), điểm trúng, pháp tuyến, hướng đạn, WeaponKind, hệ số lực đẩy | Combat (Props dựng khi nổ) | IShootable, ITapTarget |
 | C5 | `IShootable` | `OnShot(ShotInfo)` — vật thể môi trường | Props (M3) | TapShooter |
 | C6 | `TargetKind` (enum) | Enemy, Hostage, Pickup, **Grenade (dùng từ M3)** | — | |
@@ -150,10 +165,10 @@ Assembly `ClaudeCop.Core`, namespace `ClaudeCop.Core`, không tham chiếu assem
 | C13 | `IPlayerDamageReceiver` + `PlayerDamageService` | Register/Unregister · `Damage(source, pos)` | PlayerHealth | Enemy, TapShooter, Props |
 | C14 | `GameState` (enum) | Title, Playing, RevivePrompt, Win, GameOver | | |
 | C15 | `GameEvents` (static) | LivesChanged · PlayerDamaged · ScoreChanged · ScoreAwarded · GameStateChanged · ReviveAvailabilityChanged · snapshot | Game | UI, Camera, Combat, RankScore |
-| C16 | `CombatEvents` (static) | ShotFired · ShotResolved · AmmoChanged · WeaponChanged · ReloadStateChanged · ComboChanged · OutOfAmmo · snapshot | Combat | UI, Game, RankScore, FX |
+| C16 | `CombatEvents` (static) | ShotFired · ShotResolved · AmmoChanged · WeaponChanged · ReloadStateChanged · ComboChanged · OutOfAmmo · snapshot | Combat | UI, Game, RankScore, FX, **Viewmodel** |
 | C17 | `EncounterBase` (abstract) | Begin · IsActive · IsCleared · Cleared · Id · mô tả | EncounterWave | Camera, RankScore |
 | C18 | `RailEvents` (static) | PhaseStarted · PhaseTransition · MoveSegmentStarted · EncounterStarted · EncounterCleared · LevelCompleted | Camera | Game, UI, RankScore |
-| C19 | `UserSettings` (static) | ReduceMotion (key `cc_reduce_motion`) · Changed | UI ghi | Camera đọc, UI |
+| C19 | `UserSettings` (static) | ReduceMotion (key `cc_reduce_motion`) · Changed | UI ghi | Camera đọc, UI, **Viewmodel** |
 | C20 | `GameCommands` (static) | RequestReload · RequestStartGame · RequestRestart · RequestRevive · DeclineRevive · RequestDebugOverlayToggle | UI | Combat, Game |
 | **C21** | `BlastEvents` (static) — **M3, T-600, chờ duyệt Q1** | Event Blasted(BlastReport) · Raise · reset khi vào Play | Props (ExplosiveBarrel) | Game (điểm), RankScore (stats), FX (nổ), Camera (rung), UI (chữ "NỔ!") |
 | **C22** | `BlastReport` (struct) — **M3, T-600** | Tâm, bán kính, số enemy hạ, số con tin trúng, Id nguồn | Props | như C21 |
@@ -173,6 +188,7 @@ Assembly `ClaudeCop.Core`, namespace `ClaudeCop.Core`, không tham chiếu assem
 - **Game:** `GameManager`, `PlayerHealth`, `ScoreSystem`, `GameFlow`/`LifeTracker`/`ScoreCalculator`, `GameSession`, `TitleLauncher`, `GameConfig`; menu `ClaudeCop/Game/Assemble Level_01 (T-403)`, `ClaudeCop/Level/Build Multi-floor Enemies (T-501)`; bot debug.
 - **RankScore:** `IRankScoreClient`, `OfflineRankScoreClient`, `RankScorePolicy`, `RankScoreConfig`, `PlayerStatsTracker`, `RankScoreDecisionLog`, `RankScoreDirector`. M3 thêm: `ScoreRankEvaluator` + hợp đồng rank, câu hỏi `wave_preset`, `weapon_drop`.
 - **FX:** `FxSystem` (nghe `ShotFired`, tự raycast, pool). M3: nghe `BlastEvents`.
+- **Viewmodel (W8, mới):** `ViewmodelController`, `ViewmodelConfig` (SO), `ViewmodelMotion` (lớp thuần); editor `ViewmodelAssetBuilder` (menu `ClaudeCop/Build Viewmodel`); prefab `Viewmodel_Pistol/Shotgun/MachineGun` (hợp đồng node ở Conventions mục 4); `ViewmodelCamera` (URP Overlay). Tên chính xác chốt theo báo cáo T-801/T-802.
 - **UI:** TMP toàn bộ; `GameplayUI` (HUD, DamageFlash, PhaseFade, FloatingScore, RevivePopup, GameOver, Win, EventSystem), `TitlePanel`, bảng debug RankScore. M3: vòng lựu đạn, banner, Win rank.
 - **Level:** `Level_01.prefab` 3 Phase × 6 Shot, `SurfaceMaterialTag`, nhóm `T501_MultiFloor`. M3: nhóm `M3_Markers`.
 
@@ -204,6 +220,7 @@ Assembly `ClaudeCop.Core`, namespace `ClaudeCop.Core`, không tham chiếu assem
 - Không commit `Assets/Screenshots/`, `ProjectSettings/Packages/com.unity.probuilder/`, `ProjectSettings/SceneTemplateSettings.json`.
 - **Màn hình dọc** (Canvas 1080×1920), **offline hoàn toàn** (RankScore = luật viết sẵn).
 - 2026-10-04: chấp nhận các màn hiện tại; **tiếp tục M3**.
+- 2026-10-05: duyệt plan **Viewmodel súng góc nhìn thứ nhất** (chỉ súng, 3 súng, low-poly primitive/ProBuilder, súng nghiêng nhẹ theo điểm tap) → W8.
 
 ## Câu hỏi mở M3 — **ĐÃ CHỐT (2026-10-04, mặc định PM + chủ dự án)**
 | # | Câu hỏi | Quyết định |
@@ -220,4 +237,5 @@ Assembly `ClaudeCop.Core`, namespace `ClaudeCop.Core`, không tham chiếu assem
 - Trả thư mục cho combat-coder / enemy-coder; boss, âm thanh, rung, slow-motion, quảng cáo thật, Pause menu (xem lại F-206).
 - F-210 phần CinemachineCamera serialize trong scene (nếu cần chỉnh tay).
 - Kiểm trên Android thật + profile hiệu năng (có thể làm sớm hơn nếu chủ dự án có máy — TEST-W7 có mục tuỳ chọn).
+- Viewmodel: vỏ đạn văng, thay model xịn (giữ hợp đồng node), tay nhân vật.
 - **Đã bỏ:** RankScore online, Proxy/Direct client, server, API key.

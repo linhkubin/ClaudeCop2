@@ -12,6 +12,22 @@ namespace ClaudeCop.FX
         [Min(0)] public int maxInstances = 8;
     }
 
+    /// <summary>Kieu vet dan cho mot loai sung.</summary>
+    [Serializable]
+    public struct TracerStyle
+    {
+        public Color color;
+        [Tooltip("Do day co so (m).")] public float width;
+        [Tooltip("Toc do dau dan (m/s).")] public float speed;
+        [Tooltip("Do tre cua duoi so voi dau (s) = do dai vet = thoi gian mo dan.")] public float tailLag;
+        [Tooltip("Do tan (do) cua cac vet phu / vet them.")] public float spreadDeg;
+        [Tooltip("So vet phu tan nhe them (ngoai moi muc tieu trung).")] public int extraPellets;
+
+        public static TracerStyle Pistol => new TracerStyle { color = new Color(1f, 0.92f, 0.55f, 1f), width = 0.02f, speed = 220f, tailLag = 0.12f, spreadDeg = 0f, extraPellets = 0 };
+        public static TracerStyle Shotgun => new TracerStyle { color = new Color(1f, 0.8f, 0.4f, 1f), width = 0.016f, speed = 200f, tailLag = 0.1f, spreadDeg = 3f, extraPellets = 3 };
+        public static TracerStyle MachineGun => new TracerStyle { color = new Color(1f, 0.6f, 0.2f, 0.85f), width = 0.012f, speed = 260f, tailLag = 0.08f, spreadDeg = 0.5f, extraPellets = 0 };
+    }
+
     /// <summary>Cau hinh FX: prefab theo chat lieu / ket qua ban, gioi han pool va hat.</summary>
     [CreateAssetMenu(menuName = "ClaudeCop/FX Config", fileName = "FxConfig")]
     public sealed class FxConfig : ScriptableObject
@@ -31,6 +47,31 @@ namespace ClaudeCop.FX
         [Min(1)] public int maxActiveParticles = 300;
         [Range(0.05f, 1f)] public float reduceMotionScale = 0.4f;
         public bool muzzleEnabled = true;
+
+        [Header("Tracer (vet dan)")]
+        public bool tracerEnabled = true;
+        [Tooltip("Tuy chon. Trong = Sprites/Default (ho tro mau dinh diem).")]
+        public Material tracerMaterial;
+        [Min(4)] public int tracerPoolSize = 24;
+        public TracerStyle tracerPistol = TracerStyle.Pistol;
+        public TracerStyle tracerShotgun = TracerStyle.Shotgun;
+        public TracerStyle tracerMachineGun = TracerStyle.MachineGun;
+        [Tooltip("Do day them moi met khoang cach toi camera de xa van thay.")]
+        public float tracerWidthPerMeter = 0.004f;
+        public float tracerMaxWidth = 0.12f;
+        [Tooltip("Khoang cach vet khi ban truot (m).")]
+        public float tracerMissDistance = 40f;
+        [Range(0.05f, 1f)] public float tracerReduceMotionScale = 0.5f;
+
+        public TracerStyle GetTracer(WeaponKind k)
+        {
+            switch (k)
+            {
+                case WeaponKind.Shotgun: return tracerShotgun;
+                case WeaponKind.MachineGun: return tracerMachineGun;
+                default: return tracerPistol;
+            }
+        }
 
         [Header("Raycast moi truong")]
         public float rayMaxDistance = 80f;

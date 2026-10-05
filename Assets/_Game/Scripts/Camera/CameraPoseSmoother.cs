@@ -17,7 +17,7 @@ namespace ClaudeCop.Camera
         readonly CinemachineBrain brain;
         readonly UnityEngine.Camera outCam;
 
-        struct S { public Vector3 pos, vel, angVel; public Quaternion rot; public float fov, fovVel; }
+        struct S { public Vector3 pos, vel, angVel; public Quaternion rot; public float fov, fovVel; public Vector3 rA, rAV; public float rF, rFV; public float kP, kPV, kF, kFV; } // rA = reaction (yaw, pitch), rF = reaction FOV
 
         bool has, snap;
         ICinemachineCamera snapExpect;
@@ -27,7 +27,8 @@ namespace ClaudeCop.Camera
 
         // Do kiem (debug / bao cao): gia tri lon nhat cua pose DA lam muot va do tre toi da so voi pose tho.
         public float MaxAngVel, MaxAngAcc, MaxVel, MaxAcc, MaxFovRate, MaxLagAngle, MaxLagPos;
-        public int Calls, MaxCallsPerFrame; int callFrame, callsThisFrame;
+        public float MaxKickPitch, MaxKickFov, MaxKickAngVel;
+        public float MaxReactAngVel, MaxReactAngAcc, MaxReactFovRate, MaxReactYaw; public int Calls, MaxCallsPerFrame; int callFrame, callsThisFrame;
 
         public CameraPoseSmoother(CinemachineBrain brain, CameraFeelProfile profile)
         {
@@ -41,7 +42,7 @@ namespace ClaudeCop.Camera
         /// <summary>Lan cap pose ke tiep (khi camera expectActive da live) copy thang pose tho: chi dung cho Cut duoc phep (vao level, luc man den giua Phase).</summary>
         public void RequestSnap(ICinemachineCamera expectActive = null) { snap = true; snapExpect = expectActive; }
 
-        public void ResetStats() { MaxAngVel = MaxAngAcc = MaxVel = MaxAcc = MaxFovRate = MaxLagAngle = MaxLagPos = 0f; }
+        public void ResetStats() { MaxAngVel = MaxAngAcc = MaxVel = MaxAcc = MaxFovRate = MaxLagAngle = MaxLagPos = MaxReactAngVel = MaxReactAngAcc = MaxReactFovRate = MaxReactYaw = 0f; MaxKickPitch = MaxKickFov = MaxKickAngVel = 0f; }
 
         /// <summary>
         /// Brain co the phat CameraUpdatedEvent nhieu lan/frame (do duoc 2 lan): moi lan tinh lai tu trang thai CUOI FRAME TRUOC (committed)
@@ -92,6 +93,25 @@ namespace ClaudeCop.Camera
                 Vector3 df = Step(new Vector3(rawFov - cand.fov, 0f, 0f), ref fv, p.smoothMaxFovRate * sc, p.smoothMaxFovAcc * sc, dt);
                 cand.fov += df.x; cand.fovVel = fv.x;
 
+                // CAM-LIVELY: kenh reaction (giat minh quay sang) co gioi han RIENG cao hon, ap SAU luoi chinh nen khong bi loc
+                Vector3 rt = CameraFeelState.ReactTarget;
+                Vector3 rd = Step(new Vector3(rt.x, rt.y, 0f) - cand.rA, ref cand.rAV, p.reactMaxAngVel, p.reactMaxAngAcc, dt);
+                cand.rA += rd;
+                Vector3 rfv = new Vector3(cand.rFV, 0f, 0f);
+                Vector3 rdf = Step(new Vector3(rt.z - cand.rF, 0f, 0f), ref rfv, p.reactMaxFovRate, p.reactMaxFovAcc, dt);
+                cand.rF += rdf.x; cand.rFV = rfv.x;
+                // CAM-VC2: kenh giat khi ban (pitch len + punch FOV) co gioi han RIENG, ap sau luoi chinh
+                Vector2 kt = CameraFeelState.KickTarget;
+                Vector3 kpv = new Vector3(cand.kPV, 0f, 0f);
+                Vector3 kd = Step(new Vector3(kt.x - cand.kP, 0f, 0f), ref kpv, p.kickMaxAngVel, p.kickMaxAngAcc, dt);
+                cand.kP += kd.x; cand.kPV = kpv.x;
+                Vector3 kfv = new Vector3(cand.kFV, 0f, 0f);
+                Vector3 kdf = Step(new Vector3(kt.y - cand.kF, 0f, 0f), ref kfv, p.kickMaxFovRate, p.kickMaxFovAcc, dt);
+                cand.kF += kdf.x; cand.kFV = kfv.x;
+                MaxKickPitch = Mathf.Max(MaxKickPitch, cand.kP); MaxKickFov = Mathf.Max(MaxKickFov, cand.kF); MaxKickAngVel = Mathf.Max(MaxKickAngVel, Mathf.Abs(cand.kPV));
+                MaxReactAngVel = Mathf.Max(MaxReactAngVel, cand.rAV.magnitude); MaxReactAngAcc = Mathf.Max(MaxReactAngAcc, (cand.rAV - committed.rAV).magnitude / dt);
+                MaxReactFovRate = Mathf.Max(MaxReactFovRate, Mathf.Abs(cand.rFV)); MaxReactYaw = Mathf.Max(MaxReactYaw, Mathf.Abs(cand.rA.x));
+
                 // Do kiem (chi frame dau cua moi frame: tinh theo cand)
                 float av = cand.angVel.magnitude, sp = cand.vel.magnitude;
                 MaxAngVel = Mathf.Max(MaxAngVel, av); MaxVel = Mathf.Max(MaxVel, sp);
@@ -101,8 +121,10 @@ namespace ClaudeCop.Camera
             }
             else cand = committed;
 
-            b.transform.SetPositionAndRotation(cand.pos + cand.rot * shakeP, cand.rot * shakeQ);
-            if (outCam != null) outCam.fieldOfView = cand.fov;
+            // Reaction: yaw quanh truc dung world, pitch quanh truc phai cuc bo (len = duong); tap/reticle/sung (con cua Main Camera) di theo pose cuoi
+            Quaternion finalRot = Quaternion.AngleAxis(cand.rA.x, Vector3.up) * cand.rot * Quaternion.Euler(-(cand.rA.y + cand.kP), 0f, 0f);
+            b.transform.SetPositionAndRotation(cand.pos + finalRot * shakeP, finalRot * shakeQ);
+            if (outCam != null) outCam.fieldOfView = Mathf.Max(15f, cand.fov - cand.rF - cand.kF);
         }
 
         /// <summary>Mot buoc dieu khien: toc do mong muon = min(vMax, can bac hai(2*a*0.9*khoang cach)) (de phanh kip), tien gan toc do do voi gia toc toi da.</summary>

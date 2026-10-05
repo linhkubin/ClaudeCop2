@@ -22,12 +22,25 @@ namespace ClaudeCop.Camera
         float length, v, ti, to, total, da, db, time;
         float yaw, pitch, roll, yawVel, pitchVel, rollVel;
         float dist;
+        RailSpeedCurve curve;           // CAM-VC2: duong cong toc do (null = hinh thang cu)
+        bool hasNext; float nextYaw, nextPitch; // CAM-VC2: nhin truoc huong shot ke
 
         public bool Active { get; private set; }
         public bool Running { get; private set; }
         public bool Finished { get; private set; }
         public float CurrentSpeed { get; private set; }
         public float Length => length;
+        public RailSpeedCurve Curve => curve;
+        /// <summary>Tong thoi gian doan Move du kien (s).</summary>
+        public float PlannedTotal => total;
+        /// <summary>Huong nhin hien tai (yaw, pitch do) - de do kiem.</summary>
+        public float Yaw => yaw;
+        public float Pitch => pitch;
+        public float Progress => length > 0f ? dist / length : 0f;
+
+        /// <summary>CAM-VC2: huong nhin cua shot ke (yaw/pitch do). Ray se nghieng dan toi do o lookNextStart..1 va khop dung khi toi. Goi sau Prepare, truoc StartMoving.</summary>
+        public void SetNextLook(float yawDeg, float pitchDeg) { hasNext = true; nextYaw = yawDeg; nextPitch = Mathf.Clamp(pitchDeg, -p.maxPitch, p.maxPitch); }
+        public void ClearNextLook() { hasNext = false; }
 
         public RailCameraDriver(CinemachineCamera cam, CinemachineSplineDolly dolly, CameraFeelProfile profile)
         {
@@ -56,6 +69,13 @@ namespace ClaudeCop.Camera
                 ti *= k; to *= k; da *= k; db *= k;
             }
             total = ti + to + (length - da - db) / v;
+            curve = null; hasNext = false;
+            if (p.railCurveEnabled)
+            {
+                // Giu tong thoi gian bang hinh thang cu; duong cong chi doi phan bo toc do (nhanh ra dau, giam mem o cuoi).
+                curve = new RailSpeedCurve(length, total, p.railAccelTime, p.railDecelFraction, Mathf.Max(v, p.railCurveMaxSpeed));
+                total = curve.Total;
+            }
             time = 0f; dist = 0f; CurrentSpeed = 0f;
             Running = false; Finished = false; Active = true;
 
@@ -82,6 +102,7 @@ namespace ClaudeCop.Camera
             {
                 time += dt;
                 if (time >= total) { time = total; dist = length; CurrentSpeed = 0f; Running = false; Finished = true; }
+                else if (curve != null) { curve.Evaluate(time, out dist, out float cs); CurrentSpeed = cs; }
                 else
                 {
                     if (time < ti) { dist = v * time * time / (2f * ti); CurrentSpeed = v * time / ti; }
@@ -109,13 +130,25 @@ namespace ClaudeCop.Camera
             float wantYaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
             float wantPitch = Mathf.Clamp(-Mathf.Asin(Mathf.Clamp(dir.normalized.y, -1f, 1f)) * Mathf.Rad2Deg, -p.maxPitch, p.maxPitch);
 
+            // CAM-VC2: 30% cuoi doan Move nghieng dan ve huong shot ke (smoothstep), khop dung khi toi; khong xoay muon roi giat lai.
+            float damping = p.lookDamping, rateCap = p.maxYawRate;
+            if (hasNext && p.lookNextWeight > 0f && length > 0.01f)
+            {
+                float w = Mathf.Clamp01((dist / length - p.lookNextStart) / Mathf.Max(0.01f, 1f - p.lookNextStart));
+                w = w * w * (3f - 2f * w) * p.lookNextWeight;
+                wantYaw = wantYaw + Mathf.DeltaAngle(wantYaw, nextYaw) * w;
+                wantPitch = Mathf.Lerp(wantPitch, nextPitch, w);
+                damping = Mathf.Lerp(p.lookDamping, Mathf.Min(p.lookDamping, p.lookNextDamping), w);
+                rateCap = Mathf.Lerp(p.maxYawRate, Mathf.Max(p.maxYawRate, p.lookNextMaxYawRate), w);
+            }
+
             float oldYaw = yaw;
-            float smoothed = Mathf.SmoothDampAngle(yaw, wantYaw, ref yawVel, p.lookDamping, p.maxYawRate, dt);
+            float smoothed = Mathf.SmoothDampAngle(yaw, wantYaw, ref yawVel, damping, rateCap, dt);
             // SmoothDamp co the vuot maxSpeed nhe -> ep cung theo gioi han do/giay
-            yaw += Mathf.Clamp(Mathf.DeltaAngle(yaw, smoothed), -p.maxYawRate * dt, p.maxYawRate * dt);
-            pitch = Mathf.SmoothDamp(pitch, wantPitch, ref pitchVel, p.lookDamping, p.maxYawRate, dt);
+            yaw += Mathf.Clamp(Mathf.DeltaAngle(yaw, smoothed), -rateCap * dt, rateCap * dt);
+            pitch = Mathf.SmoothDamp(pitch, wantPitch, ref pitchVel, damping, rateCap, dt);
             float yawRate = Mathf.DeltaAngle(oldYaw, yaw) / dt;
-            float wantRoll = UserSettings.ReduceMotion ? 0f : -Mathf.Clamp(yawRate / p.maxYawRate, -1f, 1f) * p.maxRoll;
+            float wantRoll = UserSettings.ReduceMotion ? 0f : -Mathf.Clamp(yawRate / Mathf.Max(1f, p.maxYawRate), -1f, 1f) * p.maxRoll;
             roll = Mathf.SmoothDamp(roll, wantRoll, ref rollVel, p.rollSmoothTime, Mathf.Infinity, dt);
             roll = Mathf.Clamp(roll, -p.maxRoll, p.maxRoll);
 

@@ -68,6 +68,7 @@ namespace ClaudeCop.FX.Editor
                 P("smoke", true, false, new Color(0.22f, 0.21f, 0.2f, 0.75f), new Color(0.35f, 0.33f, 0.3f, 0.5f), 10, 1f, 3f, 0.8f, 1.4f, 0.9f, -0.1f, 180, 1.8f),
                 P("fire", true, true, new Color(1f, 0.75f, 0.2f, 1f), new Color(1f, 0.35f, 0.05f, 1f), 8, 0.5f, 2.2f, 1.0f, 1.9f, 0.45f, 0f, 180, 1.3f)), 1.0f, 3);
             cfg.explosionPrewarm = 3;
+            cfg.muzzleEnabled = false; // VIEWMODEL-1: muzzle flash do viewmodel phat (ViewmodelController)
 
             var mark = GameObject.CreatePrimitive(PrimitiveType.Quad);
             mark.name = "BulletMark";

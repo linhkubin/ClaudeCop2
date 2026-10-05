@@ -7,6 +7,8 @@ namespace ClaudeCop.Core
     public static class UserSettings
     {
         public const string ReduceMotionKey = "cc_reduce_motion";
+        /// <summary>Gia tri mac dinh khi chua co PlayerPrefs (nguoi dung chon bat tu dau).</summary>
+        public const bool DefaultReduceMotion = true;
 
         static bool loaded;
         static bool reduceMotion;
@@ -17,7 +19,7 @@ namespace ClaudeCop.Core
         {
             get
             {
-                if (!loaded) { reduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, 0) == 1; loaded = true; }
+                if (!loaded) { reduceMotion = PlayerPrefs.GetInt(ReduceMotionKey, DefaultReduceMotion ? 1 : 0) == 1; loaded = true; }
                 return reduceMotion;
             }
             set

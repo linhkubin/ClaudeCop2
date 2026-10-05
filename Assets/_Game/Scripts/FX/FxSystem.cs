@@ -14,6 +14,7 @@ namespace ClaudeCop.FX
         [SerializeField] FxConfig config;
 
         FxPool pool;
+        TracerPool tracers;
         Camera cam;
         Vector2 lastScreenPos;
         bool hasShot;
@@ -37,15 +38,67 @@ namespace ClaudeCop.FX
 
         void OnDisable()
         {
+            tracers?.ReleaseAll();
             CombatEvents.ShotFired -= OnShotFired;
             CombatEvents.ShotResolved -= OnShotResolved;
             BlastEvents.Blasted -= OnBlasted;
             pool?.ReleaseAll();
         }
 
-        void OnDestroy() { pool?.Destroy(); }
+        void OnDestroy() { pool?.Destroy(); tracers?.Destroy(); }
 
-        void Update() { pool.Tick(Time.time); }
+        void Update() { pool.Tick(Time.time); tracers?.Tick(Time.time); }
+
+        bool EnsureTracers()
+        {
+            if (tracers != null) return true;
+            var mat = config.tracerMaterial;
+            if (mat == null)
+            {
+                var sh = Shader.Find("Sprites/Default");
+                if (sh == null) return false;
+                mat = new Material(sh) { name = "TracerRuntime", hideFlags = HideFlags.DontSave };
+            }
+            tracers = new TracerPool(transform, mat, config.tracerPoolSize);
+            return true;
+        }
+
+        void SpawnTracers(ShotResult r)
+        {
+            if (!config.tracerEnabled || r.Outcome == TapOutcome.Blocked || !hasShot) return;
+            if (!EnsureCam() || !EnsureTracers()) return;
+            var style = config.GetTracer(r.Weapon);
+            Vector3 camPos = cam.transform.position;
+
+            var ray = cam.ScreenPointToRay(lastScreenPos);
+            bool hasHit = r.Outcome != TapOutcome.Miss;
+            Vector3 end = TracerMath.ComputeEnd(ray.origin, ray.direction, hasHit, r.WorldPoint, config.tracerMissDistance);
+
+            // CAM-VC2: viewmodel xoay sung ve diem trung ngay luc nay (khong phu thuoc thu tu su kien) roi tra diem nong
+            // (da quy ve camera chinh de vet dan bat dau dung o dau nong tren man hinh). Khong co viewmodel: nong gan nhat / canh duoi man hinh.
+            Vector3 origin;
+            if (!MuzzleAnchor.TryAimAt(end, out origin) && !MuzzleAnchor.TryGet(out origin))
+            {
+                float w = Screen.width, h = Screen.height;
+                origin = cam.ScreenToWorldPoint(new Vector3(w * 0.5f + (lastScreenPos.x - w * 0.5f) * 0.35f, h * 0.02f, 0.8f));
+            }
+
+            float rm = UserSettings.ReduceMotion ? config.tracerReduceMotionScale : 1f;
+            Color col = style.color; col.a *= rm;
+            float tail = style.tailLag * rm;
+            int count = Mathf.Max(1, r.TargetsHit) + Mathf.Max(0, style.extraPellets);
+            if (UserSettings.ReduceMotion) count = Mathf.Min(count, 2);
+            for (int i = 0; i < count; i++)
+            {
+                // Vet dau la tia chinh; cac vet con lai tan nhe quanh no.
+                Vector3 e = i == 0 ? end : TracerMath.SpreadEnd(origin, end, Mathf.Max(style.spreadDeg, 0.01f), Random.value, Random.value);
+                float dist = (e - origin).magnitude;
+                float camDist = ((origin + e) * 0.5f - camPos).magnitude;
+                float width = TracerMath.WidthAtDistance(style.width, config.tracerWidthPerMeter, camDist, config.tracerMaxWidth);
+                float travel = TracerMath.TravelTime(dist, style.speed, 0.03f);
+                tracers.Spawn(origin, e, col, width * (i == 0 ? 1f : 0.7f), travel, tail, Time.time);
+            }
+        }
 
         float Scale => UserSettings.ReduceMotion ? config.reduceMotionScale : 1f;
 
@@ -83,6 +136,7 @@ namespace ClaudeCop.FX
         void OnShotResolved(ShotResult r)
         {
             if (config == null || !EnsureCam()) return;
+            SpawnTracers(r);
             var targetFx = config.GetOutcome(r.Outcome);
             if (targetFx != null)
             {

@@ -16,10 +16,10 @@ MonoBehaviour:
   easeInTime: 1
   easeOutTime: 1
   lookAhead: 4
-  lookDamping: 0.5
+  lookDamping: 1.1
   baseFov: 45
-  maxYawRate: 45
-  maxRoll: 2
+  maxYawRate: 26
+  maxRoll: 0
   maxPitch: 10
   cutAngle: 360
   reduceMotionCutAngle: 360
@@ -33,7 +33,7 @@ MonoBehaviour:
   handheldAmplitude: 0.3
   handheldFrequency: 0.4
   handheldTimeScale: 5
-  bobAmplitude: 0.025
+  bobAmplitude: 0.006
   bobStepsPerSecond: 1.9
   dollyInFov: 2.5
   dollyInDuration: 8
@@ -93,3 +93,26 @@ MonoBehaviour:
   smoothReduceMotionScale: 0.6
   blendMaxAngAccel: 110
   blendMaxAccel: 14
+  handheldRollScale: 0
+  breathFov: 1.2
+  breathPeriod: 4.5
+  comboDollyFov: 2
+  comboDollyPerCombo: 0.25
+  comboDollySmooth: 0.9
+  reactEnabled: 0
+  reactMinOffset: 2.5
+  reactGain: 0.85
+  reactMinAngle: 4.5
+  reactMaxYaw: 8
+  reactMaxPitch: 4
+  reactIn: 0.15
+  reactHold: 0.12
+  reactOut: 0.8
+  reactFov: 1.5
+  reactCooldown: 1.6
+  reactGatherWindow: 0.12
+  reactMaxAngVel: 170
+  reactMaxAngAcc: 2200
+  reactMaxFovRate: 40
+  reactMaxFovAcc: 500
+  reactReduceMotionScale: 0

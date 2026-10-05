@@ -21,7 +21,7 @@ namespace ClaudeCop.Game.Debugging
         void OnEnable()
         {
             sb.Clear();
-            sb.AppendLine("t,dt,shot,phase,blend,vcam,px,py,pz,qx,qy,qz,qw,fov,ts");
+            sb.AppendLine("t,dt,shot,phase,blend,vcam,px,py,pz,qx,qy,qz,qw,fov,ts,rx,ry,rz,cd");
             hLevel = () => Flush();
             RailEvents.LevelCompleted += hLevel;
             StartCoroutine(Loop());
@@ -45,7 +45,8 @@ namespace ClaudeCop.Game.Debugging
                   .Append(brain != null && brain.IsBlending ? 1 : 0).Append(',').Append(vc).Append(',')
                   .Append(F(p.x)).Append(',').Append(F(p.y)).Append(',').Append(F(p.z)).Append(',')
                   .Append(F(q.x)).Append(',').Append(F(q.y)).Append(',').Append(F(q.z)).Append(',').Append(F(q.w)).Append(',')
-                  .Append(F(cam.fieldOfView)).Append(',').Append(F(Time.timeScale)).AppendLine();
+                  .Append(F(cam.fieldOfView)).Append(',').Append(F(Time.timeScale)).Append(',')
+                  .Append(F(CameraFeelState.ReactTarget.x)).Append(',').Append(F(CameraFeelState.ReactTarget.y)).Append(',').Append(F(CameraFeelState.ReactTarget.z)).Append(',').Append(F(CameraFeelState.ComboDolly)).AppendLine();
             }
         }
     }

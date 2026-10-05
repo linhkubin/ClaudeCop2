@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 181d6e42faf731447a20195b629b95e6, type: 3}
+  m_Name: ViewmodelConfig
+  m_EditorClassIdentifier: ClaudeCop.Viewmodel::ClaudeCop.Viewmodel.ViewmodelConfig
+  weapons:
+  - kind: 0
+    prefab: {fileID: 4605850084359984253, guid: 0235c6b6fb6940247a6fab3feb80e1d3, type: 3}
+    fallbackReloadClipLength: 1
+    fireClipMinInterval: 0.25
+    recoilImpulseScale: 1
+    recoilVisualScale: 1
+  - kind: 1
+    prefab: {fileID: 4304944837111077940, guid: f5a737ecaf3b751479b1ff32b8ce7621, type: 3}
+    fallbackReloadClipLength: 1.2
+    fireClipMinInterval: 0.25
+    recoilImpulseScale: 1.5
+    recoilVisualScale: 1.2
+  - kind: 2
+    prefab: {fileID: 1287156369199354133, guid: 18094cf7bc46d16418ae122049afceb1, type: 3}
+    fallbackReloadClipLength: 1.4
+    fireClipMinInterval: 0.25
+    recoilImpulseScale: 0.55
+    recoilVisualScale: 1
+  overlayFov: 45
+  overlayNear: 0.03
+  overlayFar: 5
+  narrowAspect: 0.46
+  wideAspect: 0.5625
+  anchorNarrow: {x: 0.7, y: 0.09}
+  anchorWide: {x: 0.7, y: 0.1}
+  depth: 0.55
+  scaleNarrow: 0.62
+  scaleWide: 0.7
+  baseEuler: {x: -4, y: -8, z: 0}
+  flashDuration: 0.05
+  flashScaleRange: {x: 0.8, y: 1.3}
+  reloadSpeedRange: {x: 0.4, y: 4}
+  motion:
+    recoilStiffness: 260
+    recoilDamping: 26
+    recoilImpulse: 9
+    recoilMax: 1.6
+    recoilPosition: {x: 0, y: 0.012, z: -0.05}
+    recoilEuler: {x: -6, y: 0, z: 1.5}
+    tiltMaxYaw: 7
+    tiltMaxPitch: 5
+    tiltMaxRoll: 3
+    tiltSmoothTime: 0.08
+    tiltHoldTime: 0.6
+    tiltReturnTime: 0.25
+    reduceMotionScale: 0.35

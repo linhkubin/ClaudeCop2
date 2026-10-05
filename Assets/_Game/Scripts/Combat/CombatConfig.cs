@@ -11,6 +11,7 @@ namespace ClaudeCop.Combat
         public const float DefaultMaxRayDistance = 100f;
         public const float DefaultEmptyClickCooldown = 0.2f;
         public const float DefaultBodyHitPaddingPx = 8f;
+        public const float DefaultBarrelHitPaddingPx = 8f;
         public const int DefaultComboMaxMultiplier = 5;
         public const int DefaultComboHitsPerStep = 1;
 
@@ -34,6 +35,12 @@ namespace ClaudeCop.Combat
         [Tooltip("Dan khong xuyen: vu khi 1 muc tieu/phat (Pistol/MG) chon muc tieu GAN CAMERA NHAT khi nhieu enemy cung trung (Justice van uu tien nhat).")]
         [SerializeField] bool nearestTargetFirst = true;
 
+        [Header("Thung no (uu tien hon enemy tru Justice)")]
+        [Tooltip("Tap trung thung no (trong bounds man hinh + padding, khong bi che) thi ban thung thay vi enemy ke ben.")]
+        [SerializeField] bool barrelPriority = true;
+        [Tooltip("Mo rong hinh chu nhat man hinh cua thung (px chuan 1080p). Khong nong ban kinh aim-assist.")]
+        [SerializeField, Min(0f)] float barrelHitPaddingPx = DefaultBarrelHitPaddingPx;
+
         [Header("Combo")]
         [SerializeField, Min(1)] int comboMaxMultiplier = DefaultComboMaxMultiplier;
         [Tooltip("So phat trung lien tiep de tang 1 bac he so.")]
@@ -47,6 +54,8 @@ namespace ClaudeCop.Combat
         public int ComboHitsPerStep => comboHitsPerStep;
         public bool RevertToStartingWeaponWhenEmpty => revertToStartingWeaponWhenEmpty;
         public bool EnemyBodyHit => enemyBodyHit;
+        public bool BarrelPriority => barrelPriority;
+        public float BarrelHitPaddingPx => barrelHitPaddingPx;
         public bool NearestTargetFirst => nearestTargetFirst;
         public float BodyHitPaddingPx => bodyHitPaddingPx;
         public float JusticeRadiusPx => justiceRadiusPx;

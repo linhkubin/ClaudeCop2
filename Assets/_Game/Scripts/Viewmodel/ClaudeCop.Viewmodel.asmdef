@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.Viewmodel",
+    "rootNamespace": "ClaudeCop.Viewmodel",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Combat"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

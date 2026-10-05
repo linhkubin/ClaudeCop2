@@ -18,6 +18,14 @@ namespace ClaudeCop.Camera
         public static Vector3 ShakePos;
         public static Quaternion ShakeRot = Quaternion.identity;
 
+        /// <summary>CAM-LIVELY: muc tieu reaction hien tai (x = yaw do, y = pitch do (len = duong), z = punch FOV do (giam FOV)). PhaseDirector ghi, CameraPoseSmoother ap sau luoi gioi han.</summary>
+        public static Vector3 ReactTarget;
+        /// <summary>CAM-LIVELY: do giam FOV (do) theo combo, da lam muot. PhaseDirector ghi, CameraFeelApplier doc.</summary>
+        public static float ComboDolly;
+
+        /// <summary>CAM-VC2: giat khi ban. x = pitch len (do), y = giam FOV (do). PhaseDirector ghi, CameraPoseSmoother ap qua kenh rieng sau luoi gioi han.</summary>
+        public static Vector2 KickTarget;
+
         public static void TriggerShake(float duration, float scale = 1f) { ShakeStart = Time.time; ShakeDuration = Mathf.Max(0.01f, duration); ShakeScale = Mathf.Max(0f, scale); }
 
         public static void Tick(float dt, CameraFeelProfile p)
@@ -29,7 +37,7 @@ namespace ClaudeCop.Camera
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            Combat = false; MoveSpeed = 0f; CombatWeight = 0f; ShakeStart = -10f; ShakeDuration = 0.2f; ShakeScale = 1f; ShakePos = Vector3.zero; ShakeRot = Quaternion.identity;
+            Combat = false; MoveSpeed = 0f; CombatWeight = 0f; ShakeStart = -10f; ShakeDuration = 0.2f; ShakeScale = 1f; ShakePos = Vector3.zero; ShakeRot = Quaternion.identity; ReactTarget = Vector3.zero; ComboDolly = 0f; KickTarget = Vector2.zero;
         }
     }
 }

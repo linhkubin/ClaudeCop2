@@ -277,6 +277,68 @@ namespace ClaudeCop.Combat
             return Rect.MinMaxRect(minX - bodyPadPx, minY - bodyPadPx, maxX + bodyPadPx, maxY + bodyPadPx);
         }
 
+        // ---------- Thung no (uu tien) ----------
+        float barrelPadPx;
+        Ray barrelRay;
+        Func<IPriorityShootable, Rect?> barrelRectFunc;
+        Func<IPriorityShootable, bool> barrelOccludedFunc;
+        Func<IPriorityShootable, float> barrelDepthFunc;
+        readonly RaycastHit[] rayBuf = new RaycastHit[16];
+
+        float BarrelDepth(IPriorityShootable b) { return (b.PriorityBounds.center - barrelRay.origin).sqrMagnitude; }
+
+        Rect? BarrelRect(IPriorityShootable b)
+        {
+            Bounds bb = b.PriorityBounds;
+            if (bb.size == Vector3.zero) return null;
+            Vector3 mn = bb.min, mx = bb.max;
+            float minX = 0, minY = 0, maxX = 0, maxY = 0; bool any = false;
+            for (int k = 0; k < 8; k++)
+            {
+                var p = Project(new Vector3((k & 1) == 0 ? mn.x : mx.x, (k & 2) == 0 ? mn.y : mx.y, (k & 4) == 0 ? mn.z : mx.z));
+                if (!p.HasValue) return null;
+                var v = p.Value;
+                if (!any) { minX = maxX = v.x; minY = maxY = v.y; any = true; }
+                else { if (v.x < minX) minX = v.x; if (v.x > maxX) maxX = v.x; if (v.y < minY) minY = v.y; if (v.y > maxY) maxY = v.y; }
+            }
+            return Rect.MinMaxRect(minX - barrelPadPx, minY - barrelPadPx, maxX + barrelPadPx, maxY + barrelPadPx);
+        }
+
+        // Bi che neu tren tia tu camera toi thung co collider khac (khong phai thung, khong phai ITapTarget) o truoc thung.
+        bool BarrelOccluded(IPriorityShootable b)
+        {
+            Vector3 toT = b.PriorityBounds.center - barrelRay.origin;
+            float dist = toT.magnitude;
+            if (dist < 0.01f) return false;
+            int mask = config != null ? config.EnvironmentMask.value : ~0;
+            int n = Physics.RaycastNonAlloc(new Ray(barrelRay.origin, toT / dist), rayBuf, dist, mask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < n; i++)
+            {
+                var col = rayBuf[i].collider;
+                if (col == null) continue;
+                if (ReferenceEquals(col.GetComponentInParent<IPriorityShootable>(), b)) continue;
+                if (col.GetComponentInParent<ITapTarget>() != null) continue;
+                return true;
+            }
+            return false;
+        }
+
+        void ResolveBarrel(Vector2 screenPos, IPriorityShootable barrel)
+        {
+            Vector3 point = barrel.PriorityBounds.center;
+            Vector3 dir = (point - barrelRay.origin).normalized;
+            barrel.OnShot(new ShotInfo
+            {
+                ScreenPosition = screenPos,
+                HitPoint = point,
+                HitNormal = -dir,
+                Direction = dir,
+                Weapon = weapon.Kind,
+                ImpulseScale = weapon.ImpulseScale
+            });
+            EmitEnvironmentResult(screenPos, point, true, true);
+        }
+
         /// <returns>Vu khi cua thung vua nhat (neu co), nguoc lai null.</returns>
         WeaponData ResolveShot(Vector2 screenPos)
         {
@@ -297,6 +359,16 @@ namespace ClaudeCop.Combat
             bool nearest = config == null || config.NearestTargetFirst;
             int count = TargetSelector.Select(TargetRegistry.Targets, screenPos, radius, justice,
                 weapon.MaxTargetsPerShot, projectFunc, hits, bodyHit ? bodyRectFunc : null, nearest ? depthFunc : null);
+
+            bool barrelOn = config == null || config.BarrelPriority;
+            if (BarrelPriority.Applies(barrelOn, weapon.MaxTargetsPerShot, count, count > 0 && hits[0].Justice))
+            {
+                barrelPadPx = (config != null ? config.BarrelHitPaddingPx : CombatConfig.DefaultBarrelHitPaddingPx) * scale;
+                barrelRay = cam.ScreenPointToRay(screenPos);
+                if (barrelRectFunc == null) { barrelRectFunc = BarrelRect; barrelOccludedFunc = BarrelOccluded; barrelDepthFunc = BarrelDepth; }
+                var barrel = BarrelPriority.Pick(PriorityShootables.Items, screenPos, barrelRectFunc, barrelOccludedFunc, barrelDepthFunc);
+                if (barrel != null) { ResolveBarrel(screenPos, barrel); return null; }
+            }
 
             if (count == 0) { ResolveEnvironment(screenPos); return null; }
 
@@ -388,6 +460,11 @@ namespace ClaudeCop.Combat
                 }
             }
 
+            EmitEnvironmentResult(screenPos, point, rayHit, shootableHit);
+        }
+
+        void EmitEnvironmentResult(Vector2 screenPos, Vector3 point, bool rayHit, bool shootableHit)
+        {
             // C9: Environment chi khi trung IShootable (giu combo); tuong tro/khong trung gi = Miss (reset combo).
             TapOutcome outcome = ShotClassifier.ClassifyEnvironment(rayHit, shootableHit);
             float mult = combo != null ? combo.RegisterShot(outcome, ShotClassifier.KeepsCombo(outcome)) : CombatEvents.Current.ComboMultiplier;

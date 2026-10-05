@@ -47,6 +47,16 @@ namespace ClaudeCop.Camera
         float transitionRemaining;  // giay unscaled con phai cho (hold + fadeIn) sau khi cut sang Phase moi
         bool transitionPending;
         CameraPoseSmoother smoother;
+        CameraReaction reaction;
+        CameraKick kick;
+        bool reactionOk;       // true tu luc toi diem (ArmFeel) den luc Activate camera ke tiep
+        float comboTarget, comboVel;
+
+        /// <summary>CAM-LIVELY: logic reaction (do dem/bien do).</summary>
+        public CameraReaction Reaction => reaction;
+
+        /// <summary>CAM-VC2: logic giat khi ban (do dem/bien do).</summary>
+        public CameraKick Kick => kick;
 
         /// <summary>Luoi an toan van toc/gia toc cuoi pipeline (CAM-SMOOTH). Dung de do/debug.</summary>
         public CameraPoseSmoother Smoother => smoother;
@@ -88,6 +98,8 @@ namespace ClaudeCop.Camera
             }
             outCam = brain != null ? brain.GetComponent<UnityEngine.Camera>() : UnityEngine.Camera.main;
             if (brain != null && smoother == null) { smoother = new CameraPoseSmoother(brain, profile); smoother.Enable(); }
+            if (reaction == null) reaction = new CameraReaction(profile);
+            if (kick == null) kick = new CameraKick(profile);
             ReframeShots();
         }
 
@@ -130,6 +142,9 @@ namespace ClaudeCop.Camera
             BlastEvents.Blasted += OnBlasted;
             GameEvents.GameStateChanged += OnGameStateChanged;
             CombatEvents.ShotResolved += OnShotResolved;
+            CombatEvents.ShotFired += OnShotFired;
+            CombatEvents.ComboChanged += OnComboChanged;
+            TargetRegistry.Registered += OnTargetRegistered;
         }
 
         void OnDisable()
@@ -139,6 +154,10 @@ namespace ClaudeCop.Camera
             BlastEvents.Blasted -= OnBlasted;
             GameEvents.GameStateChanged -= OnGameStateChanged;
             CombatEvents.ShotResolved -= OnShotResolved;
+            CombatEvents.ShotFired -= OnShotFired;
+            CombatEvents.ComboChanged -= OnComboChanged;
+            TargetRegistry.Registered -= OnTargetRegistered;
+            reaction?.Cancel(); kick?.Cancel(); CameraFeelState.KickTarget = Vector2.zero; CameraFeelState.ReactTarget = Vector3.zero; CameraFeelState.ComboDolly = 0f;
             ReleasePause();
             ReleaseTransitionPause();
             SlowZoom.EndKill();
@@ -149,11 +168,54 @@ namespace ClaudeCop.Camera
             started = false;
         }
 
+        /// <summary>CAM-VC2: giat nhe khi ban. Tap dung Camera.main luc nay (giat chi ap sau, bien do nho); tat/giam khi Giam chuyen dong.</summary>
+        void OnShotFired(WeaponKind weapon, Vector2 screenPos)
+        {
+            if (profile == null || kick == null) return;
+            kick.Fire(Time.time, weapon, UserSettings.ReduceMotion ? profile.kickReduceMotionScale : 1f);
+        }
+
         void OnShotResolved(ShotResult r)
         {
             if (profile == null || UserSettings.ReduceMotion) return;
             if (r.TargetKind == TargetKind.Grenade) return;
             if (r.Outcome == TapOutcome.Kill || r.Outcome == TapOutcome.JusticeKill) SlowZoom.Punch(profile, Time.time, r.Outcome == TapOutcome.JusticeKill);
+        }
+
+        void OnComboChanged(int streak, float mult)
+        {
+            if (profile == null) return;
+            comboTarget = Mathf.Min(profile.comboDollyFov, Mathf.Max(0, streak - 1) * profile.comboDollyPerCombo);
+        }
+
+        /// <summary>Enemy MOI lo ra (targetable lan dau) lech truc camera: gop vao reaction (giat minh quay sang).</summary>
+        void OnTargetRegistered(ITapTarget t)
+        {
+            if (reaction == null || !reactionOk || t == null || t.Kind != TargetKind.Enemy || outCam == null) return;
+            Vector3 local = Quaternion.Inverse(outCam.transform.rotation) * (t.AimPoint - outCam.transform.position);
+            if (local.z < 1f) return;
+            reaction.Notify(Time.time, Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg, Mathf.Atan2(local.y, local.z) * Mathf.Rad2Deg);
+        }
+
+        void TickLiveliness()
+        {
+            bool reduce = UserSettings.ReduceMotion;
+            // dolly-in theo combo (ease ra khi het dot), tat khi Giam chuyen dong
+            float tgt = (reduce || !CameraFeelState.Combat) ? 0f : comboTarget;
+            CameraFeelState.ComboDolly = Mathf.SmoothDamp(CameraFeelState.ComboDolly, tgt, ref comboVel, profile.comboDollySmooth, Mathf.Infinity, Time.deltaTime);
+            if (reaction == null) return;
+            bool allowed = reactionOk && CameraFeelState.Combat && brain != null && !brain.IsBlending && !pauseHeld && !transitionPauseHeld && !transitionPending && !SlowZoom.KillZoomActive;
+            reaction.Tick(Time.time, allowed, reduce ? profile.reactReduceMotionScale : 1f);
+            Vector3 t = reaction.Target;
+            // khong chong len punch ha enemy: giam punch FOV cua reaction theo do lech punch dang chay
+            if (profile.punchFov > 0f) t.z *= 1f - Mathf.Clamp01(SlowZoom.PunchOffset(Time.time) / profile.punchFov);
+            CameraFeelState.ReactTarget = t;
+
+            // CAM-VC2: giat khi ban. Giam khi reaction / kill-zoom dang chay (uu tien chung: khong chong len nhau).
+            float busy = Mathf.Clamp01((Mathf.Abs(t.x) + Mathf.Abs(t.y)) / Mathf.Max(0.1f, profile.kickReactRef));
+            if (SlowZoom.KillZoomActive) busy = 1f;
+            float damp = 1f - busy * (1f - profile.kickReactDamp);
+            CameraFeelState.KickTarget = kick != null && profile.kickEnabled ? kick.Evaluate(Time.time, damp) : Vector2.zero;
         }
 
         void OnGameStateChanged(GameState s)
@@ -181,6 +243,7 @@ namespace ClaudeCop.Camera
             driver?.Tick(Time.deltaTime);
             CameraFeelState.MoveSpeed = driver != null && driver.Active ? driver.CurrentSpeed : 0f;
             CameraFeelState.Tick(Time.deltaTime, profile);
+            TickLiveliness();
         }
 
         // ---------------- Luong chay ----------------
@@ -273,6 +336,13 @@ namespace ClaudeCop.Camera
             SlowZoom.EndKill(); // camera cu da blend xong
             if (transitionPending) yield return FinishPhaseTransition();
 
+            // CAM-VC2: nhin truoc shot Combat ke trong cung Phase (khop dung huong shot khi toi)
+            var nextShot = si + 1 < phases[pi].shots.Count ? phases[pi].shots[si + 1] : null;
+            if (nextShot != null && nextShot.kind == ShotKind.Combat && nextShot.VCam != null)
+            {
+                Vector3 nf = nextShot.VCam.transform.forward;
+                driver.SetNextLook(Mathf.Atan2(nf.x, nf.z) * Mathf.Rad2Deg, -Mathf.Asin(Mathf.Clamp(nf.y, -1f, 1f)) * Mathf.Rad2Deg);
+            }
             driver.StartMoving();
             while (!driver.Finished) yield return null;
         }
@@ -329,6 +399,7 @@ namespace ClaudeCop.Camera
                 yield return null;
             }
             enc.Cleared -= onCleared;
+            comboTarget = 0f; reactionOk = false; // het dot: ease ra dolly combo, khong reaction nua
             activeEnc = null; activeOnCleared = null;
             RailEvents.RaiseEncounterCleared(enc);
             // Zoom nhe vao vi tri kill cuoi roi moi chuyen goc (tat khi Giam chuyen dong)
@@ -382,6 +453,7 @@ namespace ClaudeCop.Camera
         {
             if (brain != null)
                 brain.DefaultBlend = new CinemachineBlendDefinition(cut ? CinemachineBlendDefinition.Styles.Cut : profile.blendStyle, blendTime);
+            reactionOk = false; reaction?.Cancel();
             if (active != null) active.Priority.Value = 0;
             cam.Priority.Value = ActivePriority;
             active = cam;
@@ -398,9 +470,10 @@ namespace ClaudeCop.Camera
             ReleasePause();
         }
 
-        static void ArmFeel(CinemachineVirtualCameraBase cam)
+        void ArmFeel(CinemachineVirtualCameraBase cam)
         {
             if (cam == null) return;
+            reactionOk = true;
             var ap = cam.GetComponent<CameraFeelApplier>();
             if (ap != null) ap.Arm(Time.time);
         }

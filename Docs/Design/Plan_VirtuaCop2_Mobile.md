@@ -43,7 +43,7 @@ Mọi thông số nằm trong một ScriptableObject `CameraFeelProfile` để c
 - **Zoom:**
   - Dolly-in trong lúc giao tranh thu FOV tổng cộng không quá 8–10 độ.
   - Khi hạ enemy cuối của một đợt, có cú "zoom punch": giảm FOV 5 độ trong 0.15 giây, trả lại trong 0.4 giây.
-- **Rung camera khi bị bắn:** ngắn 0.2 giây, biên độ vừa phải. Bắn súng không làm rung camera, để người chơi tap vẫn chính xác.
+- **Rung camera khi bị bắn:** ngắn 0.2 giây, biên độ vừa phải. Bắn súng chỉ giật rất nhẹ (CAM-VC2): ngẩng 0.3–0.6°, punch FOV ≤ 0.5°, hồi ~0.1 s, tắt khi Giảm chuyển động; số trong `CameraFeelProfile` (kick*), đủ nhỏ để tap vẫn chính xác.
 - **Nhịp của một Phase:**
   1. Di chuyển 3–5 giây (tối đa 6 giây).
   2. Giao tranh 8–15 giây.

@@ -9,7 +9,7 @@ namespace ClaudeCop.Props
     /// roi phat <see cref="BlastEvents"/>. Khong tu cong diem, khong cham GameEvents/CombatEvents.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ExplosiveBarrel : MonoBehaviour, IShootable
+    public sealed class ExplosiveBarrel : MonoBehaviour, IShootable, IPriorityShootable
     {
         [SerializeField] PropConfig config;
         [Tooltip("Phan hinh anh bi an khi no. Rong thi khong an.")]
@@ -26,13 +26,32 @@ namespace ClaudeCop.Props
 
         public bool Exploded => exploded;
         public int BlastId => GetInstanceID();
+        public bool IsPriorityLive => !exploded && gameObject.activeInHierarchy;
+        public Bounds PriorityBounds
+        {
+            get
+            {
+                bool any = false; Bounds b = new Bounds(transform.position, Vector3.zero);
+                if (colliders == null) return b;
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    var c = colliders[i];
+                    if (c == null || !c.enabled || c.isTrigger) continue;
+                    if (!any) { b = c.bounds; any = true; } else b.Encapsulate(c.bounds);
+                }
+                return b;
+            }
+        }
         PropConfig Cfg => config != null ? config : PropConfig.Fallback;
 
         void Awake()
         {
             enabled = false;
             if (colliders == null || colliders.Length == 0) colliders = GetComponentsInChildren<Collider>(true);
+            PriorityShootables.Register(this);
         }
+
+        void OnDestroy() { PriorityShootables.Unregister(this); }
 
         public void OnShot(ShotInfo shot) { Explode(); }
 
