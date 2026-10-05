@@ -57,14 +57,16 @@ namespace ClaudeCop.Camera
         [Tooltip("Goc xoay toi da ve phia vi tri kill (do)")] public float killZoomMaxTurn = 4f;
 
         [Header("Chuyen Phase")]
+        [Tooltip("Bat: doi Phase LIEN MACH - khong fade den, khong Cut; ray noi tiep tu Shot cuoi Phase truoc sang Phase moi, tieu de Phase hien chong len canh dang chay (banner chu). Tat: kieu cu (fade den + Cut). phaseFade*/phaseHold/reduceMotionFade chi dung khi tat.")]
+        public bool seamlessPhaseTransitions = true;
         public float phaseFadeOut = 0.4f;
         public float phaseHold = 1.0f;
         public float phaseFadeIn = 0.4f;
         [Tooltip("Giam chuyen dong: fade vao/ra ngan hon (s)")] public float reduceMotionFade = 0.2f;
 
         [Header("Nhip ray")]
-        [Tooltip("Doan Move dai hon thi tang toc do (toi da maxRailSpeed) de khong qua nay (s). Plan: <= 6 s")] public float maxMoveSeconds = 5.8f;
-        [Tooltip("Toc do ray toi da khi bi tang de giu maxMoveSeconds (m/s). Plan: 3-4 m/s")] public float maxRailSpeed = 4.5f;
+        [Tooltip("Doan Move dai hon thi tang toc do (toi da maxRailSpeed) de khong qua nay (s). Plan: <= 6 s")] public float maxMoveSeconds = 6f;
+        [Tooltip("Toc do ray toi da khi bi tang de giu maxMoveSeconds (m/s). Plan: 3-4 m/s. Shot co speedOverride > 0 BO QUA tran nay co chu y (Level 1: P3_S1/P3_S5 = 4.8 de doan Move <= 6 s).")] public float maxRailSpeed = 4.5f;
 
         [Header("Man hinh doc")]
         [Tooltip("Ti le khung hinh luc dat FOV cua cac Shot (rong/cao). FOV trong Shot/baseFov la FOV doc o ti le nay.")]

@@ -19,6 +19,8 @@ namespace ClaudeCop.Enemy
         public bool ShowsReticle => State == EnemyState.Aiming;
         public bool IsActivated => activated;
         public int Volleys { get; private set; }
+        /// <summary>Enemy dung san (SceneStanding): ActivateStanding bo qua pha lo, vao thang Aiming; het vong thi ban roi ngam lai (khong rut xuong).</summary>
+        public bool StandsGround { get; set; }
 
         /// <summary>Goi khi enemy vua tro nen ban duoc (de dang ky target). Luon di cap voi AimEnded.</summary>
         public System.Action AimStarted;
@@ -42,6 +44,16 @@ namespace ClaudeCop.Enemy
             if (State != EnemyState.Hidden || activated) return;
             activated = true;
             StartPeek();
+        }
+
+        /// <summary>Kich hoat enemy dung san: vao thang Aiming (PeekT = 1), vong target bat dau ngay. Chi tu Hidden, chua kich hoat.</summary>
+        public void ActivateStanding()
+        {
+            if (State != EnemyState.Hidden || activated) return;
+            activated = true;
+            State = EnemyState.Aiming;
+            PeekT = 1f; timer = 0f; ReticleProgress = 0f; ExposedTime = 0f;
+            BeginTargetable();
         }
 
         public bool Kill()
@@ -79,7 +91,9 @@ namespace ClaudeCop.Enemy
                     if (ReticleProgress >= 1f)
                     {
                         Volleys++;
-                        State = EnemyState.Retreating; timer = 0f;
+                        timer = 0f;
+                        if (StandsGround) { ReticleProgress = 0f; Fired?.Invoke(); break; }
+                        State = EnemyState.Retreating;
                         Fired?.Invoke();
                     }
                     break;

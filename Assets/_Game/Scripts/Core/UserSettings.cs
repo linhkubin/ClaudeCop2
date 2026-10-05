@@ -32,6 +32,9 @@ namespace ClaudeCop.Core
             }
         }
 
+        /// <summary>Chi cho debug/bot do: doi gia tri trong bo nho, KHONG ghi PlayerPrefs, khong phat Changed.</summary>
+        public static void SetRuntimeOnly(bool value) { reduceMotion = value; loaded = true; }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { loaded = false; reduceMotion = false; Changed = null; }
     }

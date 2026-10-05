@@ -24,6 +24,7 @@ namespace ClaudeCop.Game.Debugging
         [Tooltip("W7: khong ban Grenadier de no nem luu dan (tu tat sau khi da thu bo mac + ban roi).")] public bool grenadierWait;
         [Tooltip("W7: bo mac luu dan (khong ban) de mat 1 mang.")] public bool ignoreGrenade;
         public bool shootHostageOnce, pickupFirst = true, autoStart = true, shots = true;
+        [Tooltip("Bot do: tat Giam chuyen dong luc runtime (khong ghi PlayerPrefs) de do cam giac day du.")] public bool reduceMotionOff = false;
         public string dir = "";
         public string logFile = "";
 
@@ -50,6 +51,7 @@ namespace ClaudeCop.Game.Debugging
         void OnEnable()
         {
             Application.runInBackground = true;
+            if (reduceMotionOff) UserSettings.SetRuntimeOnly(false);
             DontDestroyOnLoad(gameObject);
             StartCoroutine(RateProbe());
             hPhase = (i, t) => { phase = i; Log("PHASE " + i + " " + t); };

@@ -12,6 +12,8 @@ namespace ClaudeCop.Core
         public static event Action<int, string> PhaseStarted;
         /// <summary>(title, fadeOut, hold, fadeIn) - giay.</summary>
         public static event Action<string, float, float, float> PhaseTransition;
+        /// <summary>Doi Phase LIEN MACH (seamlessPhaseTransitions): tieu de Phase hien chu chong len canh dang chay, khong man den.</summary>
+        public static event Action<string> PhaseBanner;
         /// <summary>Encounter sap toi, hoac null neu doan di chuyen khong dan toi giao tranh.</summary>
         public static event Action<EncounterBase> MoveSegmentStarted;
         public static event Action<EncounterBase> EncounterStarted;
@@ -20,6 +22,7 @@ namespace ClaudeCop.Core
 
         public static void RaisePhaseStarted(int index, string title) => PhaseStarted?.Invoke(index, title);
         public static void RaisePhaseTransition(string title, float fadeOut, float hold, float fadeIn) => PhaseTransition?.Invoke(title, fadeOut, hold, fadeIn);
+        public static void RaisePhaseBanner(string title) => PhaseBanner?.Invoke(title);
         public static void RaiseMoveSegmentStarted(EncounterBase upcoming) => MoveSegmentStarted?.Invoke(upcoming);
         public static void RaiseEncounterStarted(EncounterBase e) => EncounterStarted?.Invoke(e);
         public static void RaiseEncounterCleared(EncounterBase e) => EncounterCleared?.Invoke(e);
@@ -28,7 +31,7 @@ namespace ClaudeCop.Core
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            PhaseStarted = null; PhaseTransition = null; MoveSegmentStarted = null;
+            PhaseStarted = null; PhaseTransition = null; PhaseBanner = null; MoveSegmentStarted = null;
             EncounterStarted = null; EncounterCleared = null; LevelCompleted = null;
         }
     }

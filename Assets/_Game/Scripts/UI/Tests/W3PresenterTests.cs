@@ -183,6 +183,20 @@ namespace ClaudeCop.UI.Tests
             Assert.AreEqual(1f, v.BlackAlpha, 0.01f);   // van la fade den, khong bi banner de
         }
 
+        [Test]
+        public void Phase_Banner_Seamless_Shows_Title_Without_Black()
+        {
+            Spawn("PhaseFade");
+            var v = go.GetComponent<PhaseTransitionView>(); var pr = go.GetComponent<PhaseTransitionPresenter>();
+            RailEvents.RaisePhaseStarted(1, "STAGE 1-2");   // Phase sau: khong tu hien banner, cho PhaseBanner
+            pr.FlushPending();
+            Assert.IsFalse(v.IsPlaying);
+            RailEvents.RaisePhaseBanner("STAGE 1-2");
+            Assert.IsTrue(v.IsPlaying); Assert.AreEqual("STAGE 1-2", v.TitleString);
+            for (int i = 0; i < 40; i++) { v.Tick(0.05f); Assert.AreEqual(0f, v.BlackAlpha, "khong bao gio co lop den"); }
+            Assert.IsFalse(v.IsPlaying);   // tu an sau ~2 s
+        }
+
         // ---------- FloatingScore ----------
         [Test]
         public void FloatingScore_Spawn_Pool_Is_Bounded_And_Recycles()

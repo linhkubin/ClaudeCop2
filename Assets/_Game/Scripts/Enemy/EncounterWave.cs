@@ -37,10 +37,14 @@ namespace ClaudeCop.Enemy
         [SerializeField] List<HostageActor> sceneHostages = new List<HostageActor>();
         [SerializeField] List<Transform> hostageSpawnPoints = new List<Transform>();
         [SerializeField] HostageActor hostagePrefab;
+        [Tooltip("Con tin dung im tai cho den het dot (khong tu thut vao/bien mat); het dot thi dung im, khong ban duoc.")]
+        [SerializeField] bool hostagesStandStill = true;
         [Header("Pickup (GameObject co WeaponPickup)")]
         [SerializeField] List<GameObject> scenePickups = new List<GameObject>();
         [SerializeField] List<Transform> pickupSpawnPoints = new List<Transform>();
         [SerializeField] GameObject pickupPrefab;
+        [Tooltip("So enemy toi da song cung luc trong dot (<= 0 = khong gioi han). Enemy ke tiep cho den khi co cho trong.")]
+        [SerializeField] int maxConcurrent;
         [SerializeField, TextArea] string description;
 
         struct Slot { public EnemyActor enemy; public HostageActor hostage; }
@@ -241,6 +245,7 @@ namespace ClaudeCop.Enemy
             active = true;
             lastKillPos = transform.position;
             nextIndex = 0;
+            foreach (var e in queue) if (e != null && e.SceneStanding) e.Activate();
             ActivateNext();   // phan tu dau lo ngay (dot khong enemy: LateUpdate se phat Cleared)
         }
 
@@ -281,19 +286,22 @@ namespace ClaudeCop.Enemy
             if (useHostages)
             {
                 foreach (var h in sceneHostages)
-                    if (h != null) { hostages.Add(h); if (config != null) h.ApplyConfig(config); }
+                    if (h != null) { hostages.Add(h); if (config != null) h.ApplyConfig(config); h.SetStandStill(hostagesStandStill); }
                 foreach (var h in spawnedHostages)
                 {
                     if (h == null) continue;
                     if (config != null) h.ApplyConfig(config);
                     h.gameObject.SetActive(true);
+                    h.SetStandStill(hostagesStandStill);
                     hostages.Add(h);
                 }
             }
 
             // Thu tu kich hoat: enemy theo thu tu, con tin chen deu giua cac enemy.
-            int ec = queue.Count, hc = hostages.Count;
-            for (int i = 0; i < ec; i++) sequence.Add(new Slot { enemy = queue[i] });
+            int ec = 0, hc = hostages.Count;
+            foreach (var q in queue) if (!q.SceneStanding) ec++;
+            // Enemy dung san: ban duoc ngay khi dot bat dau (Begin kich hoat het), khong xep hang so le.
+            for (int i = 0; i < queue.Count; i++) if (!queue[i].SceneStanding) sequence.Add(new Slot { enemy = queue[i] });
             for (int k = 0; k < hc; k++)
             {
                 int at = Mathf.Clamp(Mathf.RoundToInt((k + 1) * (float)ec / (hc + 1)) + k, 0, sequence.Count);
@@ -336,10 +344,24 @@ namespace ClaudeCop.Enemy
         {
             if (!active || cleared || nextIndex >= sequence.Count) return;
             countdown -= dt;
-            if (countdown <= 0f) ActivateNext();
+            if (countdown > 0f) return;
+            if (maxConcurrent > 0 && ActivatedAliveCount() >= maxConcurrent) return; // cho co cho trong, giu countdown <= 0
+            ActivateNext();
         }
 
         void LateUpdate() { FlushClear(); }
+
+        int ActivatedAliveCount()
+        {
+            int n = 0;
+            foreach (var q in queue) if (q != null && q.SceneStanding && !q.IsDead) n++;
+            for (int i = 0; i < nextIndex && i < sequence.Count; i++)
+            {
+                var e = sequence[i].enemy;
+                if (e != null && !e.IsDead) n++;
+            }
+            return n;
+        }
 
         bool HasEnemyToActivate()
         {
@@ -361,8 +383,22 @@ namespace ClaudeCop.Enemy
 
         void DismissExtras()
         {
-            foreach (var h in hostages) if (h != null && h.gameObject.activeSelf) h.Dismiss();
-            foreach (var p in pickups) if (p != null) p.SetActive(false);
+            foreach (var h in hostages) if (h != null && h.gameObject.activeSelf) h.Freeze();
+            if (pickups.Count > 0) StartCoroutine(SinkPickups(new List<GameObject>(pickups)));
+        }
+
+        /// <summary>Thung vu khi chim xuong roi tat sau khi dot xong (khong bien mat dot ngot).</summary>
+        System.Collections.IEnumerator SinkPickups(List<GameObject> items)
+        {
+            var from = new List<Vector3>();
+            foreach (var g in items) from.Add(g != null ? g.transform.position : Vector3.zero);
+            for (float t = 0f; t < 0.7f; t += Time.deltaTime)
+            {
+                float k = t / 0.7f;
+                for (int i = 0; i < items.Count; i++) if (items[i] != null) items[i].transform.position = from[i] + Vector3.down * 1.5f * k;
+                yield return null;
+            }
+            for (int i = 0; i < items.Count; i++) if (items[i] != null) { items[i].SetActive(false); items[i].transform.position = from[i]; }
         }
 
         void OnGrenadeThrown(EnemyActor e, Grenade g)

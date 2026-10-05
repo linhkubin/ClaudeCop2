@@ -15,7 +15,7 @@ namespace ClaudeCop.Camera
     }
 
     /// <summary>
-    /// Chay man choi: Phase -> Shot tuan tu. Move: di theo spline (ease) roi sang Shot ke. Combat: Begin encounter, cho Cleared,
+    /// Chay man choi: Phase -> Shot tuan tu. Doi Phase mac dinh LIEN MACH (profile.seamlessPhaseTransitions): khong fade den, khong Cut. Move: di theo spline (ease) roi sang Shot ke. Combat: Begin encounter, cho Cleared,
     /// nghi restAfterClear, sang Shot ke. Raise RailEvents. Blend/Cut giua cac Shot va goc phu: CombatPauseSignal.Push("CameraBlend").
     /// Rig: 1 CinemachineBrain tren Main Camera; 1 CinemachineCamera "Rail" (SplineDolly) tai su dung cho moi Shot Move
     /// (doi Spline); moi Shot Combat (va goc phu) co CinemachineCamera rieng, chuyen bang Priority (10 = active, 0 = khac).
@@ -46,6 +46,8 @@ namespace ClaudeCop.Camera
         bool forceCutNext;          // shot dau cua Phase moi: Cut trong luc man den
         float transitionRemaining;  // giay unscaled con phai cho (hold + fadeIn) sau khi cut sang Phase moi
         bool transitionPending;
+        string pendingBannerTitle;  // SEAMLESS: tieu de Phase cho hien khi ray vao Phase moi bat dau chay
+        readonly PhaseBannerGate bannerGate = new PhaseBannerGate(); // moi Phase chi hien chu stage dung 1 lan
         CameraPoseSmoother smoother;
         CameraReaction reaction;
         CameraKick kick;
@@ -73,6 +75,7 @@ namespace ClaudeCop.Camera
             if (started) return;
             Init();
             started = true;
+            bannerGate.Reset(); bannerGate.TryShow(0); // Phase 0: UI tu hien qua PhaseStarted
             routine = StartCoroutine(Run());
         }
 
@@ -254,7 +257,11 @@ namespace ClaudeCop.Camera
                 CurrentPhaseIndex = pi;
                 var phase = phases[pi];
                 RailEvents.RaisePhaseStarted(pi, phase.title);
-                if (pi > 0) yield return BeginPhaseTransition(phase.title);
+                if (pi > 0)
+                {
+                    if (profile.seamlessPhaseTransitions) { if (bannerGate.TryShow(pi)) pendingBannerTitle = phase.title; } // lien mach: khong fade, khong Cut
+                    else yield return BeginPhaseTransition(phase.title);
+                }
 
                 ShotKind prevKind = ShotKind.Move;
                 for (int si = 0; si < phase.shots.Count; si++)
@@ -266,7 +273,8 @@ namespace ClaudeCop.Camera
                     else yield return RunCombat(shot, prevKind);
                     prevKind = shot.kind;
                 }
-                if (transitionPending) yield return FinishPhaseTransition(); // Phase khong co Shot chay duoc
+                FlushPhaseBanner();
+            if (transitionPending) yield return FinishPhaseTransition(); // Phase khong co Shot chay duoc
             }
             CurrentShot = null;
             LevelFinished = true;
@@ -290,6 +298,14 @@ namespace ClaudeCop.Camera
             forceCutNext = true;
             transitionRemaining = hold + fi;
             transitionPending = true;
+        }
+
+        /// <summary>SEAMLESS: hien tieu de Phase chong len canh dang chay (goi khi ray bat dau chay / toi diem Combat dau Phase).</summary>
+        void FlushPhaseBanner()
+        {
+            if (pendingBannerTitle == null) return;
+            string t = pendingBannerTitle; pendingBannerTitle = null;
+            RailEvents.RaisePhaseBanner(t);
         }
 
         IEnumerator FinishPhaseTransition()
@@ -328,7 +344,8 @@ namespace ClaudeCop.Camera
             forceCutNext = false;
             // Camera ray dat san theo huong tiep tuyen dau ray; viec xoay tu goc Combat sang huong ray do blend Cinemachine
             // (EaseInOut, thoi gian tu co gian theo goc) thuc hien - truoc day ray tu xoay sau khi toi noi voi toc do/gia toc cao.
-            if (!sameCam) driver.Prepare(shot.spline, shot.speedOverride, Quaternion.LookRotation(startFwd));
+            bool keyed = shot.lookKeys != null && shot.lookKeys.Count > 0; // huong nhin theo moc: giu huong camera luc vao ray, khong xoay ve tiep tuyen
+            if (!sameCam && !keyed) driver.Prepare(shot.spline, shot.speedOverride, Quaternion.LookRotation(startFwd));
             if (snap) smoother?.RequestSnap(railCamera);
             float bt = ScaleBlend(shot.ResolveBlend(profile), railCamera, cut);
             Activate(railCamera, cut, bt);
@@ -343,7 +360,9 @@ namespace ClaudeCop.Camera
                 Vector3 nf = nextShot.VCam.transform.forward;
                 driver.SetNextLook(Mathf.Atan2(nf.x, nf.z) * Mathf.Rad2Deg, -Mathf.Asin(Mathf.Clamp(nf.y, -1f, 1f)) * Mathf.Rad2Deg);
             }
+            driver.SetLookKeys(keyed ? shot.lookKeys : null);
             driver.StartMoving();
+            FlushPhaseBanner();
             while (!driver.Finished) yield return null;
         }
 
@@ -365,8 +384,17 @@ namespace ClaudeCop.Camera
             SlowZoom.EndKill(); // camera cu da blend xong
             if (transitionPending) yield return FinishPhaseTransition();
             ArmFeel(cam); // toi diem: bat dau settle -> giu khung -> push-in (chi zoom-in)
+            FlushPhaseBanner();
 
             var enc = shot.encounter;
+            if (enc == null && shot.dwell > 0f)
+            {
+                // Nhip giam tai: giu goc nay mot luc (reload tu nhien), khong co encounter.
+                comboTarget = 0f;
+                yield return new WaitForSeconds(shot.dwell);
+                reactionOk = false;
+                yield break;
+            }
             if (enc == null)
             {
                 Debug.LogWarning("[PhaseDirector] Shot Combat '" + shot.name + "' khong co EncounterBase, bo qua.", shot);

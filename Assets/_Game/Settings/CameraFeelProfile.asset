@@ -51,6 +51,7 @@ MonoBehaviour:
   killZoomDuration: 0.6
   killZoomAimBlend: 0.25
   killZoomMaxTurn: 2.5
+  seamlessPhaseTransitions: 1
   phaseFadeOut: 0.4
   phaseHold: 1
   phaseFadeIn: 0.4
@@ -62,17 +63,19 @@ MonoBehaviour:
   maxVerticalFov: 45
   autoFrame: 1
   frameMargin: 5
+  autoFrameBlockMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   frameMaxYaw: 12
   frameMaxPullBack: 2.5
+  frameExtraFov: 5
+  liveReframeRate: 3
   trackTargets: 1
   trackMaxYaw: 8
   trackSpeed: 12
   trackSmoothTime: 1
   trackMargin: 1.5
   trackMinDepth: 3
-  autoFrameBlockMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
   hitShakeDuration: 0.2
   hitShakePosition: 0.04
   hitShakeAngle: 1.2
@@ -81,8 +84,6 @@ MonoBehaviour:
   explosionShakeScale: 0.6
   explosionShakeDuration: 0.25
   explosionShakeOffWhenReduceMotion: 1
-  rollSmoothTime: 0.3
-  blendWaitMargin: 0.5
   smootherEnabled: 1
   smoothMaxAngVel: 70
   smoothMaxAngAcc: 260
@@ -116,3 +117,30 @@ MonoBehaviour:
   reactMaxFovRate: 40
   reactMaxFovAcc: 500
   reactReduceMotionScale: 0
+  kickEnabled: 1
+  kickPitch: 0.4
+  kickFov: 0.3
+  kickRise: 0.03
+  kickFall: 0.09
+  kickScalePistol: 1
+  kickScaleShotgun: 1.5
+  kickScaleMachineGun: 0.45
+  kickMaxPitch: 0.8
+  kickMaxFov: 0.5
+  kickReduceMotionScale: 0
+  kickReactRef: 2
+  kickReactDamp: 0.3
+  kickMaxAngVel: 120
+  kickMaxAngAcc: 6000
+  kickMaxFovRate: 20
+  kickMaxFovAcc: 1500
+  railCurveEnabled: 1
+  railAccelTime: 0.8
+  railDecelFraction: 0.25
+  railCurveMaxSpeed: 5.5
+  lookNextStart: 0.7
+  lookNextWeight: 1
+  lookNextDamping: 0.55
+  lookNextMaxYawRate: 40
+  rollSmoothTime: 0.3
+  blendWaitMargin: 0.5

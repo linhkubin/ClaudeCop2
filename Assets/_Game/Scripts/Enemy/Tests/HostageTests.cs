@@ -211,8 +211,9 @@ namespace ClaudeCop.Enemy.Tests
             Kill(e);
             w.FlushClear();
             Assert.AreEqual(1, cleared, "con tin dang lo khong chan Cleared");
-            Assert.IsFalse(h.gameObject.activeSelf, "con tin bi huy bo khi dot xong");
             Assert.AreEqual(0, w.ActiveHostageCount);
+            Assert.IsTrue(h.gameObject.activeSelf, "con tin dung im, khong tat dot ngot");
+            Assert.IsFalse(h.IsTargetable, "het dot: khong ban duoc nua");
         }
 
         [Test]

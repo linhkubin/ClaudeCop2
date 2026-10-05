@@ -1,0 +1,118 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74414920e478c53418a22e715de9ebea, type: 3}
+  m_Name: LevelValidationRules
+  m_EditorClassIdentifier: ClaudeCop.Game::ClaudeCop.Game.Validation.LevelValidationRules
+  minTargetDistance: 12
+  minPickupDistance: 8
+  aimHeight: 1.5
+  aspectPortrait: 0.5625
+  aspectTall: 0.46153846
+  maxVerticalFov: 45
+  fovMarginDeg: 5
+  maxHorizontalOffsetDeg: 5.5
+  maxClusterWidthDeg: 21
+  sightlineMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  sightlineEndTolerance: 0.3
+  sightlineIgnorePrefixes:
+  - Prop_Glass
+  - PropSlot_Glass
+  railJoinPosTolerance: 0.05
+  railJoinAngleTolerance: 0.5
+  combatPairMaxAngle: 30
+  combatPairMaxDistance: 1
+  maxMoveSeconds: 6
+  maxCumulativeYaw: 150
+  turnReversalMinDeg: 15
+  maxTurnReversals: 4
+  routeMinSegment: 0.5
+  railSamples: 16
+  levelRules:
+  - sceneNameContains: Level_01
+    forbidHostage: 1
+    forbidBarrel: 1
+    forbidWeaponCrate: 1
+    forbidHumanShield: 1
+    forbidGrenadier: 1
+    maxEnemiesPerWave: 4
+    maxEnemiesTotal: 24
+    maxConcurrentCap: 3
+  - sceneNameContains: Level_02
+    forbidHostage: 0
+    forbidBarrel: 1
+    forbidWeaponCrate: 1
+    forbidHumanShield: 1
+    forbidGrenadier: 1
+    maxEnemiesPerWave: 4
+    maxEnemiesTotal: 28
+    maxConcurrentCap: 3
+  fallbackRule:
+    sceneNameContains: 
+    forbidHostage: 0
+    forbidBarrel: 0
+    forbidWeaponCrate: 0
+    forbidHumanShield: 0
+    forbidGrenadier: 0
+    maxEnemiesPerWave: 8
+    maxEnemiesTotal: 80
+    maxConcurrentCap: 6
+  hostagePrefixes:
+  - HostageSpawn_
+  barrelPrefixes:
+  - PropSlot_Barrel_
+  - Prop_Barrel_
+  weaponCratePrefixes:
+  - PickupSpawn_
+  humanShieldPrefixes:
+  - ShieldSpawn_
+  grenadierPrefixes:
+  - GrenadierSpawn_
+  nameRules:
+  - label: EnemySpawn
+    prefix: EnemySpawn_
+    regex: ^EnemySpawn_P\d+_W\d+_\d+$
+  - label: HostageSpawn
+    prefix: HostageSpawn_
+    regex: ^HostageSpawn_P\d+_W\d+_\d+$
+  - label: GrenadierSpawn
+    prefix: GrenadierSpawn_
+    regex: ^GrenadierSpawn_P\d+_W\d+_\d+$
+  - label: ShieldSpawn
+    prefix: ShieldSpawn_
+    regex: ^ShieldSpawn_P\d+_W\d+_\d+$
+  - label: PickupSpawn
+    prefix: PickupSpawn_
+    regex: ^PickupSpawn_P\d+_W\d+_\d+$
+  - label: PropSlot
+    prefix: PropSlot_
+    regex: ^PropSlot_(Barrel|Box|Glass)_P\d+_W\d+_\d+$
+  - label: Prop
+    prefix: Prop_
+    regex: ^Prop_(Barrel|Box|Glass)_P\d+_W\d+_\d+$
+  - label: CamPoint
+    prefix: CamPoint_
+    regex: ^CamPoint_P\d+_S\d+$
+  - label: RailHint
+    prefix: RailHint_
+    regex: ^RailHint_P\d+_S\d+_\d+$
+  - label: Shot
+    prefix: Shot_
+    regex: ^Shot_P\d+_S\d+_(Move|Combat)$
+  - label: Wave
+    prefix: Wave_
+    regex: ^Wave_P\d+_W\d+$
+  - label: Rail
+    prefix: Rail_
+    regex: ^Rail_P\d+_S\d+$
+  propSlotTolerance: 0.05

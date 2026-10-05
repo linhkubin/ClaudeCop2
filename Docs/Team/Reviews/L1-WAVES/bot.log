@@ -1,0 +1,183 @@
+[M2 25.54|t0.02] START (GameCommands)
+[M2 25.97|t0.35] WEAPON Pistol
+[M2 25.97|t0.35] AMMO 6/6 Pistol
+[M2 26.44|t0.35] LIVES 3/3
+[M2 26.44|t0.35] SCORE 0
+[M2 26.44|t0.35] STATE Playing score=0 lives=3 timeScale=1
+[M2 26.44|t0.35] PHASE 0 STAGE 1-1
+[M2 26.44|t0.35] MOVE_SEGMENT next=Wave_P1_W2
+[M2 26.44|t0.35] RANKSCORE wave_preset choice=default conf=0.00 reticle=0.00 src=Default stats=shots=0 hits=0 miss=0 hostage=0 acc=0.00 react=0.00s dmg=0 env=0 blast=0 revive=0
+[M2 26.45|t0.35] RANKSCORE reticle_time choice=normal conf=0.00 reticle=2.50 src=Default stats=shots=0 hits=0 miss=0 hostage=0 acc=0.00 react=0.00s dmg=0 env=0 blast=0 revive=0
+[M2 26.45|t0.35] RANKSCORE weapon_drop choice=default conf=0.00 reticle=0.00 src=Default stats=shots=0 hits=0 miss=0 hostage=0 acc=0.00 react=0.00s dmg=0 env=0 blast=0 revive=0
+[M2 26.53|t0.35] SHOT_BEGIN Shot_P1_S1_Move
+[M2 32.20|t5.80] SHOT_END Shot_P1_S1_Move dur=5.67 avgFps=50 minFps=1
+[M2 32.20|t5.80] SHOT_BEGIN Shot_P1_S2_Combat
+[M2 32.73|t6.32] ENC_START Wave_P1_W2 (Wave_P1_W2 L1 (1 enemy, max 1))
+[M2 33.37|t6.95] AMMO 5/6 Pistol
+[M2 33.37|t6.95] COMBO streak=1 x1.0
+[M2 33.37|t6.95] RESOLVED Kill kind=Enemy weapon=Pistol combo=x1.0 hits=1 prog=0.12
+[M2 33.37|t6.95] SCORE 188
+[M2 33.37|t6.95] AWARD 188 justice=False mul=x1.0
+[M2 33.40|t6.99] ENC_CLEARED Wave_P1_W2
+[M2 34.35|t7.94] SHOT_END Shot_P1_S2_Combat dur=2.14 avgFps=59 minFps=24
+[M2 34.35|t7.94] SHOT_BEGIN Shot_P1_S3_Combat
+[M2 34.95|t8.54] SCREENSHOT p1_combat_Wave_P1_W2
+[M2 35.57|t9.16] MOVE_SEGMENT next=Wave_P1_W3
+[M2 35.57|t9.16] RANKSCORE wave_preset choice=default conf=0.00 reticle=0.00 src=Default stats=shots=1 hits=1 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 35.57|t9.16] RANKSCORE reticle_time choice=normal conf=0.27 reticle=2.50 src=Default stats=shots=1 hits=1 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 35.57|t9.16] RANKSCORE weapon_drop choice=default conf=0.00 reticle=0.00 src=Default stats=shots=1 hits=1 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 35.57|t9.16] ENC_START Wave_P1_W3 (Wave_P1_W3 L1 (1 enemy, max 1))
+[M2 36.20|t9.79] AMMO 4/6 Pistol
+[M2 36.20|t9.79] COMBO streak=2 x2.0
+[M2 36.20|t9.79] RESOLVED Kill kind=Enemy weapon=Pistol combo=x2.0 hits=1 prog=0.13
+[M2 36.20|t9.79] SCORE 562
+[M2 36.20|t9.79] AWARD 374 justice=False mul=x2.0
+[M2 36.21|t9.81] ENC_CLEARED Wave_P1_W3
+[M2 37.13|t10.73] SHOT_END Shot_P1_S3_Combat dur=2.79 avgFps=59 minFps=14
+[M2 37.14|t10.73] SHOT_BEGIN Shot_P1_S4_Combat
+[M2 38.24|t11.83] MOVE_SEGMENT next=Wave_P1_W4
+[M2 38.24|t11.83] RANKSCORE wave_preset choice=default conf=0.00 reticle=0.00 src=Default stats=shots=2 hits=2 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 38.24|t11.83] RANKSCORE reticle_time choice=normal conf=0.54 reticle=2.50 src=Default stats=shots=2 hits=2 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 38.24|t11.83] RANKSCORE weapon_drop choice=default conf=0.00 reticle=0.00 src=Default stats=shots=2 hits=2 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 38.24|t11.83] ENC_START Wave_P1_W4 (Wave_P1_W4 L1 (2 enemy, max 1))
+[M2 38.87|t12.46] AMMO 3/6 Pistol
+[M2 38.87|t12.46] COMBO streak=3 x3.0
+[M2 38.87|t12.46] RESOLVED Kill kind=Enemy weapon=Pistol combo=x3.0 hits=1 prog=0.12
+[M2 38.87|t12.46] SCORE 1125
+[M2 38.87|t12.46] AWARD 563 justice=False mul=x3.0
+[M2 39.48|t13.08] AMMO 2/6 Pistol
+[M2 39.48|t13.08] COMBO streak=4 x4.0
+[M2 39.49|t13.08] RESOLVED Kill kind=Enemy weapon=Pistol combo=x4.0 hits=1 prog=0.13
+[M2 39.49|t13.08] SCORE 1875
+[M2 39.49|t13.08] AWARD 750 justice=False mul=x4.0
+[M2 39.50|t13.09] ENC_CLEARED Wave_P1_W4
+[M2 40.42|t14.01] PHASE 1 STAGE 1-2
+[M2 40.84|t14.43] MOVE_SEGMENT next=Wave_P2_W2
+[M2 40.84|t14.43] RANKSCORE wave_preset choice=default conf=0.00 reticle=0.00 src=Default stats=shots=4 hits=4 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 40.84|t14.43] RANKSCORE reticle_time choice=normal conf=0.00 reticle=2.50 src=Default stats=shots=0 hits=0 miss=0 hostage=0 acc=0.00 react=0.00s dmg=0 env=0 blast=0 revive=0
+[M2 40.84|t14.43] RANKSCORE weapon_drop choice=default conf=0.00 reticle=0.00 src=Default stats=shots=4 hits=4 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 40.85|t14.44] SHOT_END Shot_P1_S4_Combat dur=3.71 avgFps=60 minFps=46
+[M2 40.85|t14.44] SHOT_BEGIN Shot_P2_S1_Move
+[M2 40.85|t14.44] ROT_JUMP 7150 shot=Shot_P2_S1_Move
+[M2 47.72|t21.31] SHOT_END Shot_P2_S1_Move dur=6.87 avgFps=60 minFps=43
+[M2 47.72|t21.31] SHOT_BEGIN Shot_P2_S2_Combat
+[M2 48.22|t21.81] ENC_START Wave_P2_W2 (Wave_P2_W2 L1 (1 enemy, max 1))
+[M2 48.85|t22.44] AMMO 1/6 Pistol
+[M2 48.85|t22.44] COMBO streak=5 x5.0
+[M2 48.85|t22.44] RESOLVED Kill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.12
+[M2 48.85|t22.44] SCORE 2815
+[M2 48.85|t22.44] AWARD 940 justice=False mul=x5.0
+[M2 48.87|t22.46] ENC_CLEARED Wave_P2_W2
+[M2 49.80|t23.39] SHOT_END Shot_P2_S2_Combat dur=2.08 avgFps=60 minFps=42
+[M2 49.80|t23.39] SHOT_BEGIN Shot_P2_S3_Combat
+[M2 50.43|t24.03] SCREENSHOT p2_combat_Wave_P2_W2
+[M2 50.70|t24.30] MOVE_SEGMENT next=Wave_P2_W3
+[M2 50.70|t24.30] RANKSCORE wave_preset choice=intense conf=1.00 reticle=0.00 src=Offline stats=shots=5 hits=5 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 50.71|t24.30] RANKSCORE reticle_time choice=normal conf=0.27 reticle=2.50 src=Default stats=shots=1 hits=1 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 50.71|t24.30] RANKSCORE weapon_drop choice=none conf=1.00 reticle=0.00 src=Offline stats=shots=5 hits=5 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 50.71|t24.30] ENC_START Wave_P2_W3 (Wave_P2_W3 L1 (2 enemy, max 2))
+[M2 51.34|t24.93] AMMO 0/6 Pistol
+[M2 51.34|t24.93] COMBO streak=6 x5.0
+[M2 51.34|t24.93] RESOLVED Kill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.15
+[M2 51.34|t24.93] SCORE 3741
+[M2 51.34|t24.93] AWARD 926 justice=False mul=x5.0
+[M2 51.60|t25.20] BOT RELOAD
+[M2 51.60|t25.20] RELOADING True
+[M2 52.12|t25.71] AMMO 6/6 Pistol
+[M2 52.12|t25.71] RELOADING False
+[M2 52.13|t25.73] AMMO 5/6 Pistol
+[M2 52.13|t25.73] COMBO streak=7 x5.0
+[M2 52.13|t25.73] RESOLVED JusticeKill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.34
+[M2 52.13|t25.73] SCORE 5991
+[M2 52.13|t25.73] AWARD 2250 justice=True mul=x5.0
+[M2 52.15|t25.74] ENC_CLEARED Wave_P2_W3
+[M2 53.08|t26.68] SHOT_END Shot_P2_S3_Combat dur=3.29 avgFps=59 minFps=14
+[M2 53.09|t26.68] SHOT_BEGIN Shot_P2_S4_Combat
+[M2 57.84|t31.43] SHOT_END Shot_P2_S4_Combat dur=4.75 avgFps=60 minFps=43
+[M2 57.84|t31.43] SHOT_BEGIN Shot_P2_S5_Combat
+[M2 59.04|t32.63] MOVE_SEGMENT next=Wave_P2_W5
+[M2 59.04|t32.63] RANKSCORE wave_preset choice=intense conf=1.00 reticle=0.00 src=Offline stats=shots=7 hits=7 miss=0 hostage=0 acc=1.00 react=0.56s dmg=0 env=0 blast=0 revive=0
+[M2 59.04|t32.63] RANKSCORE reticle_time choice=short conf=0.81 reticle=2.00 src=Offline stats=shots=3 hits=3 miss=0 hostage=0 acc=1.00 react=0.63s dmg=0 env=0 blast=0 revive=0
+[M2 59.04|t32.63] RANKSCORE weapon_drop choice=none conf=1.00 reticle=0.00 src=Offline stats=shots=7 hits=7 miss=0 hostage=0 acc=1.00 react=0.56s dmg=0 env=0 blast=0 revive=0
+[M2 59.04|t32.63] ENC_START Wave_P2_W5 (Wave_P2_W5 L1 (2 enemy, max 1))
+[M2 59.67|t33.26] AMMO 4/6 Pistol
+[M2 59.67|t33.26] COMBO streak=8 x5.0
+[M2 59.67|t33.26] RESOLVED Kill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.16
+[M2 59.67|t33.26] SCORE 6911
+[M2 59.67|t33.26] AWARD 920 justice=False mul=x5.0
+[M2 60.28|t33.88] AMMO 3/6 Pistol
+[M2 60.28|t33.88] COMBO streak=9 x5.0
+[M2 60.28|t33.88] RESOLVED JusticeKill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.15
+[M2 60.29|t33.88] SCORE 9161
+[M2 60.29|t33.88] AWARD 2250 justice=True mul=x5.0
+[M2 60.30|t33.90] ENC_CLEARED Wave_P2_W5
+[M2 61.22|t34.81] PHASE 2 STAGE 1-3
+[M2 61.63|t35.23] MOVE_SEGMENT next=Wave_P3_W2
+[M2 61.63|t35.23] RANKSCORE wave_preset choice=intense conf=1.00 reticle=0.00 src=Offline stats=shots=9 hits=9 miss=0 hostage=0 acc=1.00 react=0.55s dmg=0 env=0 blast=0 revive=0
+[M2 61.63|t35.23] RANKSCORE reticle_time choice=normal conf=0.00 reticle=2.50 src=Default stats=shots=0 hits=0 miss=0 hostage=0 acc=0.00 react=0.00s dmg=0 env=0 blast=0 revive=0
+[M2 61.64|t35.23] RANKSCORE weapon_drop choice=none conf=1.00 reticle=0.00 src=Offline stats=shots=9 hits=9 miss=0 hostage=0 acc=1.00 react=0.55s dmg=0 env=0 blast=0 revive=0
+[M2 61.65|t35.24] SHOT_END Shot_P2_S5_Combat dur=3.81 avgFps=60 minFps=41
+[M2 61.65|t35.24] SHOT_BEGIN Shot_P3_S1_Move
+[M2 61.65|t35.24] ROT_JUMP 5420 shot=Shot_P3_S1_Move
+[M2 68.52|t42.11] SHOT_END Shot_P3_S1_Move dur=6.87 avgFps=60 minFps=42
+[M2 68.52|t42.11] SHOT_BEGIN Shot_P3_S2_Combat
+[M2 69.02|t42.61] ENC_START Wave_P3_W2 (Wave_P3_W2 L1 (2 enemy, max 1))
+[M2 69.65|t43.25] AMMO 2/6 Pistol
+[M2 69.65|t43.25] COMBO streak=10 x5.0
+[M2 69.65|t43.25] RESOLVED Kill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.16
+[M2 69.65|t43.25] SCORE 10082
+[M2 69.66|t43.25] AWARD 921 justice=False mul=x5.0
+[M2 70.27|t43.86] AMMO 1/6 Pistol
+[M2 70.27|t43.86] COMBO streak=11 x5.0
+[M2 70.27|t43.86] RESOLVED JusticeKill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.15
+[M2 70.27|t43.86] SCORE 12332
+[M2 70.27|t43.86] AWARD 2250 justice=True mul=x5.0
+[M2 70.29|t43.88] ENC_CLEARED Wave_P3_W2
+[M2 71.22|t44.81] SCREENSHOT p3_combat_Wave_P3_W2
+[M2 71.30|t44.89] SHOT_END Shot_P3_S2_Combat dur=2.78 avgFps=59 minFps=13
+[M2 71.30|t44.89] SHOT_BEGIN Shot_P3_S3_Combat
+[M2 72.24|t45.83] MOVE_SEGMENT next=Wave_P3_W3
+[M2 72.24|t45.83] RANKSCORE wave_preset choice=intense conf=1.00 reticle=0.00 src=Offline stats=shots=11 hits=11 miss=0 hostage=0 acc=1.00 react=0.54s dmg=0 env=0 blast=0 revive=0
+[M2 72.24|t45.83] RANKSCORE reticle_time choice=normal conf=0.54 reticle=2.50 src=Default stats=shots=2 hits=2 miss=0 hostage=0 acc=1.00 react=0.51s dmg=0 env=0 blast=0 revive=0
+[M2 72.24|t45.83] RANKSCORE weapon_drop choice=none conf=1.00 reticle=0.00 src=Offline stats=shots=11 hits=11 miss=0 hostage=0 acc=1.00 react=0.54s dmg=0 env=0 blast=0 revive=0
+[M2 72.24|t45.83] ENC_START Wave_P3_W3 (Wave_P3_W3 L1 (3 enemy, max 2))
+[M2 72.88|t46.47] AMMO 0/6 Pistol
+[M2 72.88|t46.47] COMBO streak=12 x5.0
+[M2 72.88|t46.47] RESOLVED Kill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.16
+[M2 72.88|t46.47] SCORE 13253
+[M2 72.88|t46.47] AWARD 921 justice=False mul=x5.0
+[M2 73.13|t46.72] BOT RELOAD
+[M2 73.13|t46.72] RELOADING True
+[M2 73.64|t47.23] AMMO 6/6 Pistol
+[M2 73.64|t47.23] RELOADING False
+[M2 73.66|t47.25] AMMO 5/6 Pistol
+[M2 73.66|t47.25] COMBO streak=13 x5.0
+[M2 73.66|t47.25] RESOLVED JusticeKill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.30
+[M2 73.66|t47.25] SCORE 15503
+[M2 73.66|t47.25] AWARD 2250 justice=True mul=x5.0
+[M2 73.91|t47.50] AMMO 4/6 Pistol
+[M2 73.91|t47.50] COMBO streak=14 x5.0
+[M2 73.91|t47.50] RESOLVED Kill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.25
+[M2 73.91|t47.50] SCORE 16378
+[M2 73.91|t47.50] AWARD 875 justice=False mul=x5.0
+[M2 73.93|t47.52] ENC_CLEARED Wave_P3_W3
+[M2 74.88|t48.47] SHOT_END Shot_P3_S3_Combat dur=3.58 avgFps=60 minFps=41
+[M2 74.88|t48.47] SHOT_BEGIN Shot_P3_S4_Combat
+[M2 75.69|t49.28] MOVE_SEGMENT next=Wave_P3_W4
+[M2 75.69|t49.28] RANKSCORE wave_preset choice=intense conf=1.00 reticle=0.00 src=Offline stats=shots=14 hits=14 miss=0 hostage=0 acc=1.00 react=0.57s dmg=0 env=0 blast=0 revive=0
+[M2 75.69|t49.28] RANKSCORE reticle_time choice=short conf=1.00 reticle=2.00 src=Offline stats=shots=5 hits=5 miss=0 hostage=0 acc=1.00 react=0.61s dmg=0 env=0 blast=0 revive=0
+[M2 75.69|t49.28] RANKSCORE weapon_drop choice=none conf=1.00 reticle=0.00 src=Offline stats=shots=14 hits=14 miss=0 hostage=0 acc=1.00 react=0.57s dmg=0 env=0 blast=0 revive=0
+[M2 75.69|t49.28] ENC_START Wave_P3_W4 (Wave_P3_W4 L1 (1 enemy, max 1))
+[M2 76.33|t49.92] AMMO 3/6 Pistol
+[M2 76.33|t49.92] COMBO streak=15 x5.0
+[M2 76.33|t49.92] RESOLVED Kill kind=Enemy weapon=Pistol combo=x5.0 hits=1 prog=0.16
+[M2 76.33|t49.92] SCORE 17300
+[M2 76.33|t49.92] AWARD 922 justice=False mul=x5.0
+[M2 76.34|t49.93] ENC_CLEARED Wave_P3_W4
+[M2 77.24|t50.84] MOVE_SEGMENT next=none
+[M2 77.26|t50.85] SHOT_END Shot_P3_S4_Combat dur=2.38 avgFps=60 minFps=41
+[M2 77.26|t50.85] SHOT_BEGIN Shot_P3_S5_Move
+[M2 83.17|t56.77] LEVEL_COMPLETED maxMoveRate=35.4 maxBlendRate=35.9 maxOtherRate=22.9
+[M2 83.18|t56.77] STATE Win score=17300 lives=3 timeScale=1
+[M2 83.18|t56.77] RANKSCORE rank choice=S/None conf=1.00 reticle=0.00 src=Offline stats=shots=15 hits=15 miss=0 hostage=0 acc=1.00 react=0.57s dmg=0 env=0 blast=0 revive=0
+[M2 84.38|t57.97] SCREENSHOT win

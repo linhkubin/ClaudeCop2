@@ -4,7 +4,7 @@ using ClaudeCop.Core;
 namespace ClaudeCop.UI
 {
     /// <summary>
-    /// RailEvents.PhaseTransition -> fade den + tieu de. RailEvents.PhaseStarted (Phase dau khong co transition) -> banner chu.
+    /// RailEvents.PhaseTransition -> fade den + tieu de (kieu cu). RailEvents.PhaseBanner -> chu chong len canh (lien mach). RailEvents.PhaseStarted (Phase dau khong co transition) -> banner chu.
     /// PhaseDirector phat PhaseStarted truoc PhaseTransition cung frame nen banner duoc hoan toi Update va huy neu transition toi.
     /// </summary>
     public class PhaseTransitionPresenter : MonoBehaviour
@@ -22,12 +22,14 @@ namespace ClaudeCop.UI
             if (view == null) { Debug.LogError("[PhaseTransitionPresenter] Thieu view.", this); return; }
             RailEvents.PhaseTransition += OnTransition;
             RailEvents.PhaseStarted += OnStarted;
+            RailEvents.PhaseBanner += OnBanner;
         }
 
         void OnDisable()
         {
             RailEvents.PhaseTransition -= OnTransition;
             RailEvents.PhaseStarted -= OnStarted;
+            RailEvents.PhaseBanner -= OnBanner;
             pendingBanner = false;
         }
 
@@ -37,8 +39,17 @@ namespace ClaudeCop.UI
             view.Play(title, fadeOut, hold, fadeIn);
         }
 
+        /// <summary>Doi Phase lien mach: chu Phase chong len canh dang chay, khong man den.</summary>
+        void OnBanner(string title)
+        {
+            pendingBanner = false;
+            if (view == null) return;
+            view.Banner(string.IsNullOrEmpty(title) ? "STAGE" : title, Cfg.bannerFadeIn, Cfg.bannerHold, Cfg.bannerFadeOut);
+        }
+
         void OnStarted(int index, string title)
         {
+            if (index > 0) return; // Phase sau: hien bang PhaseTransition (fade) hoac PhaseBanner (lien mach)
             pendingBanner = true;
             pendingTitle = string.IsNullOrEmpty(title) ? "STAGE " + (index + 1) : title;
         }

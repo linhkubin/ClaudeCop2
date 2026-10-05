@@ -24,6 +24,10 @@ namespace ClaudeCop.Enemy
         [Tooltip("Hien khi dau hang (gio tay). Tuy chon.")]
         [SerializeField] GameObject handsUpMarker;
 
+        [Header("Dung san (SceneStanding)")]
+        [Tooltip("Enemy dat san trong scene, dung lo san o vi tri hien tai (khong lo ra tu cho nap): khi kich hoat vao thang Ngam, van co vong target; het vong thi ban roi ngam tiep.")]
+        [SerializeField] bool sceneStanding;
+
         [Header("Grenadier")]
         [Tooltip("Khi vong thu het thi NEM luu dan thay vi ban (can grenadePrefab).")]
         [SerializeField] bool throwsGrenade;
@@ -31,6 +35,7 @@ namespace ClaudeCop.Enemy
         [Tooltip("Tay nem (tuy chon). Trong thi dung chan + EnemyConfig.grenadeThrowHeight.")]
         [SerializeField] Transform throwOrigin;
 
+        const float RunInTime = 2.2f, RunInDistance = 10f;
         static int nextId = 1;
         EnemyBrain brain;
         Vector3 hidePos, peekPos;
@@ -53,6 +58,19 @@ namespace ClaudeCop.Enemy
         public bool JusticeEnabled => justiceEnabled;
         /// <summary>Con o trang thai Hidden va chua duoc kich hoat (con doi duoc cau hinh lai).</summary>
         public bool IsActivated => brain != null && brain.IsActivated;
+        /// <summary>Enemy dung san (khong lo ra tu cho nap). Doi truoc khi kich hoat.</summary>
+        public bool SceneStanding => sceneStanding;
+
+        /// <summary>Bat/tat che do dung san. Chi co hieu luc khi chua kich hoat.</summary>
+        public void SetSceneStanding(bool on)
+        {
+            EnsureInit();
+            sceneStanding = on;
+            if (IsActivated || dead) return;
+            if (on) { peekPos = hidePos; peekRot = hideRot; }
+            SetRenderers(!on);
+            BuildBrain();
+        }
 
         public int Id => id;
         public TargetKind Kind => TargetKind.Enemy;
@@ -89,6 +107,7 @@ namespace ClaudeCop.Enemy
             CachePositions();
             BuildBrain();
             SetCollider(false);
+            if (sceneStanding) SetRenderers(false);
             RefreshMarkers();
         }
 
@@ -136,6 +155,7 @@ namespace ClaudeCop.Enemy
             EnsureInit();
             if (cfg != null) config = cfg;
             hidePos = hidePosition; hideRot = rotation; peekPos = peekPosition; peekRot = peekRotation;
+            if (sceneStanding) { peekPos = hidePos; peekRot = hideRot; }
             positionsCached = true;
             transform.SetPositionAndRotation(hidePos, hideRot);
             BuildBrain();
@@ -147,6 +167,7 @@ namespace ClaudeCop.Enemy
             hidePos = transform.position; hideRot = transform.rotation;
             if (peekPoint != null) { peekPos = peekPoint.position; peekRot = peekPoint.rotation; }
             else { peekPos = transform.TransformPoint(peekLocalOffset); peekRot = hideRot; }
+            if (sceneStanding) { peekPos = hidePos; peekRot = hideRot; }
             positionsCached = true;
         }
 
@@ -154,11 +175,12 @@ namespace ClaudeCop.Enemy
         {
             var c = Cfg;
             brain = new EnemyBrain(
-                c.peekDuration,
+                sceneStanding ? Mathf.Max(c.peekDuration, RunInTime) : c.peekDuration,
                 reticleTimeOverride > 0f ? reticleTimeOverride : c.reticleTime,
                 c.retreatDuration,
-                hideTimeOverride >= 0f ? hideTimeOverride : c.hideTime,
+                sceneStanding ? 0f : (hideTimeOverride >= 0f ? hideTimeOverride : c.hideTime),
                 c.targetableThreshold);
+            brain.StandsGround = sceneStanding;
             brain.AimStarted = OnAimStarted;
             brain.AimEnded = OnAimEnded;
             brain.Fired = OnFired;
@@ -169,7 +191,30 @@ namespace ClaudeCop.Enemy
         public void Activate()
         {
             EnsureInit();
-            if (!dead) brain.Activate();
+            if (dead) return;
+            if (sceneStanding && !brain.IsActivated) StartRunIn();
+            brain.Activate();
+        }
+
+        /// <summary>Enemy dung san: xuat phat ngoai man hinh (lech ngang theo phia cua camera) roi chay vao vi tri dung khi wave bat dau (player da dung).</summary>
+        void StartRunIn()
+        {
+            var cam = UnityEngine.Camera.main;
+            if (cam != null)
+            {
+                Vector3 right = cam.transform.right; right.y = 0f;
+                right = right.sqrMagnitude < 1e-4f ? Vector3.right : right.normalized;
+                float side = Vector3.Dot(peekPos - cam.transform.position, right) >= 0f ? 1f : -1f;
+                hidePos = peekPos + right * side * RunInDistance;
+                hideRot = Quaternion.LookRotation(-right * side);
+            }
+            transform.SetPositionAndRotation(hidePos, hideRot);
+            SetRenderers(true);
+        }
+
+        void SetRenderers(bool on)
+        {
+            foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = on;
         }
 
         void Update()

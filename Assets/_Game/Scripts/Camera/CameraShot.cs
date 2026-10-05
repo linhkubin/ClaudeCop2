@@ -10,6 +10,15 @@ namespace ClaudeCop.Camera
     public enum ShotKind { Move, Combat }
     public enum ShotEntry { Cut, Blend, Spline }
 
+    /// <summary>Moc huong nhin (yaw, do) tai ti le quang duong cua ray Move (0..1). Dung de ray di lui/di ngang ma van xoay mem toi huong shot ke.</summary>
+    [Serializable]
+    public struct LookKey
+    {
+        [Range(0f, 1f)] public float progress;
+        public float yaw;
+        public LookKey(float progress, float yaw) { this.progress = progress; this.yaw = yaw; }
+    }
+
     [Serializable]
     public class SubAngle
     {
@@ -36,9 +45,13 @@ namespace ClaudeCop.Camera
         [Header("Move")]
         public SplineContainer spline;
         [Tooltip("<=0 = lay railSpeed trong profile")] public float speedOverride = 0f;
+        [Tooltip("Rong = ray nhin theo tiep tuyen (mac dinh). Co moc = huong nhin do cac moc quyet dinh (smoothstep giua cac moc, bat dau tu huong camera luc vao ray, ket thuc o huong Shot Combat ke) - dung cho doan noi 2 Phase de khong phai quay dau gap.")]
+        public List<LookKey> lookKeys = new List<LookKey>();
 
         [Header("Combat")]
         public EncounterBase encounter;
+        [Tooltip("Shot khong co encounter: giu camera bay nhieu giay (nhip giam tai) roi di tiep. 0 = bo qua ngay (co canh bao).")]
+        public float dwell = 0f;
         public float fov = 60f;
         public List<SubAngle> subAngles = new List<SubAngle>();
         [Tooltip("Diem world phai nam trong khung (cho lo ra cua enemy/con tin/thung). Level01Assembler dien; dung cho AutoFrame.")]

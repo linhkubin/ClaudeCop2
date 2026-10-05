@@ -22,6 +22,7 @@ namespace ClaudeCop.Enemy
         Vector3 hidePos, peekPos;
         Quaternion hideRot, peekRot;
         bool positionsCached, registered, initialized;
+        bool standStill;
         int id;
 
         /// <summary>Phat khi con tin bi ban (vi tri world).</summary>
@@ -90,6 +91,7 @@ namespace ClaudeCop.Enemy
                 c.peekDuration, c.hostageExposeTime, c.retreatDuration);
             brain.ExposeStarted = OnExposeStarted;
             brain.ExposeEnded = OnExposeEnded;
+            brain.StaysPut = standStill;
         }
 
         /// <summary>Bat dau lo ra (EncounterWave goi).</summary>
@@ -108,6 +110,22 @@ namespace ClaudeCop.Enemy
                 Left?.Invoke(this);
             }
             gameObject.SetActive(false);
+        }
+
+        /// <summary>Con tin dung im thay vi tu thut vao/bien mat (EncounterWave bat).</summary>
+        public void SetStandStill(bool on)
+        {
+            EnsureInit();
+            if (brain != null) brain.StaysPut = on;
+            standStill = on;
+        }
+
+        /// <summary>Dot xong: con tin dung im tai cho (khong ban duoc nua, khong tat doi tuong).</summary>
+        public void Freeze()
+        {
+            if (brain == null || !brain.IsActivated || brain.IsFinished) { if (brain == null || !brain.IsActivated) Dismiss(); return; }
+            brain.Dismiss();
+            Left?.Invoke(this);
         }
 
         void Update()

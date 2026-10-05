@@ -52,3 +52,6 @@ Thư mục sở hữu chi tiết: xem `Docs/Team/Conventions.md` mục 1. **Lưu
    - Rủi ro / xung đột giữa module.
 
 Viết bằng tiếng Việt, ngắn gọn, dạng bảng/gạch đầu dòng.
+
+
+> **Quy tắc token chung:** làm theo mục 'Tiết kiệm token' trong CLAUDE.md (không đọc nguyên file scene/prefab, dùng batch_execute, lọc console/test, đo bằng số thay vì ảnh, báo cáo ngắn).

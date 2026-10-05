@@ -386,7 +386,7 @@ namespace ClaudeCop.Combat
                 float reaction = t.ExposedTime;
                 float progress = t.ReticleProgress;
                 TargetKind kind = t.Kind;
-                Vector3 point = h.Justice ? t.JusticePoint : t.AimPoint;
+                Vector3 point = h.Justice ? t.JusticePoint : TapPoint(t, screenPos);
                 Vector3 dir = (point - camPos).normalized;
                 var info = new ShotInfo
                 {
@@ -397,6 +397,7 @@ namespace ClaudeCop.Combat
                     Weapon = weapon.Kind,
                     ImpulseScale = weapon.ImpulseScale
                 };
+                BreakGlassBetween(camPos, point, screenPos);
                 TapOutcome outcome = t.OnTapHit(info, h.Justice);
 
                 if (outcome == TapOutcome.HostageHit && !hostageDamaged)
@@ -430,6 +431,58 @@ namespace ClaudeCop.Combat
                 CombatEvents.RaiseShotResolved(r);
             }
             return collected;
+        }
+
+        /// <summary>Diem dan trung = cho nguoi choi tap tren than muc tieu (giao tia camera voi collider), khong phai tam. Tap trong vung pad (khong cham collider) -> diem tren tia o do sau cua tam.</summary>
+        Vector3 TapPoint(ITapTarget t, Vector2 screenPos)
+        {
+            Vector3 aim = t.AimPoint;
+            var ray = cam.ScreenPointToRay(screenPos);
+            var comp = t as Component;
+            if (comp != null)
+            {
+                float maxDist = config != null ? config.MaxRayDistance : CombatConfig.DefaultMaxRayDistance;
+                float best = float.MaxValue; Vector3 bestPt = aim; bool found = false;
+                comp.GetComponentsInChildren(true, colScratch);
+                for (int i = 0; i < colScratch.Count; i++)
+                {
+                    var c = colScratch[i];
+                    if (c == null || !c.enabled || c.isTrigger || !c.gameObject.activeInHierarchy) continue;
+                    var owner = c.GetComponentInParent<ITapTarget>();
+                    if (owner != null && !ReferenceEquals(owner, t) && owner.Id != t.Id) continue;
+                    if (c.Raycast(ray, out RaycastHit rh, maxDist) && rh.distance < best) { best = rh.distance; bestPt = rh.point; found = true; }
+                }
+                colScratch.Clear();
+                if (found) return bestPt;
+            }
+            float depth = Vector3.Dot(aim - ray.origin, ray.direction);
+            return depth > 0.1f ? ray.origin + ray.direction * depth : aim;
+        }
+
+        /// <summary>Muc tieu dang sau lop kinh (IShootable khong phai ITapTarget) tren tia camera -> muc tieu: ban trung muc tieu thi kinh vo.</summary>
+        void BreakGlassBetween(Vector3 from, Vector3 to, Vector2 screenPos)
+        {
+            Vector3 d = to - from; float dist = d.magnitude;
+            if (dist < 0.05f) return;
+            Vector3 dir = d / dist;
+            int mask = config != null ? config.EnvironmentMask.value : ~0;
+            int n = Physics.RaycastNonAlloc(new Ray(from, dir), rayBuf, dist, mask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < n; i++)
+            {
+                var col = rayBuf[i].collider;
+                if (col == null || col.GetComponentInParent<ITapTarget>() != null) continue;
+                var shootable = col.GetComponentInParent<IShootable>();
+                if (shootable == null) continue;
+                shootable.OnShot(new ShotInfo
+                {
+                    ScreenPosition = screenPos,
+                    HitPoint = rayBuf[i].point,
+                    HitNormal = rayBuf[i].normal,
+                    Direction = dir,
+                    Weapon = weapon.Kind,
+                    ImpulseScale = weapon.ImpulseScale
+                });
+            }
         }
 
         void ResolveEnvironment(Vector2 screenPos)

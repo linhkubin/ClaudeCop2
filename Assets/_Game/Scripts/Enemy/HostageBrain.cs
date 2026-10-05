@@ -18,6 +18,8 @@ namespace ClaudeCop.Enemy
         public float ExposedTime { get; private set; }
         public bool IsTargetable => State == HostageState.Exposed;
         public bool IsActivated => activated;
+        /// <summary>Con tin dung im: Exposed khong tu het gio thut vao (cho toi khi dot xong / bi ban).</summary>
+        public bool StaysPut { get; set; }
         public bool IsFinished => State == HostageState.Left || State == HostageState.Shot;
 
         /// <summary>Vua vao Exposed (dang ky target).</summary>
@@ -72,7 +74,7 @@ namespace ClaudeCop.Enemy
                     break;
                 case HostageState.Exposed:
                     timer += dt; ExposedTime += dt;
-                    if (timer >= exposeTime)
+                    if (!StaysPut && timer >= exposeTime)
                     {
                         ExposeEnded?.Invoke();
                         State = HostageState.Retreating; timer = 0f;

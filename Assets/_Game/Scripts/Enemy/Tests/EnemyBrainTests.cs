@@ -116,5 +116,35 @@ namespace ClaudeCop.Enemy.Tests
             b.Activate(); b.Tick(0.31f); b.Tick(2.6f); b.Tick(0.31f); b.Tick(0.81f); b.Tick(0.15f);
             Assert.IsTrue(b.IsTargetable); Assert.AreEqual(2, start); Assert.AreEqual(1, end);
         }
+    
+        [Test]
+        public void Standing_StaysIdleUntilActivated_ThenAimsImmediately()
+        {
+            var b = Make(); b.StandsGround = true; int aim = 0; b.AimStarted = () => aim++;
+            b.Tick(3f);
+            Assert.AreEqual(EnemyState.Hidden, b.State); Assert.IsFalse(b.IsTargetable);
+            b.ActivateStanding();
+            Assert.AreEqual(EnemyState.Aiming, b.State); Assert.AreEqual(1, aim);
+            Assert.IsTrue(b.IsTargetable); Assert.IsTrue(b.ShowsReticle); Assert.AreEqual(1f, b.PeekT);
+        }
+
+        [Test]
+        public void Standing_FiresThenKeepsAiming_NeverRetreats()
+        {
+            var b = Make(); b.StandsGround = true; int fired = 0, ended = 0; b.Fired = () => fired++; b.AimEnded = () => ended++;
+            b.ActivateStanding(); b.Tick(2.6f);
+            Assert.AreEqual(1, fired); Assert.AreEqual(0, ended);
+            Assert.AreEqual(EnemyState.Aiming, b.State); Assert.AreEqual(0f, b.ReticleProgress, 0.001f); Assert.IsTrue(b.IsTargetable);
+            b.Tick(1.25f);
+            Assert.AreEqual(0.5f, b.ReticleProgress, 0.01f);
+            Assert.IsTrue(b.Kill());
+        }
+
+        [Test]
+        public void NonStanding_Unchanged_StillPeeksFirst()
+        {
+            var b = Make(); b.Activate();
+            Assert.AreEqual(EnemyState.Peeking, b.State); Assert.IsFalse(b.IsTargetable);
+        }
     }
 }

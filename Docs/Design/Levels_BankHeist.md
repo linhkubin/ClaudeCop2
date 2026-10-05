@@ -101,28 +101,36 @@ Luật mới: chạm đúng vòng target, một enemy mỗi lần. Chưa có con
 | 110–124 s | P3, góc cao lên bậc thềm | W2: 3 enemy dồn dập (tối đa 2 cùng lúc): bậc thấp, bậc cao, cạnh cửa. | Kết hợp cao độ, chiều sâu |
 | 124–135 s | P3, cửa chính | W3: enemy cuối bước ra cửa chính, kill-zoom rồi cửa bật mở; camera chạy tiếp vào sảnh (sang level 2). | Giải tỏa. Không luật mới |
 
-Tổng enemy khoảng 14 (P1 4, P2 5, P3 5); bắn trong khoảng 50 s, di chuyển khoảng 25 s, nhịp kể chuyện/giảm tải khoảng 12 s; còn lại là chờ ló ra. Mốc giây chỉ là dự kiến, hoàn thành sự kiện thì chuyển ngay.
+Tổng enemy 15 (P1 4, P2 5, P3 6; P2 giảm tải: wave đồng loạt chỉ 2 enemy, nhịp dwell 3–4 s không encounter ở giữa); bắn trong khoảng 50 s, di chuyển khoảng 25 s, nhịp kể chuyện/giảm tải khoảng 12 s; còn lại là chờ ló ra. Mốc giây chỉ là dự kiến, hoàn thành sự kiện thì chuyển ngay.
 Cảnh hài: không có ở level 1 (H02 ở level 2).
 Rank mẫu (chưa chốt): thang theo độ chính xác, số lần bị trúng, thời gian hoàn thành so với mốc dự kiến.
 
-## Storyboard Level 2 — Sảnh giao dịch (Easy, 3 phase, ~135 s)
-Luật mới: **con tin, không bắn nhầm**. Con tin 3. Cảnh hài H02. Enemy tối đa 2 cùng lúc, vòng target 2.5 s.
-| Mốc | Phase / shot | Sự kiện | Nhịp |
+## Storyboard Level 2 — Sảnh giao dịch (Easy, 3 phase, ~150 s)
+Luật mới: **con tin, không bắn nhầm**. Con tin 3. Cảnh hài H02 (hoạt cảnh chạy đâm cột chưa làm, hiện con tin chạy đi bình thường). Enemy tối đa 2 cùng lúc (wave cuối phase 3: 3), vòng target 2.5 s, không Justice.
+Mỗi phase 4 wave (shot S2, S3, S5, S6; S1 và S4 là Move). **Enemy đứng sẵn (S)**: đặt sẵn trong scene, đứng lộ ở chỗ trống, không ló ra từ chỗ nấp; vào thẳng Ngắm khi wave kích hoạt (EnemyActor.SceneStanding). **E** = ló ra từ chỗ nấp.
+Camera Combat dùng FOV dọc tối thiểu hẹp hơn Level 1 (S2 40, S3 36, S5 38, S6 32 = kill-zoom; Level 1 đặt 58–60 nên luôn bị chặn ở 45), cụm mục tiêu hẹp (<= ~10 độ) nên zoom thực tế khoảng 32–42 độ.
+| Phase / shot | Sự kiện | Enemy | Nhịp |
 |---|---|---|---|
-| 0–6 s | Move: cửa chính bật mở, camera vào cửa xoay | Nối liền từ level 1 | Giới thiệu |
-| 6–18 s | **P1 cửa xoay, tiếp tân** | W1: 1 enemy sau quầy tiếp tân | Mẫu quen |
-| 18–32 s | P1 | W2: con tin đầu tiên nhô khỏi quầy, enemy cách xa rõ; biểu tượng người có viền xanh (con tin) nhấp nháy, không bắn | **Luật mới** |
-| 32–46 s | P1 | W3: enemy kề con tin, hạ enemy → con tin chạy → **H02** chạy quá đà đâm cột sảnh, ngã ngồi, phủi áo, chạy ra cửa | Hài, giảm áp lực |
-| 46–52 s | Move dọc quầy giao dịch | Chuông báo động | Chuyển cảnh |
-| 52–66 s | **P2 dãy quầy** | W1: 2 enemy lần lượt sau kính quầy | Củng cố |
-| 66–80 s | P2 | W2 (**bất ngờ giữa level**): 2 enemy + 1 con tin xen giữa, phải phân biệt | Con tin xen enemy |
-| 80–84 s | P2 | Giảm tải: đèn đỏ báo động nhấp nháy, thời gian reload | Giảm tải |
-| 84–94 s | P2 | W3: 1 enemy + con tin thứ ba ở xa | Củng cố |
-| 94–100 s | Move tới khu chờ | Cầu thang giữa hiện ra | Chuyển cảnh |
-| 100–114 s | **P3 khu chờ, cầu thang** | W1: enemy trên lan can tầng lửng (cao) + enemy ngồi ghế chờ (thấp), tối đa 2 | Kiểm tra |
-| 114–128 s | P3 | W2: 3 enemy dồn dập, 1 con tin trên ghế | Kết hợp con tin |
-| 128–135 s | P3 | W3: enemy cuối chạy lên cầu thang, kill-zoom, camera đi theo lên tầng lửng | Giải tỏa |
-Tổng enemy khoảng 13, con tin 3.
+| Move S1 | Qua cửa xoay vào sảnh (nối từ level 1) | 0 | Giới thiệu |
+| **P1 cửa xoay, tiếp tân** S2 | W1: 1 S đứng trước quầy tiếp tân + 1 E sau quầy | 2 | Mẫu quen |
+| P1 S3 | W2: **con tin đầu tiên** nhô sau chậu cây, 2 enemy sau máy ATM cách xa rõ; biểu tượng con tin nhấp nháy, không bắn | 2 + 1 con tin | **Luật mới** |
+| Move S4 | Đi dọc sảnh | 0 | Chuyển |
+| P1 S5 | W3: 1 S đứng cạnh quầy thông tin | 1 | Giảm tải |
+| P1 S6 | W4: 2 E (chậu cây, quầy tiếp tân), kill-zoom; con tin chạy ra cửa (H02 chạy đâm cột dự kiến) | 2 | Hài, giải tỏa |
+| Move S1 | Chuông báo động, camera tới dãy quầy giao dịch | 0 | Chuyển cảnh |
+| **P2 dãy quầy** S2 | W1: 1 E sau kính quầy + 1 S đứng trước quầy | 2 | Củng cố |
+| P2 S3 | W2: 1 E sau quầy giữa | 1 | Nhịp thở |
+| Move S4 | Trượt ngang dọc dãy quầy | 0 | Chuyển |
+| P2 S5 | W3 (**bất ngờ giữa level**): 1 E + 1 S đứng + 1 con tin xen giữa, phải phân biệt | 2 + 1 con tin | Con tin xen enemy |
+| P2 S6 | W4: 1 E + 1 S, kill-zoom; đèn đỏ báo động nhấp nháy | 2 | Giải tỏa |
+| Move S1 | Tới khu chờ, cầu thang đôi hiện ra | 0 | Chuyển cảnh |
+| **P3 khu chờ, cầu thang** S2 | W1: 1 E trên lan can tầng lửng (cao) + 1 S đứng ở khu ghế chờ (thấp) | 2 | Kiểm tra |
+| P3 S3 | W2: 1 E lan can + 1 E sau ghế | 2 | Cao/thấp |
+| Move S4 | Tiến thêm một đoạn | 0 | Chuyển |
+| P3 S5 | W3: 2 enemy (1 E sau ghế, 1 S đứng) + **con tin thứ hai** ngồi ghế giữa | 2 + 1 con tin | Kết hợp con tin |
+| P3 S6 | W4: 3 enemy cuối (lan can, ghế, chân cầu thang; 1 S), kill-zoom; camera sẵn sàng đi lên tầng lửng | 3 | Giải giảo |
+Tổng enemy **23** (P1 7, P2 7, P3 9; trong đó 8 đứng sẵn), con tin 3 (tính theo thiết kế mới: 1 mỗi phase), tối đa 2–3 enemy cùng lúc. Level 1 có 13–15 enemy.
+Ghi chú: con tin thứ 3 ban đầu trong storyboard cũ (P2 W3) đã gộp vào con tin P3; mỗi phase đúng một con tin.
 
 ## Storyboard Level 3 — Tầng lửng và văn phòng (Easy, 3 phase, ~135 s)
 Luật mới: **Justice shot** (bắn trúng súng trên tay enemy để hạ gọn, thưởng điểm). Con tin 2–3. Cảnh hài H01 là bất ngờ giữa level.
@@ -384,6 +392,13 @@ Không khí: đỉnh tháp lộng gió, nắng chiều muộn vàng cam chiếu 
 - **Không có tính năng radio** và không có lời thoại chữ/phụ đề trong cảnh. Gợi ý luật mới bằng biểu tượng, hiệu ứng sáng và hoạt ảnh; nhịp giảm tải dùng âm thanh môi trường, chuyển động camera và reload. UI điểm/rank/nút giữ như hiện có.
 - **Hồi sinh bằng quảng cáo:** tối đa 2 lần mỗi level, hồi sinh tại đúng vị trí; không ảnh hưởng rank (rank chỉ phụ thuộc điểm và độ chính xác). Thoát ra thì chơi lại từ đầu level đó.
 - **Kết thúc level:** camera đi thêm một đoạn tới cảnh bắt đầu của level sau, rồi hiện bảng kết quả dừng chờ bấm "Tiếp tục"; camera đứng ở cảnh đầu level sau, thở nhẹ trong lúc chờ. Level 10 kết thúc chuỗi, không có đoạn đi thêm.
+
+### Quy tắc chuyển stage (vòng hỏi 8, áp dụng cho tất cả stage)
+- Giả định: "stage" = phase (P1, P2, P3...) trong một level. Nếu bạn muốn nói cả chuyển giữa các level thì quy tắc này đã khớp với quy tắc kết thúc level ở trên.
+- Kết thúc stage này, nhân vật **di chuyển liền mạch** tới stage kế và bắt đầu ngay: **không tối màn hình, không fade đen, không cắt cảnh**. Đoạn Move cuối của mỗi stage phải kết thúc đúng vị trí và hướng nhìn của shot đầu stage kế (đã là quy tắc rail).
+- Khi bắt đầu stage mới vẫn **hiện chữ stage** (tiêu đề) như hiện nay, nhưng hiện chồng lên cảnh đang chạy, không chặn gameplay và không cần màn hình đen.
+- Đây là ngoại lệ có chủ đích của quy tắc "không dùng chữ": tiêu đề stage vẫn dùng chữ.
+- Hệ quả: không dùng nhảy xa kiểu cũ giữa các phase (đoạn Cut 100 m); mọi stage phải nối bằng rail liên tục. Code hiện có `PhaseDirector` và `PhaseFade` đang fade đen khi đổi phase, cần đổi thành tiêu đề không fade.
 
 ### Lưu dữ liệu và dây level (về sau)
 - Lưu dữ liệu từng level: trạng thái mở, rank tốt nhất, điểm cao nhất, số lần chơi.

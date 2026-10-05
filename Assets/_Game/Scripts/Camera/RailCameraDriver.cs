@@ -24,6 +24,9 @@ namespace ClaudeCop.Camera
         float dist;
         RailSpeedCurve curve;           // CAM-VC2: duong cong toc do (null = hinh thang cu)
         bool hasNext; float nextYaw, nextPitch; // CAM-VC2: nhin truoc huong shot ke
+        float startYaw, startPitch;              // huong luc vao ray (SEAMLESS)
+        System.Collections.Generic.List<LookKey> keys; // SEAMLESS: huong nhin theo moc (null = nhin theo tiep tuyen)
+        const float KeyEnd = 0.92f;              // toi huong shot ke truoc cuoi ray de kip on dinh khi giam toc
 
         public bool Active { get; private set; }
         public bool Running { get; private set; }
@@ -41,6 +44,25 @@ namespace ClaudeCop.Camera
         /// <summary>CAM-VC2: huong nhin cua shot ke (yaw/pitch do). Ray se nghieng dan toi do o lookNextStart..1 va khop dung khi toi. Goi sau Prepare, truoc StartMoving.</summary>
         public void SetNextLook(float yawDeg, float pitchDeg) { hasNext = true; nextYaw = yawDeg; nextPitch = Mathf.Clamp(pitchDeg, -p.maxPitch, p.maxPitch); }
         public void ClearNextLook() { hasNext = false; }
+
+        /// <summary>SEAMLESS: dung moc huong nhin thay cho nhin theo tiep tuyen (rong/null = tat). Goi sau Prepare + SetNextLook, truoc StartMoving.</summary>
+        public void SetLookKeys(System.Collections.Generic.List<LookKey> k) { keys = k != null && k.Count > 0 ? k : null; }
+
+        static float Smooth(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+        float KeyYaw(float prog)
+        {
+            float py = startYaw, pp = 0f;
+            for (int i = 0; i < keys.Count; i++)
+            {
+                var k = keys[i];
+                if (prog <= k.progress) return py + Mathf.DeltaAngle(py, k.yaw) * Smooth((prog - pp) / Mathf.Max(1e-4f, k.progress - pp));
+                py = py + Mathf.DeltaAngle(py, k.yaw); pp = k.progress;
+            }
+            float end = hasNext ? py + Mathf.DeltaAngle(py, nextYaw) : py;
+            float e = Mathf.Max(pp + 1e-3f, KeyEnd);
+            return Mathf.Lerp(py, end, Smooth((prog - pp) / (e - pp)));
+        }
 
         public RailCameraDriver(CinemachineCamera cam, CinemachineSplineDolly dolly, CameraFeelProfile profile)
         {
@@ -69,7 +91,7 @@ namespace ClaudeCop.Camera
                 ti *= k; to *= k; da *= k; db *= k;
             }
             total = ti + to + (length - da - db) / v;
-            curve = null; hasNext = false;
+            curve = null; hasNext = false; keys = null;
             if (p.railCurveEnabled)
             {
                 // Giu tong thoi gian bang hinh thang cu; duong cong chi doi phan bo toc do (nhanh ra dau, giam mem o cuoi).
@@ -85,6 +107,7 @@ namespace ClaudeCop.Camera
 
             Vector3 e = initialRotation.eulerAngles;
             yaw = e.y; pitch = Mathf.DeltaAngle(0f, e.x); roll = 0f;
+            startYaw = yaw; startPitch = pitch;
             yawVel = pitchVel = rollVel = 0f;
             cam.transform.SetPositionAndRotation(PositionAt(0f), Quaternion.Euler(pitch, yaw, 0f));
             var lens = cam.Lens; lens.FieldOfView = p.baseFov; cam.Lens = lens;
@@ -132,7 +155,15 @@ namespace ClaudeCop.Camera
 
             // CAM-VC2: 30% cuoi doan Move nghieng dan ve huong shot ke (smoothstep), khop dung khi toi; khong xoay muon roi giat lai.
             float damping = p.lookDamping, rateCap = p.maxYawRate;
-            if (hasNext && p.lookNextWeight > 0f && length > 0.01f)
+            if (keys != null)
+            {
+                float prog = length > 0.01f ? dist / length : 1f;
+                wantYaw = KeyYaw(prog);
+                wantPitch = Mathf.Lerp(startPitch, hasNext ? nextPitch : startPitch, Smooth(prog / KeyEnd));
+                damping = Mathf.Min(p.lookDamping, p.lookNextDamping);
+                rateCap = Mathf.Max(1f, p.lookNextMaxYawRate);
+            }
+            else if (hasNext && p.lookNextWeight > 0f && length > 0.01f)
             {
                 float w = Mathf.Clamp01((dist / length - p.lookNextStart) / Mathf.Max(0.01f, 1f - p.lookNextStart));
                 w = w * w * (3f - 2f * w) * p.lookNextWeight;
