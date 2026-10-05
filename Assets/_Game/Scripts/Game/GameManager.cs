@@ -38,6 +38,7 @@ namespace ClaudeCop.Game
             GameCommands.StartGameRequested += OnStartGameRequested;
             GameCommands.ReviveRequested += OnReviveRequested;
             GameCommands.ReviveDeclined += OnReviveDeclined;
+            GameCommands.HomeRequested += ReturnToTitle;
             playerHealth.OutOfLives += OnOutOfLives;
         }
 
@@ -48,6 +49,7 @@ namespace ClaudeCop.Game
             GameCommands.StartGameRequested -= OnStartGameRequested;
             GameCommands.ReviveRequested -= OnReviveRequested;
             GameCommands.ReviveDeclined -= OnReviveDeclined;
+            GameCommands.HomeRequested -= ReturnToTitle;
             if (playerHealth != null) playerHealth.OutOfLives -= OnOutOfLives;
             ReleaseAllPauses();
             Time.timeScale = 1f;

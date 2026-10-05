@@ -236,6 +236,23 @@ namespace ClaudeCop.Meta.Tests
         }
 
         [Test]
+        public void Replay_KeepsBestRankAndScore_OnlyImproves()
+        {
+            var a = LevelRewards.Compute(0, true, new LevelRunStats { Score = 5000 }, c, 0f); a.Rank = 1;
+            LevelRewards.Apply(p, c, a);
+            var worse = LevelRewards.Compute(0, true, new LevelRunStats { Score = 3000 }, c, 0f); worse.Rank = 3;
+            LevelRewards.Apply(p, c, worse);
+            Assert.AreEqual(1, p.Level(0, false).bestRank);
+            Assert.AreEqual(5000, p.Level(0, false).bestScore);
+            var better = LevelRewards.Compute(0, true, new LevelRunStats { Score = 6000 }, c, 0f); better.Rank = 0;
+            LevelRewards.Apply(p, c, better);
+            Assert.AreEqual(0, p.Level(0, false).bestRank);
+            Assert.AreEqual(6000, p.Level(0, false).bestScore);
+            Assert.AreEqual("S", LevelRecord.RankLabel(0));
+            Assert.AreEqual("-", LevelRecord.RankLabel(-1));
+        }
+
+        [Test]
         public void AdArmor_NotStackable()
         {
             Assert.AreEqual(ShopResult.Ok, Shop.GrantAdArmor(p, c));

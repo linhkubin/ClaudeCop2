@@ -38,6 +38,9 @@ namespace ClaudeCop.Meta
         /// <summary>Hang tot nhat: 0 = S, 1 = A, 2 = B, 3 = C; -1 = chua thang.</summary>
         public int bestRank = -1;
         public bool gotS;
+
+        /// <summary>"S", "A", "B", "C" hoac "-" (chua thang).</summary>
+        public static string RankLabel(int rank) => rank >= 0 && rank < 4 ? "SABC"[rank].ToString() : "-";
     }
 
     /// <summary>Du lieu nguoi choi (luu JSON trong PlayerPrefs). Chi doi qua Shop / LevelProgress.</summary>
