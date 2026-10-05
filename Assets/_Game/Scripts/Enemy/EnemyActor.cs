@@ -24,6 +24,13 @@ namespace ClaudeCop.Enemy
         [Tooltip("Hien khi dau hang (gio tay). Tuy chon.")]
         [SerializeField] GameObject handsUpMarker;
 
+        [Header("Grenadier")]
+        [Tooltip("Khi vong thu het thi NEM luu dan thay vi ban (can grenadePrefab).")]
+        [SerializeField] bool throwsGrenade;
+        [SerializeField] Grenade grenadePrefab;
+        [Tooltip("Tay nem (tuy chon). Trong thi dung chan + EnemyConfig.grenadeThrowHeight.")]
+        [SerializeField] Transform throwOrigin;
+
         static int nextId = 1;
         EnemyBrain brain;
         Vector3 hidePos, peekPos;
@@ -50,16 +57,28 @@ namespace ClaudeCop.Enemy
         public int Id => id;
         public TargetKind Kind => TargetKind.Enemy;
         public bool IsTargetable => brain != null && brain.IsTargetable && !CombatPauseSignal.IsPaused;
-        public Vector3 AimPoint => transform.position + Vector3.up * (config != null ? config.aimHeight : 1.5f);
-        public bool HasJusticePoint => justiceEnabled && !dead;
-        public Vector3 JusticePoint => transform.TransformPoint(config != null ? config.justiceOffset : Vector3.zero);
+        public virtual Vector3 AimPoint => transform.position + Vector3.up * Cfg.aimHeight;
+        public virtual bool HasJusticePoint => justiceEnabled && !dead;
+        public virtual Vector3 JusticePoint => transform.TransformPoint(Cfg.justiceOffset);
         public bool ShowsReticle => brain != null && brain.ShowsReticle;
         public float ReticleProgress => brain != null ? brain.ReticleProgress : 0f;
         public float ExposedTime => brain != null ? brain.ExposedTime : 0f;
 
         public EnemyConfig Config => config;
+        protected EnemyConfig Cfg => config != null ? config : EnemyConfig.Fallback;
+        public bool ThrowsGrenade => throwsGrenade && grenadePrefab != null;
 
-        void Awake() { EnsureInit(); }
+        /// <summary>Phat khi enemy nem luu dan (enemy, luu dan). EncounterWave nghe de cho luu dan duoc giai quyet.</summary>
+        public event Action<EnemyActor, Grenade> GrenadeThrown;
+
+        /// <summary>Bien enemy nay thanh Grenadier (hoac tat voi null).</summary>
+        public void ConfigureGrenadier(Grenade prefab)
+        {
+            grenadePrefab = prefab;
+            throwsGrenade = prefab != null;
+        }
+
+        protected virtual void Awake() { EnsureInit(); }
 
         void EnsureInit()
         {
@@ -74,7 +93,7 @@ namespace ClaudeCop.Enemy
         }
 
         /// <summary>Bat/tat Justice point cho enemy nay (EncounterWave goi).</summary>
-        public void SetJustice(bool on)
+        public virtual void SetJustice(bool on)
         {
             justiceEnabled = on;
             RefreshMarkers();
@@ -86,7 +105,7 @@ namespace ClaudeCop.Enemy
             if (handsUpMarker != null) handsUpMarker.SetActive(surrendered);
         }
 
-        /// <summary>Doi thoi gian vong target (Jev reticle_time). Chi co hieu luc khi enemy chua kich hoat.</summary>
+        /// <summary>Doi thoi gian vong target (RankScore reticle_time). Chi co hieu luc khi enemy chua kich hoat.</summary>
         public void SetReticleTime(float seconds)
         {
             EnsureInit();
@@ -133,12 +152,13 @@ namespace ClaudeCop.Enemy
 
         void BuildBrain()
         {
-            var c = config;
+            var c = Cfg;
             brain = new EnemyBrain(
-                c != null ? c.peekDuration : 0.3f,
-                reticleTimeOverride > 0f ? reticleTimeOverride : (c != null ? c.reticleTime : 2.5f),
-                c != null ? c.retreatDuration : 0.3f,
-                hideTimeOverride >= 0f ? hideTimeOverride : (c != null ? c.hideTime : 0.8f));
+                c.peekDuration,
+                reticleTimeOverride > 0f ? reticleTimeOverride : c.reticleTime,
+                c.retreatDuration,
+                hideTimeOverride >= 0f ? hideTimeOverride : c.hideTime,
+                c.targetableThreshold);
             brain.AimStarted = OnAimStarted;
             brain.AimEnded = OnAimEnded;
             brain.Fired = OnFired;
@@ -171,22 +191,30 @@ namespace ClaudeCop.Enemy
         void OnAimStarted()
         {
             SetCollider(true);
-            if (!registered) { registered = true; TargetRegistry.Register(this); }
+            if (!registered) { registered = true; TargetRegistry.Register(this); OnTargetsRegistered(); }
         }
 
         void OnAimEnded()
         {
             SetCollider(false);
-            if (registered) { registered = false; TargetRegistry.Unregister(this); }
+            if (registered) { registered = false; TargetRegistry.Unregister(this); OnTargetsUnregistered(); }
         }
+
+        /// <summary>Hook cho lop con: vua dang ky vao TargetRegistry (dang ky them muc tieu phu).</summary>
+        protected virtual void OnTargetsRegistered() { }
+        /// <summary>Hook cho lop con: vua huy dang ky.</summary>
+        protected virtual void OnTargetsUnregistered() { }
+        /// <summary>Hook cho lop con: enemy vua chet/dau hang (sau khi da huy dang ky).</summary>
+        protected virtual void OnKilled(bool justice) { }
 
         void OnFired()
         {
+            if (ThrowsGrenade) { ThrowGrenade(); return; }
             PlayerDamageService.Damage(DamageSource.EnemyShot, AimPoint);
             Fired?.Invoke(this);
         }
 
-        public TapOutcome OnTapHit(ShotInfo shot, bool isJustice)
+        public virtual TapOutcome OnTapHit(ShotInfo shot, bool isJustice)
         {
             if (dead || !IsTargetable) return TapOutcome.Miss;
             bool justice = isJustice && HasJusticePoint;
@@ -203,9 +231,10 @@ namespace ClaudeCop.Enemy
                 Vector3 dir = shot.Direction.sqrMagnitude > 0.001f ? shot.Direction : transform.forward;
                 Vector3 axis = Vector3.Cross(Vector3.up, dir);
                 if (axis.sqrMagnitude < 0.001f) axis = transform.right;
-                deadToRot = Quaternion.AngleAxis(90f, axis.normalized) * deadFromRot;
+                deadToRot = Quaternion.AngleAxis(Cfg.fallAngle, axis.normalized) * deadFromRot;
                 if (justiceMarker != null) justiceMarker.SetActive(false);
             }
+            OnKilled(justice);
             Died?.Invoke(this, pos);
             return justice ? TapOutcome.JusticeKill : TapOutcome.Kill;
         }
@@ -215,12 +244,12 @@ namespace ClaudeCop.Enemy
             deadTimer += Time.deltaTime;
             if (surrendered)
             {
-                float t = config != null ? config.surrenderTime : 1f;
+                float t = Cfg.surrenderTime;
                 if (deadTimer >= t) gameObject.SetActive(false);
                 return;
             }
-            float linger = config != null ? config.deathLinger : 1f;
-            transform.rotation = Quaternion.Slerp(deadFromRot, deadToRot, Mathf.Clamp01(deadTimer / 0.25f));
+            float linger = Cfg.deathLinger;
+            transform.rotation = Quaternion.Slerp(deadFromRot, deadToRot, Mathf.Clamp01(deadTimer / Cfg.fallDuration));
             if (deadTimer >= linger) gameObject.SetActive(false);
         }
 
@@ -229,17 +258,39 @@ namespace ClaudeCop.Enemy
         void OnEnable()
         {
             // Bat lai giua luc Aiming: dang ky lai de van ban duoc.
-            if (brain != null && !dead && brain.State == EnemyState.Aiming && !registered)
+            if (brain != null && !dead && brain.IsTargetable && !registered)
             {
                 registered = true;
                 SetCollider(true);
                 TargetRegistry.Register(this);
+                OnTargetsRegistered();
             }
         }
 
         void OnDisable()
         {
-            if (registered) { registered = false; TargetRegistry.Unregister(this); }
+            if (registered) { registered = false; TargetRegistry.Unregister(this); OnTargetsUnregistered(); }
+        }
+
+        // ---------- Luu dan ----------
+
+        /// <summary>Diem dap cua luu dan: truoc camera camDistance m. Khong co camera: tu tay nem di thang ve phia forward.</summary>
+        public static Vector3 ComputeGrenadeTarget(Vector3 start, Vector3 forward, bool hasCamera, Vector3 camPos, Vector3 camForward, EnemyConfig c)
+        {
+            if (hasCamera) return camPos + camForward * c.grenadeLandDistance + Vector3.up * c.grenadeLandHeightOffset;
+            return start + forward * c.grenadeFallbackDistance + Vector3.up * c.grenadeLandHeightOffset;
+        }
+
+        void ThrowGrenade()
+        {
+            var c = Cfg;
+            Vector3 start = throwOrigin != null ? throwOrigin.position : transform.position + Vector3.up * c.grenadeThrowHeight;
+            var cam = UnityEngine.Camera.main;
+            Vector3 target = ComputeGrenadeTarget(start, transform.forward, cam != null,
+                cam != null ? cam.transform.position : Vector3.zero, cam != null ? cam.transform.forward : Vector3.forward, c);
+            var g = Instantiate(grenadePrefab, start, Quaternion.identity);
+            g.Launch(start, target, c);
+            GrenadeThrown?.Invoke(this, g);
         }
     }
 }

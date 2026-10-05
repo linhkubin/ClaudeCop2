@@ -8,6 +8,8 @@
         "ClaudeCop.Enemy",
         "ClaudeCop.Combat",
         "ClaudeCop.Game",
+        "ClaudeCop.Props",
+        "ClaudeCop.RankScore",
         "Unity.Cinemachine",
         "Unity.Splines",
         "Unity.Mathematics"

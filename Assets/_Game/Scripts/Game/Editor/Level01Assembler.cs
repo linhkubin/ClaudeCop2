@@ -7,12 +7,14 @@ using UnityEngine.Splines;
 using ClaudeCop.Camera;
 using ClaudeCop.Camera.Editor;
 using ClaudeCop.Enemy;
+using ClaudeCop.Props;
+using ClaudeCop.RankScore;
 
 namespace ClaudeCop.Game.Editor
 {
     /// <summary>
     /// T-403: dung lai phan "Rails / Encounters / Shots" va danh sach Phase cua Scenes/Gameplay/Level_01.unity tu Level_01.prefab
-    /// (3 Phase x 6 Shot). Chay lai nhieu lan an toan (xoa va dung lai 3 nhom do). Dat/noi: FxSystems, JevSystems.
+    /// (3 Phase x 6 Shot). Chay lai nhieu lan an toan (xoa va dung lai 3 nhom do). Dat/noi: FxSystems, RankScoreSystems.
     /// </summary>
     public static class Level01Assembler
     {
@@ -134,7 +136,9 @@ namespace ClaudeCop.Game.Editor
 
             // Cac he thong co san
             EnsurePrefab(roots, "FxSystems", Pre + "FX/FxSystems.prefab");
-            EnsurePrefab(roots, "JevSystems", Pre + "Game/JevSystems.prefab");
+            EnsurePrefab(roots, "RankScoreSystems", Pre + "Game/RankScoreSystems.prefab");
+
+            AssembleM3(scene, roots, level, points, encounters);
 
             // F-210: luu lai CameraFeelProfile de lo cac field M2
             
@@ -145,6 +149,85 @@ namespace ClaudeCop.Game.Editor
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log("[Level01Assembler] Done: 3 Phase, " + Waves.Length + " wave.");
+        }
+
+        // ---- M3 (T-702): Props, Grenadier, HumanShield, PropSystems, RankScoreDirector ----
+        static void AssembleM3(Scene scene, List<GameObject> roots, GameObject level, Dictionary<string, Transform> points, Transform encounters)
+        {
+            // Don dep ban cu (Props do menu tao)
+            var oldProps = roots.Find(g => g != null && g.name == "Props");
+            if (oldProps != null) Object.DestroyImmediate(oldProps);
+            var propsRoot = new GameObject("Props").transform;
+            SceneManager.MoveGameObjectToScene(propsRoot.gameObject, scene);
+
+            var barrel = AssetDatabase.LoadAssetAtPath<GameObject>(Pre + "Props/Prop_Barrel.prefab");
+            var box = AssetDatabase.LoadAssetAtPath<GameObject>(Pre + "Props/Prop_Box.prefab");
+            var glass = AssetDatabase.LoadAssetAtPath<GameObject>(Pre + "Props/Prop_Glass.prefab");
+            int nb = 0, nx = 0, ng = 0;
+            foreach (var kv in new List<KeyValuePair<string, Transform>>(points))
+            {
+                string n = kv.Key; var m = kv.Value;
+                GameObject pf = null;
+                if (n.StartsWith("PropSlot_Barrel_")) { pf = barrel; nb++; }
+                else if (n.StartsWith("PropSlot_Box_")) { pf = box; nx++; }
+                else if (n.StartsWith("PropSlot_Glass_")) { pf = glass; ng++; }
+                if (pf == null) continue;
+                var inst = (GameObject)PrefabUtility.InstantiatePrefab(pf, scene);
+                inst.name = n.Replace("PropSlot_", "Prop_");
+                inst.transform.SetParent(propsRoot, true);
+                inst.transform.SetPositionAndRotation(m.position, m.rotation);
+                if (pf == glass)
+                {
+                    var ls = m.lossyScale; var ps = inst.transform.localScale;
+                    inst.transform.localScale = new Vector3(ls.x, ls.y, ps.z);
+                }
+            }
+
+            // Grenadier / HumanShield vao EncounterWave
+            var gPrefab = AssetDatabase.LoadAssetAtPath<EnemyActor>(Pre + "Enemies/Enemy_Grenadier.prefab");
+            var hsPrefab = AssetDatabase.LoadAssetAtPath<HumanShieldEnemy>(Pre + "Enemies/Enemy_HumanShield.prefab");
+            foreach (var wave in encounters.GetComponentsInChildren<EncounterWave>(true))
+            {
+                // ten Wave_P{p}_W{w}
+                var parts = wave.name.Split('_'); if (parts.Length < 3) continue;
+                string key = parts[1] + "_" + parts[2] + "_";
+                if (parts[1] == "P1") continue; // chi tu Phase 2
+                var so = new SerializedObject(wave);
+                var g = Find(points, "GrenadierSpawn_" + key);
+                if (g.Count > 0)
+                {
+                    so.FindProperty("grenadierPrefab").objectReferenceValue = gPrefab;
+                    SetList(so.FindProperty("grenadierSpawnPoints"), g);
+                }
+                var h = Find(points, "ShieldSpawn_" + key);
+                if (h.Count > 0)
+                {
+                    so.FindProperty("humanShieldPrefab").objectReferenceValue = hsPrefab;
+                    SetList(so.FindProperty("humanShieldSpawnPoints"), h);
+                }
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            EnsurePrefab(roots, "PropSystems", Pre + "Props/PropSystems.prefab");
+
+            // RankScoreDirector
+            var rsRoot = roots.Find(g => g != null && g.name == "RankScoreSystems");
+            var dir = rsRoot != null ? rsRoot.GetComponentInChildren<RankScoreDirector>(true) : Object.FindFirstObjectByType<RankScoreDirector>();
+            if (dir != null)
+            {
+                var so = new SerializedObject(dir);
+                so.FindProperty("presetCalm").objectReferenceValue = AssetDatabase.LoadAssetAtPath<EnemyPreset>(Pre + "Enemies/Data/EnemyPreset_Calm.asset");
+                so.FindProperty("presetStandard").objectReferenceValue = AssetDatabase.LoadAssetAtPath<EnemyPreset>(Pre + "Enemies/Data/EnemyPreset_Standard.asset");
+                so.FindProperty("presetIntense").objectReferenceValue = AssetDatabase.LoadAssetAtPath<EnemyPreset>(Pre + "Enemies/Data/EnemyPreset_Intense.asset");
+                so.FindProperty("presetHostageHeavy").objectReferenceValue = AssetDatabase.LoadAssetAtPath<EnemyPreset>(Pre + "Enemies/Data/EnemyPreset_HostageHeavy.asset");
+                so.FindProperty("shotgunPickupPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(Pre + "Combat/WeaponPickup_Shotgun.prefab");
+                so.FindProperty("machineGunPickupPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(Pre + "Combat/WeaponPickup_MachineGun.prefab");
+                if (so.FindProperty("tracker").objectReferenceValue == null)
+                    so.FindProperty("tracker").objectReferenceValue = dir.GetComponentInParent<PlayerStatsTracker>() ?? Object.FindFirstObjectByType<PlayerStatsTracker>();
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+            else Debug.LogWarning("[Level01Assembler] Khong thay RankScoreDirector");
+            Debug.Log("[Level01Assembler] M3: props barrel=" + nb + " box=" + nx + " glass=" + ng);
         }
 
         static Vector3 Flat(Vector3 v) { v.y = 0f; return v.sqrMagnitude < 1e-6f ? Vector3.forward : v.normalized; }

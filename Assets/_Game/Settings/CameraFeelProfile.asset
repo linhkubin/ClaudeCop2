@@ -16,39 +16,80 @@ MonoBehaviour:
   easeInTime: 1
   easeOutTime: 1
   lookAhead: 4
-  lookDamping: 0.35
-  baseFov: 60
-  maxYawRate: 60
+  lookDamping: 0.5
+  baseFov: 45
+  maxYawRate: 45
   maxRoll: 2
   maxPitch: 10
-  cutAngle: 90
-  reduceMotionCutAngle: 30
+  cutAngle: 360
+  reduceMotionCutAngle: 360
   defaultBlend: 0.5
   blendStyle: 1
   subAngleBlend: 0.6
   restAfterClear: 0.3
+  maxBlendSpeed: 7
+  maxBlendAngularSpeed: 30
+  maxBlendTime: 4
   handheldAmplitude: 0.3
   handheldFrequency: 0.4
   handheldTimeScale: 5
   bobAmplitude: 0.025
   bobStepsPerSecond: 1.9
-  dollyInFov: 8
-  dollyInDuration: 12
+  dollyInFov: 2.5
+  dollyInDuration: 8
+  settleFov: 1.5
+  settleTime: 0.55
+  handheldFadeIn: 0.6
   modeFade: 0.4
-  punchFov: 5
-  punchIn: 0.15
-  punchOut: 0.4
-  killZoomFov: 6
-  killZoomDuration: 0.5
-  killZoomAimBlend: 0.35
-  killZoomMaxTurn: 6
+  punchFov: 1.2
+  punchIn: 0.22
+  punchOut: 0.6
+  justicePunchFov: 1.8
+  justicePunchIn: 0.3
+  justicePunchOut: 1
+  killZoomFov: 2
+  killZoomDuration: 0.6
+  killZoomAimBlend: 0.25
+  killZoomMaxTurn: 2.5
   phaseFadeOut: 0.4
   phaseHold: 1
   phaseFadeIn: 0.4
   reduceMotionFade: 0.2
   maxMoveSeconds: 5.4
-  maxRailSpeed: 4
+  maxRailSpeed: 4.5
+  designAspect: 1.7777778
+  keepHorizontalFov: 0
+  maxVerticalFov: 45
+  autoFrame: 1
+  frameMargin: 5
+  frameMaxYaw: 12
+  frameMaxPullBack: 2.5
+  trackTargets: 1
+  trackMaxYaw: 8
+  trackSpeed: 12
+  trackSmoothTime: 1
+  trackMargin: 1.5
+  trackMinDepth: 3
+  autoFrameBlockMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   hitShakeDuration: 0.2
   hitShakePosition: 0.04
   hitShakeAngle: 1.2
   hitShakeReduceScale: 0.35
+  hitShakeFrequency: 40
+  explosionShakeScale: 0.6
+  explosionShakeDuration: 0.25
+  explosionShakeOffWhenReduceMotion: 1
+  rollSmoothTime: 0.3
+  blendWaitMargin: 0.5
+  smootherEnabled: 1
+  smoothMaxAngVel: 70
+  smoothMaxAngAcc: 260
+  smoothMaxVel: 12
+  smoothMaxAcc: 30
+  smoothMaxFovRate: 14
+  smoothMaxFovAcc: 50
+  smoothReduceMotionScale: 0.6
+  blendMaxAngAccel: 110
+  blendMaxAccel: 14

@@ -39,6 +39,14 @@ namespace ClaudeCop.FX
             return c;
         }
 
+        /// <summary>Tao san count instance cua prefab (tat), de Spawn khong Instantiate luc choi.</summary>
+        public void Prewarm(GameObject prefab, int count)
+        {
+            if (prefab == null) return;
+            if (!pools.TryGetValue(prefab, out var list)) { list = new List<Slot>(Mathf.Max(count, 4)); pools[prefab] = list; }
+            while (list.Count < count) list.Add(Create(prefab));
+        }
+
         /// <summary>Phat mot FX. Tra ve instance, hoac null neu bi tu choi (maxInstances=0 / vuot ngan sach hat).</summary>
         public GameObject Spawn(GameObject prefab, Vector3 pos, Quaternion rot, float lifetime, int maxInstances,
                                 float particleScale, int particleBudget, float now)

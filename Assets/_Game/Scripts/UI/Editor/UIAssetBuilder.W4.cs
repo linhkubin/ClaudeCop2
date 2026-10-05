@@ -2,29 +2,29 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using ClaudeCop.Jev;
+using ClaudeCop.RankScore;
 
 namespace ClaudeCop.UI.Editor
 {
     /// <summary>
-    /// W4 (T-411): JevDebugPanel.prefab (nut JEV + panel an mac dinh) va them node o CUOI GameplayUI.prefab.
-    /// Idempotent. KHONG dong vao scene. Menu: ClaudeCop/UI/W4 - Build Jev Debug Panel.
+    /// W4 (T-411): RankScoreDebugPanel.prefab (nut RANKSCORE + panel an mac dinh) va them node o CUOI GameplayUI.prefab.
+    /// Idempotent. KHONG dong vao scene. Menu: ClaudeCop/UI/W4 - Build RankScore Debug Panel.
     /// </summary>
     public static partial class UIAssetBuilder
     {
-        [MenuItem("ClaudeCop/UI/W4 - Build Jev Debug Panel")]
+        [MenuItem("ClaudeCop/UI/W4 - Build RankScore Debug Panel")]
         public static void BuildW4()
         {
             System.IO.Directory.CreateDirectory(PrefabDir);
             font = GetUiFont();
             var cfg = AssetDatabase.LoadAssetAtPath<UIConfig>(Root + "/UIConfig.asset");
             var white = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteDir + "/White.png");
-            BuildJevDebugPanel(cfg, white);
+            BuildRankScoreDebugPanel(cfg, white);
             AssetDatabase.SaveAssets();
-            AddJevPanelToGameplayUI();
+            AddRankScorePanelToGameplayUI();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("[UIAssetBuilder] W4 (JevDebugPanel) build xong.");
+            Debug.Log("[UIAssetBuilder] W4 (RankScoreDebugPanel) build xong.");
         }
 
         static TMP_Text JRow(string name, Transform parent, string text, int size, float y, float h, float x = 20f, float w = 780f,
@@ -50,23 +50,23 @@ namespace ClaudeCop.UI.Editor
             return r;
         }
 
-        static void BuildJevDebugPanel(UIConfig cfg, Sprite white)
+        static void BuildRankScoreDebugPanel(UIConfig cfg, Sprite white)
         {
-            var root = NewCanvas("JevDebugPanel", 70);
+            var root = NewCanvas("RankScoreDebugPanel", 70);
             var safe = NewRect("SafeArea", root.transform);
             Stretch(safe); safe.gameObject.AddComponent<SafeAreaPanel>();
 
-            // Nut JEV nho o goc duoi-trai (raycast chi tren nut)
-            var btn = NewButton("JevButton", safe, white, new Color(0.1f, 0.1f, 0.15f, 0.75f), "JEV", 34, out _);
+            // Nut RANKSCORE nho o goc duoi-trai (raycast chi tren nut)
+            var btn = NewButton("RankScoreButton", safe, white, new Color(0.1f, 0.1f, 0.15f, 0.75f), "RANKSCORE", 34, out _);
             Anchor((RectTransform)btn.transform, new Vector2(0f, 0f), new Vector2(130, 70), new Vector2(24, 260)); // tren cum vu khi/dan
 
-            // Panel: KHONG chan raycast (chi nut JEV chan tap); thu nho ~0.56 => ~460px / 1920 (~24% chieu rong), nam tren nut JEV
+            // Panel: KHONG chan raycast (chi nut RANKSCORE chan tap); thu nho ~0.56 => ~460px / 1920 (~24% chieu rong), nam tren nut RANKSCORE
             var panel = NewImage("Panel", safe, white, new Color(0.04f, 0.06f, 0.1f, 0.88f), false);
             Anchor(panel.rectTransform, new Vector2(0f, 0f), new Vector2(820, 770), new Vector2(24, 342));
             panel.rectTransform.localScale = new Vector3(0.56f, 0.56f, 1f);
             var p = panel.transform;
 
-            var title = JRow("Title", p, "JEV DEBUG", 30, -8, 36);
+            var title = JRow("Title", p, "RANKSCORE DEBUG", 30, -8, 36);
             title.color = new Color(0.6f, 0.65f, 0.75f);
             var question = JRow("Question", p, "Câu hỏi: —", 32, -48, 44);
             var choice = JRow("Choice", p, "Chưa có quyết định", 36, -92, 48);
@@ -82,20 +82,20 @@ namespace ClaudeCop.UI.Editor
 
             var time = JRow("Time", p, "", 28, -256, 36);
 
-            var labels = new TMP_Text[JevDebugPanelView.BarCount];
-            var fills = new Image[JevDebugPanelView.BarCount];
+            var labels = new TMP_Text[RankScoreDebugPanelView.BarCount];
+            var fills = new Image[RankScoreDebugPanelView.BarCount];
             for (int i = 0; i < labels.Length; i++)
             {
                 float y = -298 - i * 42;
                 labels[i] = JRow("BarLabel" + i, p, "", 28, y, 36, 20, 250);
-                JTrack("BarTrack" + i, p, white, 280, y - 6, 520, 24, new Color(1, 1, 1, 0.12f), out fills[i], cfg != null ? cfg.jevBarColor : Color.green);
+                JTrack("BarTrack" + i, p, white, 280, y - 6, 520, 24, new Color(1, 1, 1, 0.12f), out fills[i], cfg != null ? cfg.rankScoreBarColor : Color.green);
             }
 
             var stats = JRow("Stats", p, "", 28, -430, 110);
             var history = JRow("History", p, "", 26, -548, 214);
             history.color = new Color(0.8f, 0.85f, 0.95f);
 
-            var view = root.AddComponent<JevDebugPanelView>();
+            var view = root.AddComponent<RankScoreDebugPanelView>();
             Set(view, "panelRoot", panel.gameObject);
             Set(view, "toggleButtonRoot", btn.gameObject);
             Set(view, "toggleButton", btn);
@@ -110,22 +110,22 @@ namespace ClaudeCop.UI.Editor
             Set(view, "historyText", history);
             Set(view, "barLabels", labels);
             Set(view, "barFills", fills);
-            var pr = root.AddComponent<JevDebugPanelPresenter>();
+            var pr = root.AddComponent<RankScoreDebugPanelPresenter>();
             Set(pr, "view", view);
             Set(pr, "config", cfg);
-            Set(pr, "jevConfig", AssetDatabase.LoadAssetAtPath<JevConfig>("Assets/_Game/Prefabs/Game/Data/JevConfig.asset"));
+            Set(pr, "rankScoreConfig", AssetDatabase.LoadAssetAtPath<RankScoreConfig>("Assets/_Game/Prefabs/Game/Data/RankScoreConfig.asset"));
             panel.gameObject.SetActive(false);
-            Save(root, "JevDebugPanel");
+            Save(root, "RankScoreDebugPanel");
         }
 
-        static void AddJevPanelToGameplayUI()
+        static void AddRankScorePanelToGameplayUI()
         {
             string path = PrefabDir + "/GameplayUI.prefab";
             var root = PrefabUtility.LoadPrefabContents(path);
             try
             {
-                if (root.transform.Find("JevDebugPanel") != null) return;
-                var p = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/JevDebugPanel.prefab");
+                if (root.transform.Find("RankScoreDebugPanel") != null) return;
+                var p = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/RankScoreDebugPanel.prefab");
                 var inst = (GameObject)PrefabUtility.InstantiatePrefab(p, root.transform);
                 inst.transform.SetAsLastSibling();
                 PrefabUtility.SaveAsPrefabAsset(root, path);

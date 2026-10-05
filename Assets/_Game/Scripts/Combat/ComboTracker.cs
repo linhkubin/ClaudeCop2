@@ -13,7 +13,7 @@ namespace ClaudeCop.Combat
         readonly int maxMultiplier, hitsPerStep;
         public int Streak { get; private set; }
 
-        public ComboTracker(int maxMultiplier = 5, int hitsPerStep = 1)
+        public ComboTracker(int maxMultiplier = CombatConfig.DefaultComboMaxMultiplier, int hitsPerStep = CombatConfig.DefaultComboHitsPerStep)
         {
             this.maxMultiplier = Mathf.Max(1, maxMultiplier);
             this.hitsPerStep = Mathf.Max(1, hitsPerStep);

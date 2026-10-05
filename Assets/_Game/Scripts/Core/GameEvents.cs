@@ -14,7 +14,7 @@ namespace ClaudeCop.Core
     }
 
     /// <summary>
-    /// C15. Su kien game. Chi Game (GameManager/PlayerHealth) duoc Raise; UI, Camera (shake), Combat (reset combo), Jev nghe.
+    /// C15. Su kien game. Chi Game (GameManager/PlayerHealth) duoc Raise; UI, Camera (shake), Combat (reset combo), RankScore nghe.
     /// Current luon cap nhat truoc khi phat event.
     /// </summary>
     public static class GameEvents

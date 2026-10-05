@@ -17,7 +17,7 @@ namespace ClaudeCop.Combat
         public float Multiplier => Tracker.Multiplier;
 
         ComboTracker Tracker => tracker ?? (tracker = new ComboTracker(
-            config != null ? config.ComboMaxMultiplier : 5, config != null ? config.ComboHitsPerStep : 1));
+            config != null ? config.ComboMaxMultiplier : CombatConfig.DefaultComboMaxMultiplier, config != null ? config.ComboHitsPerStep : CombatConfig.DefaultComboHitsPerStep));
 
         void OnEnable()
         {

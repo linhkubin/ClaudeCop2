@@ -98,6 +98,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f85fdc344e93aa4b884f28199956b37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ClaudeCop.UI::ClaudeCop.UI.PhaseTransitionView
+  config: {fileID: 11400000, guid: ea5865395b81e0744b36f4441c104ce9, type: 2}
   content: {fileID: 8153318350997561734}
   blackGroup: {fileID: 8455823437346029962}
   titleGroup: {fileID: 4886772351423363472}

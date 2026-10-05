@@ -15,7 +15,7 @@ namespace ClaudeCop.Core
     }
 
     /// <summary>
-    /// C16. Su kien chien dau. Chi Combat (TapShooter, ComboSystem) duoc Raise; UI, Game, Jev nghe.
+    /// C16. Su kien chien dau. Chi Combat (TapShooter, ComboSystem) duoc Raise; UI, Game, RankScore nghe.
     /// Current luon cap nhat truoc khi phat event.
     /// </summary>
     public static class CombatEvents

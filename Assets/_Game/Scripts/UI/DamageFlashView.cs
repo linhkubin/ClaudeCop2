@@ -24,9 +24,10 @@ namespace ClaudeCop.UI
         {
             if (t < 0f) return;
             t += Time.unscaledDeltaTime;
+            float rise = Mathf.Clamp(Cfg.flashRiseFraction, 0.01f, 0.99f);
             float k = t / Mathf.Max(0.01f, Cfg.flashDuration);
             if (k >= 1f) { group.alpha = 0f; t = -1f; return; }
-            group.alpha = Cfg.flashPeakAlpha * (k < 0.15f ? k / 0.15f : 1f - (k - 0.15f) / 0.85f);
+            group.alpha = Cfg.flashPeakAlpha * (k < rise ? k / rise : 1f - (k - rise) / (1f - rise));
         }
     }
 }

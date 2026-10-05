@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.Tests.PlayMode",
+    "rootNamespace": "ClaudeCop.Tests.PlayMode",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Combat", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

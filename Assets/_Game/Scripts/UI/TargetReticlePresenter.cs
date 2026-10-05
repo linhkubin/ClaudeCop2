@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ClaudeCop.Core;
+using UCamera = UnityEngine.Camera;
 
 namespace ClaudeCop.UI
 {
@@ -18,9 +19,12 @@ namespace ClaudeCop.UI
 
         readonly List<Entry> active = new List<Entry>(16);
         readonly Stack<TargetReticleView> pool = new Stack<TargetReticleView>(16);
-        Camera cam;
+        UCamera cam;
+        int grenadeCount;
 
         public int ActiveCount => active.Count;
+        /// <summary>So grenade dang duoc Register (banner canh bao bat khi &gt; 0).</summary>
+        public int GrenadeCount => grenadeCount;
 
         void OnEnable()
         {
@@ -36,15 +40,19 @@ namespace ClaudeCop.UI
             TargetRegistry.Unregistered -= OnUnregistered;
             for (int i = active.Count - 1; i >= 0; i--) Release(active[i].View);
             active.Clear();
+            grenadeCount = 0;
+            if (hud != null) hud.SetGrenadeWarning(false);
         }
 
         void OnRegistered(ITapTarget t)
         {
             if (t == null || hud == null || reticlePrefab == null) return;
             for (int i = 0; i < active.Count; i++) if (active[i].Target == t) return;
+            if (t.Kind == TargetKind.Grenade) { grenadeCount++; hud.SetGrenadeWarning(true); }
             TargetReticleView v = null;
             while (v == null && pool.Count > 0) v = pool.Pop();
             if (v == null) v = Instantiate(reticlePrefab, hud.ReticleRoot, false);
+            v.SetKind(t.Kind);
             v.Show(false);
             active.Add(new Entry { Target = t, View = v });
         }
@@ -54,6 +62,11 @@ namespace ClaudeCop.UI
             for (int i = 0; i < active.Count; i++)
             {
                 if (active[i].Target != t) continue;
+                if (t.Kind == TargetKind.Grenade && grenadeCount > 0)
+                {
+                    grenadeCount--;
+                    if (grenadeCount == 0 && hud != null) hud.SetGrenadeWarning(false);
+                }
                 Release(active[i].View);
                 active.RemoveAt(i);
                 return;
@@ -70,7 +83,7 @@ namespace ClaudeCop.UI
         void LateUpdate()
         {
             if (active.Count == 0) return;
-            if (cam == null || !cam.isActiveAndEnabled) cam = Camera.main;
+            if (cam == null || !cam.isActiveAndEnabled) cam = UCamera.main;
             for (int i = 0; i < active.Count; i++)
             {
                 var e = active[i];

@@ -64,6 +64,11 @@ namespace ClaudeCop.FX.Editor
                 P("glow", true, true, new Color(1f, 0.9f, 0.3f, 1f), new Color(1f, 0.7f, 0.1f, 1f), 3, 0f, 0.3f, 0.5f, 0.8f, 0.25f, 0f, 1, 1.6f),
                 P("sparks", false, true, new Color(1f, 0.95f, 0.5f, 1f), new Color(1f, 0.75f, 0.1f, 1f), 14, 2f, 6f, 0.03f, 0.06f, 0.5f, 1.5f, 80, 0f)), 0.8f, 4);
 
+            cfg.explosion = Entry(Impact("Fx_Explosion", matSoft, matHard, matHardAdd,
+                P("smoke", true, false, new Color(0.22f, 0.21f, 0.2f, 0.75f), new Color(0.35f, 0.33f, 0.3f, 0.5f), 10, 1f, 3f, 0.8f, 1.4f, 0.9f, -0.1f, 180, 1.8f),
+                P("fire", true, true, new Color(1f, 0.75f, 0.2f, 1f), new Color(1f, 0.35f, 0.05f, 1f), 8, 0.5f, 2.2f, 1.0f, 1.9f, 0.45f, 0f, 180, 1.3f)), 1.0f, 3);
+            cfg.explosionPrewarm = 3;
+
             var mark = GameObject.CreatePrimitive(PrimitiveType.Quad);
             mark.name = "BulletMark";
             Object.DestroyImmediate(mark.GetComponent<Collider>());

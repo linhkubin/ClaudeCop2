@@ -104,5 +104,74 @@ namespace ClaudeCop.Combat.Tests
             var behind = new Fake { Id = 2, Kind = TargetKind.Enemy, AimPoint = new Vector3(0, 0, -5) };
             Assert.AreEqual(0, Run(new List<ITapTarget> { dead, behind }, Vector2.zero, 90f, 1, res));
         }
+
+        static System.Func<ITapTarget, Rect?> Body(Rect r) => t => t.Kind == TargetKind.Enemy ? (Rect?)r : null;
+
+        [Test]
+        public void BodyRectHitsOutsideAimRadius()
+        {
+            var res = new List<TargetHit>();
+            var e = E(0, 0, 1);
+            var body = Body(new Rect(-50, -300, 100, 400)); // chan o y=-250 xa AimPoint
+            var tap = new Vector2(10, -250);
+            Assert.AreEqual(0, TargetSelector.Select(new List<ITapTarget> { e }, tap, 90f, 35f, 1, Proj, res));
+            Assert.AreEqual(1, TargetSelector.Select(new List<ITapTarget> { e }, tap, 90f, 35f, 1, Proj, res, body));
+            Assert.AreEqual(1, res[0].Target.Id);
+            Assert.IsFalse(res[0].Justice);
+        }
+
+        [Test]
+        public void BodyRectOutsideIsMissAndNonTargetableIgnored()
+        {
+            var res = new List<TargetHit>();
+            var e = E(0, 0, 1);
+            Assert.AreEqual(0, TargetSelector.Select(new List<ITapTarget> { e }, new Vector2(300, 0), 90f, 35f, 1, Proj, res, Body(new Rect(-50, -300, 100, 400))));
+            e.IsTargetable = false;
+            Assert.AreEqual(0, TargetSelector.Select(new List<ITapTarget> { e }, new Vector2(10, -250), 90f, 35f, 1, Proj, res, Body(new Rect(-50, -300, 100, 400))));
+        }
+
+        [Test]
+        public void BodyHitBeatsHostageUnderTap()
+        {
+            var res = new List<TargetHit>();
+            var list = new List<ITapTarget> { H(10, -250), E(0, 0, 1) };
+            Assert.AreEqual(1, TargetSelector.Select(list, new Vector2(10, -250), 90f, 35f, 1, Proj, res, Body(new Rect(-50, -300, 100, 400))));
+            Assert.AreEqual(TargetKind.Enemy, res[0].Target.Kind);
+        }
+
+        static Fake EZ(float x, float y, float z, int id) => new Fake { Id = id, Kind = TargetKind.Enemy, AimPoint = new Vector3(x, y, z) };
+        static System.Func<ITapTarget, float> Depth => t => t.AimPoint.z;
+
+        [Test]
+        public void OverlappingEnemies_FrontOneWinsEvenIfBackAimPointCloserToTap()
+        {
+            var res = new List<TargetHit>();
+            var front = EZ(0, 0, 5, 1);   // gan camera, tam xa tap hon
+            var back = EZ(40, 0, 20, 2);  // xa camera, tam gan tap hon
+            var list = new List<ITapTarget> { back, front };
+            var tap = new Vector2(35, 0);
+            var body = Body(new Rect(-50, -300, 100, 400)); // than ca hai chong nhau
+            Assert.AreEqual(1, TargetSelector.Select(list, tap, 90f, 35f, 1, Proj, res, body, Depth));
+            Assert.AreEqual(1, res[0].Target.Id);
+            // Khong co depth: hanh vi cu (tam gan tap nhat).
+            Assert.AreEqual(1, TargetSelector.Select(list, tap, 90f, 35f, 1, Proj, res, body));
+            Assert.AreEqual(2, res[0].Target.Id);
+        }
+
+        [Test]
+        public void Depth_JusticeStillWinsAndMultiTargetUnchanged()
+        {
+            var res = new List<TargetHit>();
+            var front = EZ(0, 0, 5, 1);
+            var back = EZ(40, 0, 20, 2);
+            back.HasJusticePoint = true; back.JusticePoint = new Vector3(35, 0, 20);
+            var list = new List<ITapTarget> { front, back };
+            Assert.AreEqual(1, TargetSelector.Select(list, new Vector2(35, 0), 90f, 35f, 1, Proj, res, null, Depth));
+            Assert.AreEqual(2, res[0].Target.Id);
+            Assert.IsTrue(res[0].Justice);
+            // Shotgun (max 3): giu thu tu cu, khong doi cho theo do sau.
+            Assert.AreEqual(2, TargetSelector.Select(new List<ITapTarget> { EZ(0, 0, 5, 1), EZ(40, 0, 20, 2) }, new Vector2(30, 0), 90f, 35f, 3, Proj, res, null, Depth));
+            Assert.AreEqual(2, res[0].Target.Id);
+        }
     }
 }

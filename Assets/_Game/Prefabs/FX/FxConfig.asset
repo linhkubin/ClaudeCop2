@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 90ad3c91cde213e43aa136c0149d8a80, type: 3}
-  m_Name: FxConfig
+  m_Name: 
   m_EditorClassIdentifier: ClaudeCop.FX::ClaudeCop.FX.FxConfig
   surfaceImpacts:
   - prefab: {fileID: 3930777615212662170, guid: 72b8cbe98d471c34db2d34e6a6e4a8c7, type: 3}
@@ -47,6 +47,11 @@ MonoBehaviour:
     prefab: {fileID: 8367016649525619512, guid: aa558dcd20000ca48ba29267b177e783, type: 3}
     lifetime: 0.6
     maxInstances: 4
+  explosion:
+    prefab: {fileID: 4311032133373881063, guid: 553a347aaa8f17245842387599eba055, type: 3}
+    lifetime: 1
+    maxInstances: 3
+  explosionPrewarm: 3
   bulletMark:
     prefab: {fileID: 6633985028024217379, guid: 3b11a73b1e84c854183d81aea9d5a963, type: 3}
     lifetime: 8

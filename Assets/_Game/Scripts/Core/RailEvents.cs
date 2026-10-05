@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ClaudeCop.Core
 {
     /// <summary>
-    /// C18. Su kien ray/Phase. Chi Camera (PhaseDirector) duoc Raise; Game (Win), UI (fade/tieu de), Jev nghe.
+    /// C18. Su kien ray/Phase. Chi Camera (PhaseDirector) duoc Raise; Game (Win), UI (fade/tieu de), RankScore nghe.
     /// </summary>
     public static class RailEvents
     {

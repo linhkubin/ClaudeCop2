@@ -11,7 +11,10 @@ namespace ClaudeCop.Camera
     /// </summary>
     public static class SlowZoom
     {
-        static float punchStart = -10f, punchIn = 0.15f, punchOut = 0.4f, punchFov = 5f;
+        // Hai o punch: "dang chay" (cur) va "duoi" (tail). Do lech = max(cur, tail): max cua hai ham lien tuc la ham lien tuc,
+        // nen khi co punch moi chong len punch dang chay thi FOV KHONG bi nhay (truoc day punch moi lam do lech ve 0 trong 1 frame).
+        struct Slot { public float start, fov, tin, tout; }
+        static Slot cur = new Slot { start = -10f, tin = 0.15f, tout = 0.4f }, tail = new Slot { start = -10f, tin = 0.15f, tout = 0.4f };
         static float killStart = -10f, killDuration = 0.5f, killFov = 6f, killAim = 0.35f, killMaxTurn = 6f;
         static bool killActive;
         static Vector3 killPos;
@@ -23,13 +26,18 @@ namespace ClaudeCop.Camera
         public static Vector3 KillPosition => killPos;
         public static CinemachineVirtualCameraBase KillCamera => killCam;
 
-        public static void Punch(CameraFeelProfile p, float now)
+        static float Eval(in Slot s, float now) => PunchEnvelope(now - s.start, s.tin, s.tout) * s.fov;
+
+        public static void Punch(CameraFeelProfile p, float now, bool justice = false)
         {
-            punchStart = now; punchIn = Mathf.Max(0.01f, p.punchIn); punchOut = Mathf.Max(0.01f, p.punchOut); punchFov = p.punchFov;
+            float f = justice ? p.justicePunchFov : p.punchFov;
+            // Giu lai o co do lech lon hon o "duoi"; o moi bat dau tu 0 -> max() van lien tuc.
+            if (Eval(cur, now) >= Eval(tail, now)) tail = cur;
+            cur = new Slot { start = now, fov = f, tin = Mathf.Max(0.01f, justice ? p.justicePunchIn : p.punchIn), tout = Mathf.Max(0.01f, justice ? p.justicePunchOut : p.punchOut) };
         }
 
         /// <summary>Do giam FOV (do) tai thoi diem now (0 khi het).</summary>
-        public static float PunchOffset(float now) => PunchEnvelope(now - punchStart, punchIn, punchOut) * punchFov;
+        public static float PunchOffset(float now) => Mathf.Max(Eval(cur, now), Eval(tail, now));
 
         public static float PunchEnvelope(float elapsed, float tin, float tout)
         {
@@ -59,6 +67,6 @@ namespace ClaudeCop.Camera
         public static float KillFovOffset => killFov;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { punchStart = -10f; killStart = -10f; killActive = false; killCam = null; }
+        static void ResetStatics() { cur = new Slot { start = -10f, tin = 0.15f, tout = 0.4f }; tail = cur; killStart = -10f; killActive = false; killCam = null; }
     }
 }

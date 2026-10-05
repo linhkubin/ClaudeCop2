@@ -177,6 +177,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ClaudeCop.UI::ClaudeCop.UI.EndScreenPresenter
   winView: {fileID: 7700770753334496385}
   gameOverView: {fileID: 4679775794065043279}
+  config: {fileID: 11400000, guid: ea5865395b81e0744b36f4441c104ce9, type: 2}
 --- !u!1001 &1121768455519681090
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -380,7 +381,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8489900277883249462, guid: 6b3670638800c3342a1314494293cc79, type: 3}
       propertyPath: m_Name
-      value: JevDebugPanel
+      value: RankScoreDebugPanel
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

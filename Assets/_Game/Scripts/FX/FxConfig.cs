@@ -22,6 +22,9 @@ namespace ClaudeCop.FX
         public FxEntry enemyHit = new FxEntry();
         public FxEntry justiceHit = new FxEntry();
         public FxEntry hostageHit = new FxEntry();
+        [Tooltip("No thung (BlastEvents). Song <= 1 s, prewarm theo explosionPrewarm.")]
+        public FxEntry explosion = new FxEntry { lifetime = 1f, maxInstances = 3 };
+        [Min(0)] public int explosionPrewarm = 3;
         public FxEntry bulletMark = new FxEntry { lifetime = 8f, maxInstances = 24 };
 
         [Header("Gioi han")]

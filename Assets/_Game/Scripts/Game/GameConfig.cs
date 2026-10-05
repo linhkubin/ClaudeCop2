@@ -25,6 +25,14 @@ namespace ClaudeCop.Game
         [Tooltip("true = vao Playing ngay khi scene khoi dong (sandbox/debug). false = cho Title (StartGameRequested) hoac Restart; trong Editor, chay thang scene gameplay khong qua Title van tu bat dau.")]
         [SerializeField] bool startImmediately = true;
 
+        [Header("W7: vu no / luu dan")]
+        [Tooltip("Diem ha enemy bang no (nhan combo hien tai, KHONG tang combo).")]
+        [SerializeField, Min(0)] int explosionKillPoints = 100;
+        [Tooltip("Diem ban roi luu dan.")]
+        [SerializeField, Min(0)] int grenadeShotPoints = 50;
+
+        public int ExplosionKillPoints => explosionKillPoints;
+        public int GrenadeShotPoints => grenadeShotPoints;
         public int MaxLives => maxLives;
         public float InvulnerableSeconds => invulnerableSeconds;
         public float ReviveGraceSeconds => reviveGraceSeconds;

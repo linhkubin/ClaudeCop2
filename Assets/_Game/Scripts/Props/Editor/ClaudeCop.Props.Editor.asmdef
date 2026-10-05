@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.Props.Editor",
+    "rootNamespace": "ClaudeCop.Props.Editor",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Props"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

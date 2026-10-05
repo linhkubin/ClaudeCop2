@@ -1,7 +1,7 @@
 {
     "name": "ClaudeCop.Game.Tests",
     "rootNamespace": "ClaudeCop.Game.Tests",
-    "references": ["ClaudeCop.Core", "ClaudeCop.Game", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+    "references": ["ClaudeCop.Core", "ClaudeCop.Game", "ClaudeCop.Camera", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

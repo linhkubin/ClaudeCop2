@@ -229,8 +229,14 @@ namespace ClaudeCop.UI.Editor
             var reload = NewButton("ReloadButton", safe, circle, new Color(0.15f, 0.45f, 0.9f, 0.9f), "RELOAD", 34, out var reloadLabel);
             Anchor((RectTransform)reload.transform, new Vector2(1, 0), new Vector2(180, 180), new Vector2(-50, 50));
 
+            var warn = NewText("GrenadeWarning", safe, "LỰU ĐẠN!", 64, TextAlignmentOptions.Center, cfg.grenadeWarnColor);
+            warn.fontStyle = FontStyles.Bold;
+            Anchor(warn.rectTransform, new Vector2(0.5f, 1), new Vector2(700, 90), new Vector2(0, -190));
+            warn.gameObject.SetActive(false);
+
             var view = root.AddComponent<HudView>();
             Set(view, "config", cfg);
+            Set(view, "grenadeWarning", warn);
             Set(view, "scoreText", score);
             Set(view, "hearts", hearts);
             Set(view, "ammoText", ammo);
@@ -384,6 +390,10 @@ namespace ClaudeCop.UI.Editor
             var win = Inst<WinView>("WinPanel");
             var over = Inst<GameOverView>("GameOverPanel");
             var ad = Inst<FakeRewardedAd>("FakeAdOverlay");
+
+            var rpres = new GameObject("TargetReticlePresenter").AddComponent<TargetReticlePresenter>();
+            Set(rpres, "hud", hud);
+            Set(rpres, "reticlePrefab", AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "/TargetReticle.prefab").GetComponent<TargetReticleView>());
 
             var drv = new GameObject("UIDebugDriver").AddComponent<UIDebugDriver>();
             Set(drv, "hud", hud);

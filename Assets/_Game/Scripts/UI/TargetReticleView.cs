@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using ClaudeCop.Core;
 
 namespace ClaudeCop.UI
 {
@@ -16,15 +17,26 @@ namespace ClaudeCop.UI
 
         void Awake() { rt = (RectTransform)transform; }
 
+        bool grenade;
+        public bool IsGrenadeStyle => grenade;
+        public Color RingColor => ring != null ? ring.color : Color.clear;
+
+        /// <summary>Kieu vong: lua dan (nho, cam, nhap nhay) hay mac dinh (doi mau theo progress).</summary>
+        public void SetKind(TargetKind kind) { grenade = kind == TargetKind.Grenade; }
+
         /// <summary>Dat progress 0..1: scale + mau.</summary>
         public void SetProgress(float progress)
         {
             progress = Mathf.Clamp01(progress);
             var c = Cfg;
             float s = Mathf.Lerp(c.reticleStartScale, c.reticleEndScale, progress);
+            if (grenade) s *= c.grenadeReticleScale;
             if (rt == null) rt = (RectTransform)transform;
             rt.localScale = new Vector3(s, s, 1f);
-            if (ring != null) ring.color = c.ReticleColor(progress);
+            if (ring == null) return;
+            if (!grenade) { ring.color = c.ReticleColor(progress); return; }
+            bool alt = !UserSettings.ReduceMotion && Mathf.Repeat(Time.unscaledTime * c.grenadeReticleBlinkHz, 1f) >= 0.5f;
+            ring.color = alt ? c.grenadeReticleColorAlt : c.grenadeReticleColor;
         }
 
         /// <summary>Dat vi tri theo toa do man hinh (pixel). Canvas Screen Space Overlay.</summary>

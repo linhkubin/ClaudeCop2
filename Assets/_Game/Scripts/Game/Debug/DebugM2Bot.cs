@@ -6,7 +6,7 @@ using UnityEngine;
 using ClaudeCop.Core;
 using ClaudeCop.Combat;
 using ClaudeCop.Camera;
-using ClaudeCop.Jev;
+using ClaudeCop.RankScore;
 
 namespace ClaudeCop.Game.Debugging
 {
@@ -18,6 +18,11 @@ namespace ClaudeCop.Game.Debugging
     {
         public string mode = "Kill";
         public float tapDelay = 0.5f, interval = 0.25f;
+        [Tooltip("W7: ban thung no (ExplosiveBarrel) khi nhin thay, moi thung 1 lan.")] public bool shootBarrel;
+        [Tooltip("W7: ban roi luu dan dang bay.")] public bool shootGrenade;
+        public bool barrelNeedsEnemy = true, pullBarrel;
+        [Tooltip("W7: khong ban Grenadier de no nem luu dan (tu tat sau khi da thu bo mac + ban roi).")] public bool grenadierWait;
+        [Tooltip("W7: bo mac luu dan (khong ban) de mat 1 mang.")] public bool ignoreGrenade;
         public bool shootHostageOnce, pickupFirst = true, autoStart = true, shots = true;
         public string dir = "";
         public string logFile = "";
@@ -33,7 +38,7 @@ namespace ClaudeCop.Game.Debugging
         System.Action<GameState> hState; System.Action<int, int> hLives; System.Action<int> hScore;
         System.Action<ShotResult> hRes; System.Action<int, int, WeaponKind> hAmmo; System.Action<WeaponKind> hWeapon;
         System.Action<int, float> hCombo; System.Action<DamageSource, Vector3, int> hDmg;
-        System.Action<int, Vector3, bool, float> hAwarded; System.Action<JevDecision> hJev; System.Action<bool> hReload;
+        System.Action<int, Vector3, bool, float> hAwarded; System.Action<RankScoreDecision> hRankScore; System.Action<bool> hReload; System.Action<BlastReport> hBlast;
 
         public void Log(string m)
         {
@@ -67,13 +72,14 @@ namespace ClaudeCop.Game.Debugging
             };
             hLives = (c, m) => Log("LIVES " + c + "/" + m);
             hScore = s => Log("SCORE " + s);
-            hRes = r => Log("RESOLVED " + r.Outcome + " kind=" + r.TargetKind + " weapon=" + r.Weapon + " combo=x" + r.ComboMultiplier.ToString("F1") + " hits=" + r.TargetsHit + " prog=" + r.ReticleProgress.ToString("F2"));
+            hRes = r => { if (r.TargetKind == TargetKind.Grenade && r.Outcome == TapOutcome.Kill) grenadierWait = false; Log("RESOLVED " + r.Outcome + " kind=" + r.TargetKind + " weapon=" + r.Weapon + " combo=x" + r.ComboMultiplier.ToString("F1") + " hits=" + r.TargetsHit + " prog=" + r.ReticleProgress.ToString("F2")); };
             hAmmo = (c, m, w) => Log("AMMO " + c + "/" + m + " " + w);
             hWeapon = w => Log("WEAPON " + w);
             hCombo = (s, m) => Log("COMBO streak=" + s + " x" + m.ToString("F1"));
-            hDmg = (src, p, left) => Log("DAMAGED " + src + " livesLeft=" + left);
+            hDmg = (src, p, left) => { Log("DAMAGED " + src + " livesLeft=" + left); if (src == DamageSource.Explosion) ignoreGrenade = false; };
             hAwarded = (pts, pos, j, mul) => Log("AWARD " + pts + " justice=" + j + " mul=x" + mul.ToString("F1"));
-            hJev = d => Log("JEV " + d.Question + " choice=" + d.Choice + " conf=" + d.Confidence.ToString("F2") + " reticle=" + d.ReticleTime.ToString("F2") + " src=" + d.Source + " stats=" + d.Stats);
+            hRankScore = d => Log("RANKSCORE " + d.Question + " choice=" + d.Choice + " conf=" + d.Confidence.ToString("F2") + " reticle=" + d.ReticleTime.ToString("F2") + " src=" + d.Source + " stats=" + d.Stats);
+            hBlast = b => Log("BLAST kills=" + b.EnemiesKilled + " hostages=" + b.HostagesHit + " center=" + b.Center + " r=" + b.Radius);
             hReload = b => Log("RELOADING " + b);
             RailEvents.PhaseStarted += hPhase; RailEvents.MoveSegmentStarted += hMove; RailEvents.EncounterStarted += hStart;
             RailEvents.EncounterCleared += hClear; RailEvents.LevelCompleted += hLevel;
@@ -81,7 +87,7 @@ namespace ClaudeCop.Game.Debugging
             GameEvents.PlayerDamaged += hDmg; GameEvents.ScoreAwarded += hAwarded;
             CombatEvents.ShotResolved += hRes; CombatEvents.AmmoChanged += hAmmo; CombatEvents.WeaponChanged += hWeapon; CombatEvents.ComboChanged += hCombo;
             CombatEvents.ReloadStateChanged += hReload;
-            JevDecisionLog.DecisionMade += hJev;
+            RankScoreDecisionLog.DecisionMade += hRankScore; BlastEvents.Blasted += hBlast;
         }
 
         void OnDisable()
@@ -92,7 +98,7 @@ namespace ClaudeCop.Game.Debugging
             GameEvents.PlayerDamaged -= hDmg; GameEvents.ScoreAwarded -= hAwarded;
             CombatEvents.ShotResolved -= hRes; CombatEvents.AmmoChanged -= hAmmo; CombatEvents.WeaponChanged -= hWeapon; CombatEvents.ComboChanged -= hCombo;
             CombatEvents.ReloadStateChanged -= hReload;
-            JevDecisionLog.DecisionMade -= hJev;
+            RankScoreDecisionLog.DecisionMade -= hRankScore; BlastEvents.Blasted -= hBlast;
         }
 
         IEnumerator Shot(string name, float delay)
@@ -211,8 +217,11 @@ namespace ClaudeCop.Game.Debugging
                 if (t.Kind == TargetKind.Hostage && shootHostageOnce && t.ExposedTime > 0.3f) { pick = t; shootHostageOnce = false; Log("SHOOTING HOSTAGE on purpose"); break; }
                 if (t.Kind == TargetKind.Pickup && pickupFirst) { pick = t; break; }
             }
+            if (pick == null && !ignoreGrenade && shootGrenade)
+                foreach (var t in buf) if (t != null && t.IsTargetable && t.Kind == TargetKind.Grenade) { pick = t; Log("BOT SHOOT GRENADE"); break; }
+            if (pick == null && shootBarrel && TryShootBarrel(cam)) { next = Time.time + interval; return; }
             if (pick == null)
-                foreach (var t in buf) if (t != null && t.IsTargetable && t.Kind == TargetKind.Enemy && t.ExposedTime >= tapDelay) { pick = t; break; }
+                foreach (var t in buf) if (t != null && t.IsTargetable && t.Kind == TargetKind.Enemy && t.ExposedTime >= tapDelay && !(grenadierWait && IsGrenadier(t)) && !HoldForBarrel(t)) { pick = t; break; }
             if (pick == null) return;
             var sp = cam.WorldToScreenPoint(pick.HasJusticePoint && pick.Kind == TargetKind.Enemy ? pick.JusticePoint : pick.AimPoint);
             if (sp.z <= 0f) return;
@@ -220,6 +229,61 @@ namespace ClaudeCop.Game.Debugging
             next = Time.time + interval;
         }
 
+        readonly HashSet<int> shotBarrels = new HashSet<int>(), pulled = new HashSet<int>(), occludedLogged = new HashSet<int>(), occludedNow = new HashSet<int>();
+        float barrelScan; MonoBehaviour[] barrelCache;
+
+        bool TryShootBarrel(UnityEngine.Camera cam)
+        {
+            if (Time.time >= barrelScan) { barrelScan = Time.time + 1f; barrelCache = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None); }
+            if (barrelCache == null) return false;
+            foreach (var m in barrelCache)
+            {
+                if (m == null || !m.gameObject.activeInHierarchy || (m.GetType().Name != "ExplosiveBarrel" && m.GetType().Name != "BreakableGlass")) continue;
+                if (m.GetType().Name == "ExplosiveBarrel" && barrelNeedsEnemy)
+                {
+                    ITapTarget nearT = null; float nd = 99f;
+                    foreach (var t in buf) if (t != null && t.IsTargetable && t.Kind == TargetKind.Enemy) { float d = (t.AimPoint - BarrelCenter(m)).magnitude; if (d < nd) { nd = d; nearT = t; } }
+                    if (nearT == null || nd > 2.9f || nearT.ExposedTime < 0.15f) continue;
+                    if (nd > 2.4f && pullBarrel && pulled.Add(m.GetInstanceID()))
+                    {
+                        var dv = nearT.AimPoint - m.transform.position; dv.y = 0f;
+                        Log("BOT PULL BARREL by " + (dv.magnitude * 0.4f).ToString("F2") + "m (runtime only, marker dist=" + nd.ToString("F2") + ")");
+                        m.transform.position += dv.normalized * (dv.magnitude * 0.4f);
+                    }
+                }
+                int id = m.GetInstanceID();
+                if (shotBarrels.Contains(id)) continue;
+                var col = m.GetComponentInChildren<Collider>();
+                Vector3 wp = col != null ? col.bounds.center : m.transform.position;
+                var sp = cam.WorldToScreenPoint(wp);
+                if (sp.z <= 0f || sp.x < 0f || sp.y < 0f || sp.x > Screen.width || sp.y > Screen.height) continue;
+                if (sp.z > 25f) continue;
+                if (Physics.Raycast(cam.transform.position, (wp - cam.transform.position).normalized, out var rh, sp.z + 1f, ~0, QueryTriggerInteraction.Collide)
+                    && rh.collider.GetComponentInParent<MonoBehaviour>() is MonoBehaviour hm && hm != m && rh.collider.transform.root != m.transform.root && !rh.collider.transform.IsChildOf(m.transform))
+                {
+                    occludedNow.Add(id); if (occludedLogged.Add(id)) Log("BARREL OCCLUDED " + m.name + " by " + rh.collider.name + " dist=" + rh.distance.ToString("F1") + " camPos=" + cam.transform.position + " shot=" + lastShot);
+                    continue;
+                }
+                occludedNow.Remove(id);
+                shotBarrels.Add(id);
+                Log("BOT SHOOT BARREL " + m.name);
+                if (shots) StartCoroutine(Shot("prop_" + m.name, 0.3f));
+                shooter.FireAt(new Vector2(sp.x, sp.y));
+                return true;
+            }
+            return false;
+        }
+
+        static Vector3 BarrelCenter(MonoBehaviour m) { var c = m.GetComponentInChildren<Collider>(); return c != null ? c.bounds.center : m.transform.position; }
+        bool HoldForBarrel(ITapTarget t)
+        {
+            if (!shootBarrel || !barrelNeedsEnemy || barrelCache == null || t.ExposedTime > 1.0f) return false;
+            foreach (var m in barrelCache)
+                if (m != null && m.gameObject.activeInHierarchy && m.GetType().Name == "ExplosiveBarrel" && !shotBarrels.Contains(m.GetInstanceID()) && !occludedNow.Contains(m.GetInstanceID())
+                    && (t.AimPoint - BarrelCenter(m)).magnitude < 2.9f) return true;
+            return false;
+        }
+        static bool IsGrenadier(ITapTarget t) { var c = t as Component; return c != null && c.name.Contains("Grenadier"); }
         static bool SceneNameIsTitle() => UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Title";
     }
 }

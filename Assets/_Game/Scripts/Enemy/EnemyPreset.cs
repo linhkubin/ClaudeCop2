@@ -3,7 +3,7 @@ using UnityEngine;
 namespace ClaudeCop.Enemy
 {
     /// <summary>
-    /// Bo cau hinh dot lam san (Jev wave_preset: calm / standard / intense / hostage_heavy).
+    /// Bo cau hinh dot lam san (RankScore wave_preset: calm / standard / intense / hostage_heavy).
     /// EncounterWave.ApplyPreset ghi de len EnemyConfig theo tung dot (khong sua asset EnemyConfig).
     /// </summary>
     [CreateAssetMenu(menuName = "ClaudeCop/Enemy Preset", fileName = "EnemyPreset")]

@@ -39,6 +39,18 @@ namespace ClaudeCop.Combat
         readonly List<TargetHit> hits = new List<TargetHit>(8);
         readonly List<ShotResult> pending = new List<ShotResult>(8);
         Func<Vector3, Vector2?> projectFunc;
+        Func<ITapTarget, Rect?> bodyRectFunc;
+        float bodyPadPx;
+        readonly Dictionary<int, Collider[]> bodyColliders = new Dictionary<int, Collider[]>();
+        static readonly Collider[] NoColliders = new Collider[0];
+        readonly List<Collider> colScratch = new List<Collider>(8);
+        readonly List<Collider> keepScratch = new List<Collider>(8);
+        Func<ITapTarget, float> depthFunc;
+        Vector3 depthCamPos;
+
+        void OnTargetUnregistered(ITapTarget t) { if (t != null) bodyColliders.Remove(t.Id); }
+
+        float Depth(ITapTarget t) { return (t.AimPoint - depthCamPos).sqrMagnitude; }
 
         public WeaponData CurrentWeapon => weapon;
         public int Ammo => ammo;
@@ -46,7 +58,7 @@ namespace ClaudeCop.Combat
         /// <summary>Vu khi khoi dau (Pistol): quay ve khi het dan vu khi dac biet.</summary>
         public WeaponData StartingWeapon => startingWeapon;
 
-        void Awake() { projectFunc = Project; }
+        void Awake() { projectFunc = Project; bodyRectFunc = BodyRect; depthFunc = Depth; }
 
         void OnEnable()
         {
@@ -67,6 +79,7 @@ namespace ClaudeCop.Combat
             else Debug.LogError("[TapShooter] Chua gan InputActionAsset.", this);
 
             GameCommands.ReloadRequested += StartReload;
+            TargetRegistry.Unregistered += OnTargetUnregistered;
             if (startingWeapon != null) Equip(startingWeapon, true);
         }
 
@@ -76,6 +89,8 @@ namespace ClaudeCop.Combat
         {
             if (tapAction != null) tapAction.performed -= OnTapPerformed;
             GameCommands.ReloadRequested -= StartReload;
+            TargetRegistry.Unregistered -= OnTargetUnregistered;
+            bodyColliders.Clear();
             if (reloading) { reloading = false; CombatEvents.RaiseReloadStateChanged(false); }
         }
 
@@ -187,7 +202,7 @@ namespace ClaudeCop.Combat
             if (ammo <= 0)
             {
                 CombatEvents.RaiseOutOfAmmo();
-                nextFireTime = Time.time + 0.2f; // tranh spam khi giu
+                nextFireTime = Time.time + (config != null ? config.EmptyClickCooldown : CombatConfig.DefaultEmptyClickCooldown); // tranh spam khi giu
                 if (!TryRevertToStartingWeapon() && config != null && config.AutoReloadWhenEmpty) StartReload();
                 return;
             }
@@ -223,6 +238,45 @@ namespace ClaudeCop.Combat
             return new Vector2(sp.x, sp.y);
         }
 
+        /// <summary>Hinh chu nhat man hinh bao quanh cac collider dang bat cua enemy (bo collider thuoc ITapTarget khac, vd. con tin bi bat lam khien).</summary>
+        Rect? BodyRect(ITapTarget t)
+        {
+            var comp = t as Component;
+            if (comp == null) return null;
+            if (!bodyColliders.TryGetValue(t.Id, out var cols) || cols == null || (cols.Length > 0 && cols[0] == null))
+            {
+                comp.GetComponentsInChildren(true, colScratch);
+                keepScratch.Clear();
+                for (int i = 0; i < colScratch.Count; i++)
+                {
+                    var owner = colScratch[i].GetComponentInParent<ITapTarget>();
+                    if (owner == null || ReferenceEquals(owner, t) || owner.Id == t.Id) keepScratch.Add(colScratch[i]);
+                }
+                colScratch.Clear();
+                cols = keepScratch.Count == 0 ? NoColliders : keepScratch.ToArray(); // cache ca ket qua rong
+                bodyColliders[t.Id] = cols;
+            }
+            bool any = false;
+            float minX = 0, minY = 0, maxX = 0, maxY = 0;
+            for (int i = 0; i < cols.Length; i++)
+            {
+                var c = cols[i];
+                if (c == null || !c.enabled || !c.gameObject.activeInHierarchy || c.isTrigger) continue;
+                Bounds b = c.bounds;
+                Vector3 mn = b.min, mx = b.max;
+                for (int k = 0; k < 8; k++)
+                {
+                    var p = Project(new Vector3((k & 1) == 0 ? mn.x : mx.x, (k & 2) == 0 ? mn.y : mx.y, (k & 4) == 0 ? mn.z : mx.z));
+                    if (!p.HasValue) return null; // cham/sau mat phang camera: bo qua than
+                    var v = p.Value;
+                    if (!any) { minX = maxX = v.x; minY = maxY = v.y; any = true; }
+                    else { if (v.x < minX) minX = v.x; if (v.x > maxX) maxX = v.x; if (v.y < minY) minY = v.y; if (v.y > maxY) maxY = v.y; }
+                }
+            }
+            if (!any) return null;
+            return Rect.MinMaxRect(minX - bodyPadPx, minY - bodyPadPx, maxX + bodyPadPx, maxY + bodyPadPx);
+        }
+
         /// <returns>Vu khi cua thung vua nhat (neu co), nguoc lai null.</returns>
         WeaponData ResolveShot(Vector2 screenPos)
         {
@@ -230,12 +284,19 @@ namespace ClaudeCop.Combat
             if (cam == null) { Debug.LogWarning("[TapShooter] Khong co Camera.main.", this); return null; }
             if (projectFunc == null) projectFunc = Project;
 
-            float scale = Mathf.Min(Screen.width, Screen.height) / (config != null ? config.ReferenceScreenHeight : 1080f);
+            float scale = Mathf.Min(Screen.width, Screen.height) / (config != null ? config.ReferenceScreenHeight : CombatConfig.DefaultReferenceScreenHeight);
             float radius = weapon.HitRadiusPx * scale;
-            float justice = (config != null ? config.JusticeRadiusPx : 35f) * scale;
+            float justice = (config != null ? config.JusticeRadiusPx : CombatConfig.DefaultJusticeRadiusPx) * scale;
 
+            bool bodyHit = config == null || config.EnemyBodyHit;
+            bodyPadPx = (config != null ? config.BodyHitPaddingPx : CombatConfig.DefaultBodyHitPaddingPx) * scale;
+            if (bodyRectFunc == null) bodyRectFunc = BodyRect;
+
+            if (depthFunc == null) depthFunc = Depth;
+            depthCamPos = cam.transform.position;
+            bool nearest = config == null || config.NearestTargetFirst;
             int count = TargetSelector.Select(TargetRegistry.Targets, screenPos, radius, justice,
-                weapon.MaxTargetsPerShot, projectFunc, hits);
+                weapon.MaxTargetsPerShot, projectFunc, hits, bodyHit ? bodyRectFunc : null, nearest ? depthFunc : null);
 
             if (count == 0) { ResolveEnvironment(screenPos); return null; }
 
@@ -302,15 +363,14 @@ namespace ClaudeCop.Combat
         void ResolveEnvironment(Vector2 screenPos)
         {
             Ray ray = cam.ScreenPointToRay(screenPos);
-            float maxDist = config != null ? config.MaxRayDistance : 100f;
+            float maxDist = config != null ? config.MaxRayDistance : CombatConfig.DefaultMaxRayDistance;
             int mask = config != null ? config.EnvironmentMask.value : ~0;
-            TapOutcome outcome = TapOutcome.Miss;
             Vector3 point = ray.origin + ray.direction * maxDist;
-            bool shootableHit = false;
+            bool rayHit = false, shootableHit = false;
 
             if (Physics.Raycast(ray, out RaycastHit hit, maxDist, mask, QueryTriggerInteraction.Ignore))
             {
-                outcome = TapOutcome.Environment;
+                rayHit = true;
                 point = hit.point;
                 var shootable = hit.collider.GetComponentInParent<IShootable>();
                 if (shootable != null)
@@ -328,8 +388,9 @@ namespace ClaudeCop.Combat
                 }
             }
 
-            // Ban vat IShootable giu combo (plan muc 14); tuong tro/khong trung gi thi reset.
-            float mult = combo != null ? combo.RegisterShot(outcome, shootableHit) : CombatEvents.Current.ComboMultiplier;
+            // C9: Environment chi khi trung IShootable (giu combo); tuong tro/khong trung gi = Miss (reset combo).
+            TapOutcome outcome = ShotClassifier.ClassifyEnvironment(rayHit, shootableHit);
+            float mult = combo != null ? combo.RegisterShot(outcome, ShotClassifier.KeepsCombo(outcome)) : CombatEvents.Current.ComboMultiplier;
             CombatEvents.RaiseShotResolved(new ShotResult
             {
                 Outcome = outcome,

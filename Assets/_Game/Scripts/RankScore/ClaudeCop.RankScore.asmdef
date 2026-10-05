@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.RankScore",
+    "rootNamespace": "ClaudeCop.RankScore",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Enemy"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,14 @@
+{
+    "name": "ClaudeCop.Props.Tests",
+    "rootNamespace": "ClaudeCop.Props.Tests",
+    "references": ["ClaudeCop.Core", "ClaudeCop.Props", "ClaudeCop.Props.Editor", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

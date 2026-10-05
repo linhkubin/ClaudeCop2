@@ -50,5 +50,23 @@ namespace ClaudeCop.Core.Tests
             Assert.AreEqual(123, GameEvents.Current.Score);
             GameEvents.RaiseScoreChanged(0);
         }
+
+        [Test]
+        public void BlastEvents_RaiseDeliversReport_AndResetClearsSubscribers()
+        {
+            BlastReport got = default; int n = 0;
+            System.Action<BlastReport> h = r => { got = r; n++; };
+            BlastEvents.Blasted += h;
+            BlastEvents.Raise(new BlastReport { Center = new Vector3(1, 2, 3), Radius = 3f, EnemiesKilled = 2, HostagesHit = 1, SourceId = 77 });
+            Assert.AreEqual(1, n);
+            Assert.AreEqual(new Vector3(1, 2, 3), got.Center);
+            Assert.AreEqual(3f, got.Radius); Assert.AreEqual(2, got.EnemiesKilled);
+            Assert.AreEqual(1, got.HostagesHit); Assert.AreEqual(77, got.SourceId);
+
+            var reset = typeof(BlastEvents).GetMethod("ResetStatics", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            reset.Invoke(null, null);
+            BlastEvents.Raise(new BlastReport());
+            Assert.AreEqual(1, n);
+        }
     }
 }

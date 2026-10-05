@@ -12,17 +12,27 @@ namespace ClaudeCop.Enemy
     /// Con tin KHONG tinh vao dieu kien Cleared; khi dot Cleared con tin con lai bi huy bo va thung chua nhat bi tat.
     /// Thung vu khi la GameObject co WeaponPickup (Enemy khong tham chieu Combat): wave chi bat/tat GameObject, WeaponPickup tu dang ky target.
     /// Cleared luon phat o LateUpdate (sau ShotResolved cua phat ban cuoi), khong phat dong bo trong OnTapHit/Begin.
-    /// Cau hinh truoc Begin(): Configure(EnemyConfig), ApplyPreset(EnemyPreset), ApplyReticleTime(float) (Jev).
+    /// Cau hinh truoc Begin(): Configure(EnemyConfig), ApplyPreset(EnemyPreset), ApplyReticleTime(float) (RankScore).
     /// </summary>
     public class EncounterWave : EncounterBase
     {
         [SerializeField] EnemyConfig config;
-        [Tooltip("Bo cau hinh lam san ap o Awake (T-403). Jev reticle_time (neu co) ghi de sau, truoc Begin.")]
+        [Tooltip("Bo cau hinh lam san ap o Awake (T-403). RankScore reticle_time (neu co) ghi de sau, truoc Begin.")]
         [SerializeField] EnemyPreset preset;
         [Header("Enemy")]
         [SerializeField] List<EnemyActor> sceneEnemies = new List<EnemyActor>();
         [SerializeField] List<Transform> spawnPoints = new List<Transform>();
         [SerializeField] EnemyActor enemyPrefab;
+        [Header("Grenadier (EnemyActor co ConfigureGrenadier / prefab Enemy_Grenadier)")]
+        [SerializeField] List<Transform> grenadierSpawnPoints = new List<Transform>();
+        [SerializeField] EnemyActor grenadierPrefab;
+        [Tooltip("So grenadier toi da moi dot (< 0 = khong gioi han)")]
+        [SerializeField] int maxGrenadiersPerWave = 2;
+        [Header("Human shield (prefab Enemy_HumanShield)")]
+        [SerializeField] List<Transform> humanShieldSpawnPoints = new List<Transform>();
+        [SerializeField] HumanShieldEnemy humanShieldPrefab;
+        [Tooltip("So human shield toi da moi dot (< 0 = khong gioi han)")]
+        [SerializeField] int maxHumanShieldsPerWave = 2;
         [Header("Hostage")]
         [SerializeField] List<HostageActor> sceneHostages = new List<HostageActor>();
         [SerializeField] List<Transform> hostageSpawnPoints = new List<Transform>();
@@ -43,13 +53,14 @@ namespace ClaudeCop.Enemy
         readonly List<EnemyActor> spawnedEnemies = new List<EnemyActor>();
         readonly List<HostageActor> spawnedHostages = new List<HostageActor>();
         readonly List<GameObject> spawnedPickups = new List<GameObject>();
+        readonly List<Grenade> grenades = new List<Grenade>();
         bool preSpawned;
         int nextIndex;
         float countdown;
         bool active, cleared;
         Vector3 lastKillPos;
 
-        // Ghi de theo dot (preset / Jev); < 0 hoac null = dung EnemyConfig.
+        // Ghi de theo dot (preset / RankScore); < 0 hoac null = dung EnemyConfig.
         float reticleTimeOverride = -1f, hideTimeOverride = -1f, staggerMinOverride = -1f, staggerMaxOverride = -1f;
         bool? justiceOverride;
         float justiceFractionOverride = -1f;
@@ -77,11 +88,21 @@ namespace ClaudeCop.Enemy
                 return n;
             }
         }
+        /// <summary>So luu dan da nem nhung chua duoc giai quyet (chua bi ban, chua no). Dot chua Cleared khi con &gt; 0.</summary>
+        public int PendingGrenadeCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (var g in grenades) if (g != null && !g.IsResolved) n++;
+                return n;
+            }
+        }
         public IReadOnlyList<EnemyActor> Enemies => queue;
         public IReadOnlyList<HostageActor> Hostages => hostages;
         public override string Description =>
             string.IsNullOrEmpty(description)
-                ? "Wave '" + name + "': " + (sceneEnemies.Count + spawnPoints.Count) + " enemy, "
+                ? "Wave '" + name + "': " + (sceneEnemies.Count + spawnPoints.Count + grenadierSpawnPoints.Count + humanShieldSpawnPoints.Count) + " enemy, "
                   + (sceneHostages.Count + hostageSpawnPoints.Count) + " hostage"
                 : description;
 
@@ -89,7 +110,7 @@ namespace ClaudeCop.Enemy
 
         public void Configure(EnemyConfig cfg) { config = cfg; }
 
-        /// <summary>Doi thoi gian vong target cua dot (Jev reticle_time). Enemy chua kich hoat se dung gia tri moi.</summary>
+        /// <summary>Doi thoi gian vong target cua dot (RankScore reticle_time). Enemy chua kich hoat se dung gia tri moi.</summary>
         public void ApplyReticleTime(float seconds)
         {
             if (seconds <= 0f) return;
@@ -111,7 +132,25 @@ namespace ClaudeCop.Enemy
             foreach (var e in queue) if (e != null) e.SetHideTime(p.hideTime);
         }
 
-        /// <summary>Doi prefab thung vu khi cho dot (Jev weapon_drop). null = khong co thung spawn.</summary>
+        /// <summary>Cau hinh grenadier cho dot: prefab (Enemy_Grenadier), cac diem spawn, so toi da. Goi truoc PreSpawn (Start); goi sau thi spawn bu ngay (tat san).</summary>
+        public void ConfigureGrenadiers(EnemyActor prefab, IEnumerable<Transform> points, int max)
+        {
+            grenadierPrefab = prefab;
+            grenadierSpawnPoints = points != null ? new List<Transform>(points) : new List<Transform>();
+            maxGrenadiersPerWave = max;
+            if (preSpawned && !active) SpawnEnemies(grenadierPrefab, grenadierSpawnPoints, maxGrenadiersPerWave);
+        }
+
+        /// <summary>Cau hinh human shield cho dot: prefab (Enemy_HumanShield), cac diem spawn, so toi da.</summary>
+        public void ConfigureHumanShields(HumanShieldEnemy prefab, IEnumerable<Transform> points, int max)
+        {
+            humanShieldPrefab = prefab;
+            humanShieldSpawnPoints = points != null ? new List<Transform>(points) : new List<Transform>();
+            maxHumanShieldsPerWave = max;
+            if (preSpawned && !active) SpawnEnemies(humanShieldPrefab, humanShieldSpawnPoints, maxHumanShieldsPerWave);
+        }
+
+        /// <summary>Doi prefab thung vu khi cho dot (RankScore weapon_drop). null = khong co thung spawn.</summary>
         public void SetPickupPrefab(GameObject prefab)
         {
             if (prefab == pickupPrefab) return;
@@ -125,10 +164,11 @@ namespace ClaudeCop.Enemy
             }
         }
 
-        float StaggerMin => staggerMinOverride >= 0f ? staggerMinOverride : (config != null ? config.staggerMin : 0.4f);
-        float StaggerMax => staggerMaxOverride >= 0f ? staggerMaxOverride : (config != null ? config.staggerMax : 1.0f);
-        bool JusticeActive => justiceOverride.HasValue ? justiceOverride.Value : (config != null && config.justiceEnabled);
-        float JusticeFraction => justiceFractionOverride >= 0f ? justiceFractionOverride : (config != null ? config.justiceFraction : 0.34f);
+        EnemyConfig Cfg => config != null ? config : EnemyConfig.Fallback;
+        float StaggerMin => staggerMinOverride >= 0f ? staggerMinOverride : (Cfg.staggerMin);
+        float StaggerMax => staggerMaxOverride >= 0f ? staggerMaxOverride : (Cfg.staggerMax);
+        bool JusticeActive => justiceOverride.HasValue ? justiceOverride.Value : Cfg.justiceEnabled;
+        float JusticeFraction => justiceFractionOverride >= 0f ? justiceFractionOverride : (Cfg.justiceFraction);
 
         void Awake()
         {
@@ -144,18 +184,9 @@ namespace ClaudeCop.Enemy
         {
             if (preSpawned) return;
             preSpawned = true;
-            if (enemyPrefab != null)
-            {
-                foreach (var sp in spawnPoints)
-                {
-                    if (sp == null) continue;
-                    GetPeek(sp, out Vector3 pp, out Quaternion pr);
-                    var e = Instantiate(enemyPrefab, sp.position, sp.rotation, transform);
-                    e.Setup(config, sp.position, sp.rotation, pp, pr);
-                    e.gameObject.SetActive(false);
-                    spawnedEnemies.Add(e);
-                }
-            }
+            SpawnEnemies(enemyPrefab, spawnPoints, -1);
+            SpawnEnemies(grenadierPrefab, grenadierSpawnPoints, maxGrenadiersPerWave);
+            SpawnEnemies(humanShieldPrefab, humanShieldSpawnPoints, maxHumanShieldsPerWave);
             if (hostagePrefab != null)
             {
                 foreach (var sp in hostageSpawnPoints)
@@ -169,6 +200,23 @@ namespace ClaudeCop.Enemy
                 }
             }
             SpawnPickups();
+        }
+
+        void SpawnEnemies(EnemyActor prefab, List<Transform> points, int max)
+        {
+            if (prefab == null) return;
+            int n = 0;
+            foreach (var sp in points)
+            {
+                if (sp == null) continue;
+                if (max >= 0 && n >= max) break;
+                n++;
+                GetPeek(sp, out Vector3 pp, out Quaternion pr);
+                var e = Instantiate(prefab, sp.position, sp.rotation, transform);
+                e.Setup(config, sp.position, sp.rotation, pp, pr);
+                e.gameObject.SetActive(false);
+                spawnedEnemies.Add(e);
+            }
         }
 
         void SpawnPickups()
@@ -198,6 +246,8 @@ namespace ClaudeCop.Enemy
 
         void BuildQueue()
         {
+            foreach (var g in grenades) if (g != null) g.Resolved -= OnGrenadeResolved;
+            grenades.Clear();
             queue.Clear(); hostages.Clear(); pickups.Clear(); sequence.Clear();
 
             foreach (var e in sceneEnemies)
@@ -225,6 +275,7 @@ namespace ClaudeCop.Enemy
                     e.SetJustice(on);
                 }
                 e.Died += OnEnemyDied;
+                e.GrenadeThrown += OnGrenadeThrown;
             }
 
             if (useHostages)
@@ -302,6 +353,7 @@ namespace ClaudeCop.Enemy
             if (!active || cleared) return;
             if (HasEnemyToActivate()) return;
             if (AliveCount > 0) return;
+            if (PendingGrenadeCount > 0) return;
             active = false; cleared = true;
             DismissExtras();
             RaiseCleared(lastKillPos);
@@ -313,6 +365,19 @@ namespace ClaudeCop.Enemy
             foreach (var p in pickups) if (p != null) p.SetActive(false);
         }
 
+        void OnGrenadeThrown(EnemyActor e, Grenade g)
+        {
+            if (g == null) return;
+            grenades.Add(g);
+            g.Resolved += OnGrenadeResolved;
+        }
+
+        void OnGrenadeResolved(Grenade g, bool shotDown)
+        {
+            g.Resolved -= OnGrenadeResolved;
+            lastKillPos = g.transform.position;
+        }
+
         void OnEnemyDied(EnemyActor e, Vector3 pos)
         {
             e.Died -= OnEnemyDied;
@@ -321,7 +386,8 @@ namespace ClaudeCop.Enemy
 
         void OnDestroy()
         {
-            foreach (var e in queue) if (e != null) e.Died -= OnEnemyDied;
+            foreach (var e in queue) if (e != null) { e.Died -= OnEnemyDied; e.GrenadeThrown -= OnGrenadeThrown; }
+            foreach (var g in grenades) if (g != null) g.Resolved -= OnGrenadeResolved;
         }
     }
 }

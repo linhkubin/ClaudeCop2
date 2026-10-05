@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b8e46aac7aaba24f8937b1a32327e76, type: 3}
+  m_Name: PropConfig
+  m_EditorClassIdentifier: ClaudeCop.Props::ClaudeCop.Props.PropConfig
+  blastRadius: 3
+  chainDelay: 0.15
+  explosionForce: 800
+  explosionUpwardsModifier: 1
+  blastImpulseScale: 2
+  blastMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  boxBaseForce: 4
+  maxActiveBodies: 40
+  debrisLifetime: 4
+  debrisFadeSeconds: 0.5
+  offscreenMargin: 0.15
+  glassShardForce: 3
+  glassShardSpread: 0.35
+  glassDustLifetime: 1.5

@@ -19,6 +19,7 @@ namespace ClaudeCop.Combat
     ///  1. Nhom chinh = muc tieu IsTargetable la Enemy/Grenade co AimPoint trong ban kinh (Pickup KHONG nam trong nhom nay, F-107).
     ///     Enemy co Justice point ma tap trong justicePx cua JusticePoint la Justice.
     ///     Sap xep: Justice truoc, sau do gan nhat. Lay toi da maxHits.
+    ///     HIT-BODY: enemy con duoc tinh trung neu tap nam trong bodyRect (bounds collider tren man hinh), ngoai ban kinh.
     ///  2. Nhom chinh rong -> xet Pickup (gan nhat, toi da 1): tap trung ca enemy va thung thi ban enemy.
 ///  3. Van rong -> xet Hostage (gan nhat trong ban kinh, toi da 1): tap trung ca enemy va con tin thi luon trung enemy.
     ///  4. Khong co gi: TapShooter raycast moi truong hoac Miss.
@@ -28,7 +29,8 @@ namespace ClaudeCop.Combat
         /// <param name="project">World -> pixel; null neu diem o sau camera.</param>
         /// <returns>So hit trong results (results duoc Clear truoc).</returns>
         public static int Select(IReadOnlyList<ITapTarget> targets, Vector2 tap, float radiusPx, float justicePx,
-            int maxHits, Func<Vector3, Vector2?> project, List<TargetHit> results)
+            int maxHits, Func<Vector3, Vector2?> project, List<TargetHit> results, Func<ITapTarget, Rect?> bodyRect = null,
+            Func<ITapTarget, float> depth = null)
         {
             results.Clear();
             if (targets == null || maxHits <= 0) return 0;
@@ -54,9 +56,33 @@ namespace ClaudeCop.Combat
                     var ap = project(t.AimPoint);
                     if (!ap.HasValue) continue;
                     dist = Vector2.Distance(tap, ap.Value);
-                    if (dist > radiusPx) continue;
+                    if (dist > radiusPx)
+                    {
+                        // Trung than: tap nam trong hinh chu nhat man hinh cua collider enemy (HIT-BODY).
+                        if (bodyRect == null || t.Kind != TargetKind.Enemy) continue;
+                        var r = bodyRect(t);
+                        if (!r.HasValue || !r.Value.Contains(tap)) continue;
+                    }
                 }
                 Insert(results, new TargetHit { Target = t, Justice = justice, ScreenDistance = dist });
+            }
+
+            // Dan khong xuyen: vu khi 1 muc tieu -> chon muc tieu gan camera nhat (tru khi co Justice).
+            if (depth != null && maxHits == 1 && results.Count > 1 && !results[0].Justice)
+            {
+                int best = 0;
+                float bestDepth = depth(results[0].Target);
+                for (int i = 1; i < results.Count; i++)
+                {
+                    float d = depth(results[i].Target);
+                    if (d < bestDepth) { bestDepth = d; best = i; }
+                }
+                if (best != 0)
+                {
+                    var h = results[best];
+                    results[best] = results[0];
+                    results[0] = h;
+                }
             }
 
             if (results.Count == 0) PickNearest(targets, TargetKind.Pickup, tap, radiusPx, project, results);

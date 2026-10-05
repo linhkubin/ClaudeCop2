@@ -1,0 +1,37 @@
+{
+  "model": "jev-latest",
+  "api_url": "https://api.typesafe.ai/v1/systemone",
+  "timeout_s": 25,
+
+  "active_agents": ["gameplay-coder", "ui-coder", "level-designer", "reviewer", "game-designer", "project-manager"],
+
+  "route": {
+    "confidence_threshold": 0.6,
+    "risky_threshold": 0.6,
+    "default_model": {
+      "gameplay-coder": "sonnet", "ui-coder": "sonnet", "combat-coder": "sonnet", "enemy-coder": "sonnet",
+      "reviewer": "sonnet", "level-designer": "opus", "game-designer": "opus", "project-manager": "opus"
+    },
+    "min_model": {
+      "game-designer": "sonnet", "project-manager": "sonnet", "level-designer": "sonnet"
+    }
+  },
+
+  "context": {
+    "roots": ["Assets/_Game/Scripts"],
+    "top_files": 8,
+    "min_file_score": 0.9,
+    "top_sections": 4,
+    "min_section_score": 0.9,
+    "conventions": "Docs/Team/Conventions.md",
+    "always_sections": ["1. Phạm vi sở hữu"],
+    "chunk_size": 40
+  },
+
+  "review": {
+    "risky_paths": ["\\.unity$", "\\.prefab$", "\\.asmdef$", "^ProjectSettings/", "^Packages/manifest\\.json$", "/Scripts/Core/"],
+    "full_risk_score": 1.5,
+    "contract_threshold": 0.5,
+    "max_diff_chars": 14000
+  }
+}

@@ -47,6 +47,7 @@ namespace ClaudeCop.Camera
         /// <summary>Da can khung theo man that: CameraFeelApplier khong quy doi FOV nua.</summary>
         public bool AutoFramed { get; private set; }
 
+        bool baseCaptured; Vector3 basePos; Quaternion baseRot; float baseFovValue;
         CinemachineCamera vcam;
         public CinemachineCamera VCam => vcam != null ? vcam : (vcam = GetComponent<CinemachineCamera>());
 
@@ -85,8 +86,12 @@ namespace ClaudeCop.Camera
         /// noi FOV doc vua du (<= maxVerticalFov, chua cho dolly-in), con thieu thi lui ra sau (<= frameMaxPullBack, dung truoc vat can).
         /// Goi mot lan sau EnsureCameras.
         /// </summary>
+        float warnedAspect;
+
         public void AutoFrame(CameraFeelProfile p, float aspect)
         {
+            if (!baseCaptured) { basePos = transform.position; baseRot = transform.rotation; baseFovValue = fov; baseCaptured = true; }
+            else { transform.SetPositionAndRotation(basePos, baseRot); }
             if (kind != ShotKind.Combat || p == null || !p.autoFrame || aspect <= 0f || frameTargets.Count == 0) return;
             var cam = VCam;
             if (cam == null) return;
@@ -112,19 +117,42 @@ namespace ClaudeCop.Camera
 
             // 2) Lui ra sau den khi vua FOV toi da (khong xuyen vat can).
             float maxBack = p.frameMaxPullBack;
-            if (maxBack > 0f && Physics.SphereCast(pos, 0.3f, back, out RaycastHit hit, maxBack, ~0, QueryTriggerInteraction.Ignore))
+            if (maxBack > 0f && Physics.SphereCast(pos, 0.3f, back, out RaycastHit hit, maxBack, p.autoFrameBlockMask, QueryTriggerInteraction.Ignore))
                 maxBack = Mathf.Max(0f, hit.distance - 0.2f);
-            float extra = UserSettings.ReduceMotion ? 0f : p.dollyInFov;
-            float dist = 0f, need = RequiredFov(pos, rot, aspect, p.frameMargin) + extra;
-            while (need > p.maxVerticalFov && dist < maxBack)
+            // FOV khoi dau Combat <= FOV camera ray (baseFov) de blend Move->Combat khong zoom-out; push-in sau do chi lam hep them.
+            float limit = Mathf.Min(p.maxVerticalFov, p.baseFov > 0f ? p.baseFov : p.maxVerticalFov);
+            float dist = 0f, need = RequiredFov(pos, rot, aspect, p.frameMargin);
+            while (need > limit && dist < maxBack)
             {
                 dist = Mathf.Min(maxBack, dist + 0.25f);
-                need = RequiredFov(pos + back * dist, rot, aspect, p.frameMargin) + extra;
+                need = RequiredFov(pos + back * dist, rot, aspect, p.frameMargin);
             }
 
+            // May rat dai (aspect rat hep): neu van thieu sau khi lui, cho noi FOV them toi da frameExtraFov.
+            float hardLimit = limit + Mathf.Max(0f, p.frameExtraFov);
             transform.SetPositionAndRotation(pos + back * dist, rot);
-            var l = cam.Lens; l.FieldOfView = Mathf.Clamp(Mathf.Max(fov, need), 1f, p.maxVerticalFov); cam.Lens = l;
+            var l = cam.Lens; l.FieldOfView = Mathf.Clamp(Mathf.Max(fov, need), 1f, need > limit ? hardLimit : limit); cam.Lens = l;
+            if (need > hardLimit && !Mathf.Approximately(warnedAspect, aspect) && (warnedAspect = aspect) > 0f) Debug.LogWarning($"[CameraShot] {name}: aspect {aspect:0.00} qua dai, can FOV {need:0.0} > {hardLimit:0.0}; mot so diem co the tran khung.", this);
             AutoFramed = true;
+        }
+
+        /// <summary>
+        /// Can khung lai shot DANG LIVE mot cach mem: tinh pose dich (AutoFrame) roi di chuyen/xoay/noi FOV dan tu pose hien tai.
+        /// Tra ve true khi da toi dich (goi moi frame cho den khi true).
+        /// </summary>
+        public bool AutoFrameSmooth(CameraFeelProfile p, float aspect, float dt)
+        {
+            var cam = VCam;
+            if (cam == null) { AutoFrame(p, aspect); return true; }
+            Vector3 curPos = transform.position; Quaternion curRot = transform.rotation; float curFov = cam.Lens.FieldOfView;
+            AutoFrame(p, aspect);
+            Vector3 tPos = transform.position; Quaternion tRot = transform.rotation; float tFov = cam.Lens.FieldOfView;
+            float k = 1f - Mathf.Exp(-Mathf.Max(0.1f, p.liveReframeRate) * dt);
+            bool done = (tPos - curPos).sqrMagnitude < 1e-4f && Quaternion.Angle(tRot, curRot) < 0.1f && Mathf.Abs(tFov - curFov) < 0.1f;
+            if (done) return true;
+            transform.SetPositionAndRotation(Vector3.Lerp(curPos, tPos, k), Quaternion.Slerp(curRot, tRot, k));
+            var l = cam.Lens; l.FieldOfView = Mathf.Lerp(curFov, tFov, k); cam.Lens = l;
+            return false;
         }
 
         /// <summary>FOV doc nho nhat de moi frameTargets (cong le) nam trong khung tu pose nay voi ti le aspect.</summary>

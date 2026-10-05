@@ -46,6 +46,10 @@ namespace ClaudeCop.Camera
         bool forceCutNext;          // shot dau cua Phase moi: Cut trong luc man den
         float transitionRemaining;  // giay unscaled con phai cho (hold + fadeIn) sau khi cut sang Phase moi
         bool transitionPending;
+        CameraPoseSmoother smoother;
+
+        /// <summary>Luoi an toan van toc/gia toc cuoi pipeline (CAM-SMOOTH). Dung de do/debug.</summary>
+        public CameraPoseSmoother Smoother => smoother;
 
         public bool IsRunning => routine != null;
         public bool LevelFinished { get; private set; }
@@ -71,6 +75,7 @@ namespace ClaudeCop.Camera
             if (profile == null) { Debug.LogError("[PhaseDirector] Thieu CameraFeelProfile.", this); profile = ScriptableObject.CreateInstance<CameraFeelProfile>(); }
             if (brain == null) brain = FindFirstObjectByType<CinemachineBrain>();
             if (brain == null) Debug.LogError("[PhaseDirector] Khong tim thay CinemachineBrain.", this);
+            if (brain != null) brain.UpdateMethod = CinemachineBrain.UpdateMethods.LateUpdate; // rail/shot khong co target: tranh SmartUpdate doi nhip
             if (railCamera != null)
             {
                 var dolly = railCamera.GetComponent<CinemachineSplineDolly>();
@@ -78,19 +83,39 @@ namespace ClaudeCop.Camera
                 else driver = new RailCameraDriver(railCamera, dolly, profile);
                 var ap = railCamera.GetComponent<CameraFeelApplier>();
                 if (ap == null) ap = railCamera.gameObject.AddComponent<CameraFeelApplier>();
-                ap.profile = profile;
+                ap.profile = profile; ap.isRail = true;
                 railCamera.Priority.Enabled = true; railCamera.Priority.Value = 0;
             }
-            var outCam = brain != null ? brain.GetComponent<UnityEngine.Camera>() : UnityEngine.Camera.main;
-            float aspect = outCam != null ? outCam.aspect : (Screen.height > 0 ? (float)Screen.width / Screen.height : 0f);
+            outCam = brain != null ? brain.GetComponent<UnityEngine.Camera>() : UnityEngine.Camera.main;
+            if (brain != null && smoother == null) { smoother = new CameraPoseSmoother(brain, profile); smoother.Enable(); }
+            ReframeShots();
+        }
+
+        UnityEngine.Camera outCam;
+        float framedAspect;
+
+        float CurrentAspect() => outCam != null ? outCam.aspect : (Screen.height > 0 ? (float)Screen.width / Screen.height : 0f);
+
+        /// <summary>Can khung lai moi Shot Combat theo ti le man hien tai (goi luc Init va khi aspect doi, chi khi camera Shot khong dang live).</summary>
+        void ReframeShots()
+        {
+            float aspect = CurrentAspect();
+            bool liveDone = true;
             for (int i = 0; i < phases.Count; i++)
                 for (int j = 0; j < phases[i].shots.Count; j++)
                 {
                     var shot = phases[i].shots[j];
                     if (shot == null) continue;
                     shot.EnsureCameras(profile);
+                    if (shot.VCam != null && shot.VCam == active)
+                    {
+                        // dang live: can khung lai mem (lerp), lap lai moi frame cho den khi toi dich
+                        if (!shot.AutoFrameSmooth(profile, aspect, Time.unscaledDeltaTime)) liveDone = false;
+                        continue;
+                    }
                     shot.AutoFrame(profile, aspect); // man doc: can khung theo ti le man that
                 }
+            if (liveDone) framedAspect = aspect;
         }
 
         void Start()
@@ -100,14 +125,18 @@ namespace ClaudeCop.Camera
 
         void OnEnable()
         {
+            if (smoother != null) smoother.Enable();
             GameEvents.PlayerDamaged += OnPlayerDamaged;
+            BlastEvents.Blasted += OnBlasted;
             GameEvents.GameStateChanged += OnGameStateChanged;
             CombatEvents.ShotResolved += OnShotResolved;
         }
 
         void OnDisable()
         {
+            if (smoother != null) smoother.Disable();
             GameEvents.PlayerDamaged -= OnPlayerDamaged;
+            BlastEvents.Blasted -= OnBlasted;
             GameEvents.GameStateChanged -= OnGameStateChanged;
             CombatEvents.ShotResolved -= OnShotResolved;
             ReleasePause();
@@ -123,12 +152,21 @@ namespace ClaudeCop.Camera
         void OnShotResolved(ShotResult r)
         {
             if (profile == null || UserSettings.ReduceMotion) return;
-            if (r.Outcome == TapOutcome.Kill || r.Outcome == TapOutcome.JusticeKill) SlowZoom.Punch(profile, Time.time);
+            if (r.TargetKind == TargetKind.Grenade) return;
+            if (r.Outcome == TapOutcome.Kill || r.Outcome == TapOutcome.JusticeKill) SlowZoom.Punch(profile, Time.time, r.Outcome == TapOutcome.JusticeKill);
         }
 
         void OnGameStateChanged(GameState s)
         {
             if (startOnGamePlaying && s == GameState.Playing && !started) StartLevel();
+        }
+
+        /// <summary>W7: rung khi co vu no (explosionShake*); tat khi Giam chuyen dong neu profile bat co.</summary>
+        public void OnBlasted(BlastReport b)
+        {
+            if (profile == null) return;
+            if (UserSettings.ReduceMotion && profile.explosionShakeOffWhenReduceMotion) return;
+            CameraFeelState.TriggerShake(profile.explosionShakeDuration, profile.explosionShakeScale);
         }
 
         void OnPlayerDamaged(DamageSource src, Vector3 pos, int livesLeft)
@@ -139,6 +177,7 @@ namespace ClaudeCop.Camera
         void Update()
         {
             if (profile == null) return;
+            if (initialized && Mathf.Abs(CurrentAspect() - framedAspect) > 0.01f) ReframeShots();
             driver?.Tick(Time.deltaTime);
             CameraFeelState.MoveSpeed = driver != null && driver.Active ? driver.CurrentSpeed : 0f;
             CameraFeelState.Tick(Time.deltaTime, profile);
@@ -217,13 +256,18 @@ namespace ClaudeCop.Camera
             Quaternion fromRot = hasPrev ? brain.transform.rotation : Quaternion.identity;
             driver.Prepare(shot.spline, shot.speedOverride, hasPrev ? fromRot : Quaternion.LookRotation(Vector3.forward));
             Vector3 startFwd = driver.StartTangent();
-            if (!hasPrev) driver.Prepare(shot.spline, shot.speedOverride, Quaternion.LookRotation(startFwd));
 
-            bool cut = !hasPrev || forceCutNext || ShouldCut(fromRot * Vector3.forward, startFwd, shot.entry);
+            // CAM-SMOOTH: Cut CHI khi vao level lan dau hoac luc man den giua 2 Phase. Khong con Cut theo goc/ShotEntry.Cut.
+            // Rail -> Rail (cung camera, khong blend duoc): giu huong cu, ray tu xoay dan.
+            bool snap = !hasPrev || forceCutNext;
+            bool sameCam = active == railCamera;
+            bool cut = snap || sameCam;
             forceCutNext = false;
-            // Cut: camera ray dat thang huong tiep tuyen (khong xoay tu huong cu, tranh lia vuot gioi han sau Cut)
-            if (cut && hasPrev) driver.Prepare(shot.spline, shot.speedOverride, Quaternion.LookRotation(startFwd));
-            float bt = shot.ResolveBlend(profile);
+            // Camera ray dat san theo huong tiep tuyen dau ray; viec xoay tu goc Combat sang huong ray do blend Cinemachine
+            // (EaseInOut, thoi gian tu co gian theo goc) thuc hien - truoc day ray tu xoay sau khi toi noi voi toc do/gia toc cao.
+            if (!sameCam) driver.Prepare(shot.spline, shot.speedOverride, Quaternion.LookRotation(startFwd));
+            if (snap) smoother?.RequestSnap(railCamera);
+            float bt = ScaleBlend(shot.ResolveBlend(profile), railCamera, cut);
             Activate(railCamera, cut, bt);
             yield return WaitTransition(cut, bt);
             SlowZoom.EndKill(); // camera cu da blend xong
@@ -240,16 +284,17 @@ namespace ClaudeCop.Camera
             driver?.Deactivate();
             // Camera ray khong con la live sau Activate nen giu driver o trang thai cuoi cho blend: chi dung Tick khi Active.
             CameraFeelState.Combat = true;
-            CameraFeelState.ResetDolly();
 
             bool hasPrev = active != null && brain != null;
-            bool cut = !hasPrev || forceCutNext || ShouldCut(brain.transform.forward, shot.transform.forward, shot.entry);
+            bool cut = !hasPrev || forceCutNext; // CAM-SMOOTH: chi Cut khi vao level / man den giua Phase
             forceCutNext = false;
-            float bt = shot.ResolveBlend(profile);
+            if (cut) smoother?.RequestSnap(cam);
+            float bt = ScaleBlend(shot.ResolveBlend(profile), cam, cut);
             Activate(cam, cut, bt);
             yield return WaitTransition(cut, bt);
             SlowZoom.EndKill(); // camera cu da blend xong
             if (transitionPending) yield return FinishPhaseTransition();
+            ArmFeel(cam); // toi diem: bat dau settle -> giu khung -> push-in (chi zoom-in)
 
             var enc = shot.encounter;
             if (enc == null)
@@ -258,7 +303,7 @@ namespace ClaudeCop.Camera
                 yield break;
             }
 
-            // Giao tranh noi tiep giao tranh (khong co doan Move truoc): van hoi Jev truoc Begin() (T-403).
+            // Giao tranh noi tiep giao tranh (khong co doan Move truoc): van hoi RankScore truoc Begin() (T-403).
             if (!enc.IsActive && !enc.IsCleared && prevShotKind == ShotKind.Combat) RailEvents.RaiseMoveSegmentStarted(enc);
 
             bool cleared = false;
@@ -298,21 +343,41 @@ namespace ClaudeCop.Camera
         IEnumerator RunSubAngle(CameraShot shot, SubAngle a, Func<bool> isCleared)
         {
             var angleCam = a.cam;
-            float bt = a.blendTime >= 0f ? a.blendTime : profile.subAngleBlend;
-            bool cut = ShouldCut(brain.transform.forward, a.view.forward, ShotEntry.Blend);
+            const bool cut = false;
+            float bt = ScaleBlend(a.blendTime >= 0f ? a.blendTime : profile.subAngleBlend, angleCam, cut);
             Activate(angleCam, cut, bt);
             yield return WaitTransition(cut, bt);
+            ArmFeel(angleCam);
 
             float held = 0f;
             while (held < a.hold && !isCleared()) { held += Time.deltaTime; yield return null; }
             if (isCleared()) yield break;
 
-            bool cutBack = ShouldCut(a.view.forward, shot.transform.forward, ShotEntry.Blend);
+            const bool cutBack = false;
+            bt = ScaleBlend(bt, shot.VCam, cutBack);
             Activate(shot.VCam, cutBack, bt);
             yield return WaitTransition(cutBack, bt);
         }
 
         // ---------------- Tien ich ----------------
+        /// <summary>
+        /// Blend du dai de van toc VA gia toc (xoay + vi tri) khong vuot gioi han. EaseInOut co dinh (S-curve): dinh van toc = 1.5 x trung binh,
+        /// gia toc dinh = 6*delta/T^2 -> T >= sqrt(6*delta/aMax). Khong con tran thoi gian ep nho hon nhu cau (maxBlendTime chi la tran an toan).
+        /// </summary>
+        float ScaleBlend(float bt, CinemachineVirtualCameraBase to, bool cut)
+        {
+            if (cut || brain == null || to == null) return bt;
+            float dist = Vector3.Distance(brain.transform.position, to.transform.position);
+            float ang = Vector3.Angle(brain.transform.forward, to.transform.forward);
+            float need = 0f;
+            if (profile.maxBlendSpeed > 0f) need = Mathf.Max(need, dist / profile.maxBlendSpeed);
+            if (profile.maxBlendAngularSpeed > 0f) need = Mathf.Max(need, ang / profile.maxBlendAngularSpeed);
+            if (profile.blendMaxAccel > 0f) need = Mathf.Max(need, Mathf.Sqrt(6f * dist / profile.blendMaxAccel));
+            if (profile.blendMaxAngAccel > 0f) need = Mathf.Max(need, Mathf.Sqrt(6f * ang / profile.blendMaxAngAccel));
+            if (UserSettings.ReduceMotion) need /= Mathf.Max(0.2f, profile.smoothReduceMotionScale); // Giam chuyen dong: cham hon, KHONG Cut
+            return Mathf.Clamp(Mathf.Max(bt, need), bt, Mathf.Max(bt, profile.maxBlendTime));
+        }
+
         void Activate(CinemachineVirtualCameraBase cam, bool cut, float blendTime)
         {
             if (brain != null)
@@ -327,23 +392,21 @@ namespace ClaudeCop.Camera
             PushPause();
             yield return null;
             yield return null;
-            float timeout = (cut ? 0f : blendTime) + 0.5f;
+            float timeout = (cut ? 0f : blendTime) + profile.blendWaitMargin;
             float t = 0f;
             while (brain != null && brain.IsBlending && t < timeout) { t += Time.deltaTime; yield return null; }
             ReleasePause();
         }
 
+        static void ArmFeel(CinemachineVirtualCameraBase cam)
+        {
+            if (cam == null) return;
+            var ap = cam.GetComponent<CameraFeelApplier>();
+            if (ap != null) ap.Arm(Time.time);
+        }
+
         void PushPause() { if (pauseHeld) return; pauseHeld = true; CombatPauseSignal.Push(PauseReason); }
         void ReleasePause() { if (!pauseHeld) return; pauseHeld = false; CombatPauseSignal.Pop(PauseReason); }
-
-        bool ShouldCut(Vector3 fromFwd, Vector3 toFwd, ShotEntry entry)
-        {
-            if (entry == ShotEntry.Cut) return true;
-            float angle = Vector3.Angle(fromFwd, toFwd);
-            if (angle > profile.cutAngle) return true;
-            if (UserSettings.ReduceMotion && angle > profile.reduceMotionCutAngle) return true;
-            return false;
-        }
 
         EncounterBase FindUpcomingEncounter(int pi, int si)
         {

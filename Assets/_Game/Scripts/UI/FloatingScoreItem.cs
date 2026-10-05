@@ -9,7 +9,7 @@ namespace ClaudeCop.UI
         [SerializeField] TMP_Text label;
         public TMP_Text Label => label;
         [System.NonSerialized] public Vector3 World;
-        [System.NonSerialized] public float Age, Life, Rise;
+        [System.NonSerialized] public float Age, Life, Rise, OffsetY;
         [System.NonSerialized] public bool Active;
         public string Text => label != null ? label.text : string.Empty;
     }

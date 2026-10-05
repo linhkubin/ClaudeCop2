@@ -3,7 +3,7 @@ namespace ClaudeCop.Core
     /// <summary>C1. Chat lieu be mat dung cho FX/Props. Concrete la mac dinh.</summary>
     public enum SurfaceMaterial { Concrete = 0, Wood, Metal, Glass, Foliage, Flesh }
 
-    /// <summary>C3. Loai vu khi. Dung boi Combat, Enemy, Jev, UI.</summary>
+    /// <summary>C3. Loai vu khi. Dung boi Combat, Enemy, RankScore, UI.</summary>
     public enum WeaponKind { Pistol = 0, Shotgun, MachineGun }
 
     /// <summary>C6. Loai muc tieu co the tap. Grenade du tru.</summary>

@@ -5,7 +5,7 @@
         "ClaudeCop.Core",
         "ClaudeCop.Combat",
         "ClaudeCop.Ads",
-        "ClaudeCop.Jev",
+        "ClaudeCop.RankScore",
         "Unity.ugui",
         "Unity.TextMeshPro"
     ],

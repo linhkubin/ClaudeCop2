@@ -84,11 +84,14 @@ namespace ClaudeCop.Combat.Tests
     public class WeaponPickupTests
     {
         readonly List<GameObject> spawned = new List<GameObject>();
+        readonly List<Camera> mutedCams = new List<Camera>();
         [TearDown]
         public void TearDown()
         {
             foreach (var g in spawned) if (g != null) Object.DestroyImmediate(g);
             spawned.Clear();
+            foreach (var c in mutedCams) if (c != null) c.enabled = true;
+            mutedCams.Clear();
             for (int i = TargetRegistry.Targets.Count - 1; i >= 0; i--) TargetRegistry.Unregister(TargetRegistry.Targets[i]);
         }
 
@@ -187,6 +190,8 @@ namespace ClaudeCop.Combat.Tests
         // ---- TapShooter: nhat thung khong ton dan, equip, het dan ve Pistol ----
         TapShooter MakeShooter(WeaponData start, out Camera cam)
         {
+            // Camera.main phai la camera cua test: tam tat cac camera MainCamera co san (scene runner/leak).
+            for (var other = Camera.main; other != null; other = Camera.main) { other.enabled = false; mutedCams.Add(other); }
             var camGo = new GameObject("TestCam"); spawned.Add(camGo);
             camGo.tag = "MainCamera";
             cam = camGo.AddComponent<Camera>();

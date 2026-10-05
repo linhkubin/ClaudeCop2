@@ -4,7 +4,7 @@
     "references": [
         "ClaudeCop.UI",
         "ClaudeCop.Ads",
-        "ClaudeCop.Jev",
+        "ClaudeCop.RankScore",
         "ClaudeCop.Core",
         "Unity.ugui",
         "Unity.TextMeshPro"

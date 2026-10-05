@@ -5,29 +5,31 @@ namespace ClaudeCop.Enemy
     /// <summary>Logic thuan (khong Unity) cua state machine enemy, de test. Enemy goi Tick moi frame.</summary>
     public class EnemyBrain
     {
-        readonly float peekDuration, reticleTime, retreatDuration, hideTime;
+        readonly float peekDuration, reticleTime, retreatDuration, hideTime, threshold;
         float timer;
-        bool activated;
+        bool activated, targetable;
 
         public EnemyState State { get; private set; } = EnemyState.Hidden;
         /// <summary>0 = o cho nap, 1 = o vi tri Peek.</summary>
         public float PeekT { get; private set; }
         public float ReticleProgress { get; private set; }
         public float ExposedTime { get; private set; }
-        public bool IsTargetable => State == EnemyState.Aiming;
+        /// <summary>Ban duoc khi da lo du thay: Peeking (PeekT &gt;= nguong), Aiming, Retreating (PeekT &gt;= nguong). Dead/Hidden: khong.</summary>
+        public bool IsTargetable => targetable;
         public bool ShowsReticle => State == EnemyState.Aiming;
         public bool IsActivated => activated;
         public int Volleys { get; private set; }
 
-        /// <summary>Goi khi vua bat dau Aiming (de dang ky target).</summary>
+        /// <summary>Goi khi enemy vua tro nen ban duoc (de dang ky target). Luon di cap voi AimEnded.</summary>
         public System.Action AimStarted;
         /// <summary>Goi khi ban (vong het).</summary>
         public System.Action Fired;
-        /// <summary>Goi khi roi Aiming (an/chet) de huy dang ky.</summary>
+        /// <summary>Goi khi enemy het ban duoc (chet/rut xuong duoi nguong) de huy dang ky.</summary>
         public System.Action AimEnded;
 
-        public EnemyBrain(float peekDuration, float reticleTime, float retreatDuration, float hideTime)
+        public EnemyBrain(float peekDuration, float reticleTime, float retreatDuration, float hideTime, float targetableThreshold = 0.35f)
         {
+            threshold = targetableThreshold < 0f ? 0f : (targetableThreshold > 1f ? 1f : targetableThreshold);
             this.peekDuration = peekDuration > 0.001f ? peekDuration : 0.001f;
             this.reticleTime = reticleTime > 0.001f ? reticleTime : 0.001f;
             this.retreatDuration = retreatDuration > 0.001f ? retreatDuration : 0.001f;
@@ -44,9 +46,9 @@ namespace ClaudeCop.Enemy
 
         public bool Kill()
         {
-            if (State != EnemyState.Aiming) return false;
-            AimEnded?.Invoke();
+            if (!targetable) return false;
             State = EnemyState.Dead;
+            EndTargetable();
             return true;
         }
 
@@ -62,11 +64,12 @@ namespace ClaudeCop.Enemy
                 case EnemyState.Peeking:
                     timer += dt;
                     PeekT = timer >= peekDuration ? 1f : timer / peekDuration;
+                    if (!targetable && PeekT >= threshold) BeginTargetable();
+                    if (targetable) ExposedTime = timer - threshold * peekDuration > 0f ? timer - threshold * peekDuration : 0f;
                     if (PeekT >= 1f)
                     {
                         State = EnemyState.Aiming;
-                        ReticleProgress = 0f; ExposedTime = 0f; timer = 0f;
-                        AimStarted?.Invoke();
+                        ReticleProgress = 0f; timer = 0f;
                     }
                     break;
                 case EnemyState.Aiming:
@@ -75,7 +78,6 @@ namespace ClaudeCop.Enemy
                     ReticleProgress = timer >= reticleTime ? 1f : timer / reticleTime;
                     if (ReticleProgress >= 1f)
                     {
-                        AimEnded?.Invoke();
                         Volleys++;
                         State = EnemyState.Retreating; timer = 0f;
                         Fired?.Invoke();
@@ -84,11 +86,26 @@ namespace ClaudeCop.Enemy
                 case EnemyState.Retreating:
                     timer += dt;
                     PeekT = timer >= retreatDuration ? 0f : 1f - timer / retreatDuration;
+                    if (targetable) { ExposedTime += dt; if (PeekT < threshold || PeekT <= 0f) EndTargetable(); }
                     if (PeekT <= 0f) { State = EnemyState.Hidden; timer = 0f; ReticleProgress = 0f; }
                     break;
             }
         }
 
-        void StartPeek() { State = EnemyState.Peeking; timer = 0f; PeekT = 0f; ReticleProgress = 0f; }
+        void BeginTargetable()
+        {
+            if (targetable) return;
+            targetable = true; ExposedTime = 0f;
+            AimStarted?.Invoke();
+        }
+
+        void EndTargetable()
+        {
+            if (!targetable) return;
+            targetable = false;
+            AimEnded?.Invoke();
+        }
+
+        void StartPeek() { State = EnemyState.Peeking; timer = 0f; PeekT = 0f; ReticleProgress = 0f; ExposedTime = 0f; }
     }
 }

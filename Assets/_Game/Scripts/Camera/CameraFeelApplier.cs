@@ -15,7 +15,22 @@ namespace ClaudeCop.Camera
 
         CameraShot shot;
         bool shotLooked;
-        float trackYaw; // do lia hien tai (do), giu nguyen khi moi muc tieu da nam trong khung
+        float trackYaw, trackVel; // do lia hien tai (do), giu nguyen khi moi muc tieu da nam trong khung
+
+        /// <summary>Camera ray (Move): khong cam tay/push-in/lia. PhaseDirector dat.</summary>
+        [System.NonSerialized] public bool isRail;
+        bool armed;
+        float armTime;
+
+        /// <summary>Bat dau nhip Combat cua camera nay (sau khi toi diem): settle -> giu khung -> push-in. Trang thai rieng moi camera,
+        /// khong bi go bo khi camera roi live (khong zoom-out/xoay ve khi blend sang camera khac).</summary>
+        public void Arm(float now) { if (armed) return; armed = true; armTime = now; }
+        public bool IsArmed => armed;
+
+        public void ResetFeel() { armed = false; trackYaw = 0f; trackVel = 0f; }
+
+        static float Smooth(float k) { k = Mathf.Clamp01(k); return k * k * (3f - 2f * k); }
+        static float EaseOut(float k) { k = Mathf.Clamp01(k); return 1f - (1f - k) * (1f - k); }
 
         protected override void PostPipelineStageCallback(CinemachineVirtualCameraBase vcam, CinemachineCore.Stage stage, ref CameraState state, float deltaTime)
         {
@@ -29,7 +44,10 @@ namespace ClaudeCop.Camera
             float t = Time.time;
             Vector3 pos = Vector3.zero;
             Vector3 rot = Vector3.zero;
-            float cw = CameraFeelState.CombatWeight;
+            // Trong so rieng cua camera nay: Combat camera da toi diem = 1 (giu nguyen ca khi blend ra), cam ray = 0.
+            float sinceArm = armed ? t - armTime : 0f;
+            float cw = (isRail || !armed) ? 0f : Smooth(sinceArm / Mathf.Max(0.01f, profile.handheldFadeIn));
+            float baseFov = state.Lens.FieldOfView; // FOV truoc moi offset tam thoi (on dinh cho lim lia)
 
             if (!reduce)
             {
@@ -48,35 +66,44 @@ namespace ClaudeCop.Camera
                     pos.y += Mathf.Sin(ph) * profile.bobAmplitude * speed01;
                     pos.x += Mathf.Sin(ph * 0.5f) * profile.bobAmplitude * 0.4f * speed01;
                 }
-                if (cw > 0f && profile.dollyInFov > 0f)
+                if (!isRail && armed)
                 {
-                    float ease = CameraFeelState.DollyProgress; ease = ease * ease * (3f - 2f * ease);
-                    state.Lens.FieldOfView -= Mathf.Min(10f, profile.dollyInFov) * ease * cw;
+                    // Chi zoom-in: settle (smoothstep: bat dau/ket thuc toc do 0) roi push-in cham trong shot.
+                    float off = profile.settleFov * Smooth(sinceArm / Mathf.Max(0.05f, profile.settleTime));
+                    if (profile.dollyInDuration > 0f)
+                        off += Mathf.Min(10f, profile.dollyInFov) * Smooth((sinceArm - profile.settleTime) / profile.dollyInDuration);
+                    state.Lens.FieldOfView = Mathf.Max(20f, state.Lens.FieldOfView - off);
                 }
             }
 
+            // Rung trung dan/no: tach rieng de CameraPoseSmoother (luoi an toan) khong loc mat rung.
+            Vector3 shakePos = Vector3.zero, shakeRot = Vector3.zero;
             float el = t - CameraFeelState.ShakeStart;
             if (el >= 0f && el < CameraFeelState.ShakeDuration)
             {
                 float k = 1f - el / CameraFeelState.ShakeDuration;
                 k *= k;
+                k *= CameraFeelState.ShakeScale;
                 if (reduce) k *= profile.hitShakeReduceScale;
-                float x = t * 40f;
+                float x = t * profile.hitShakeFrequency;
                 Vector3 n = new Vector3(Mathf.PerlinNoise(x, 1.7f) - 0.5f, Mathf.PerlinNoise(x, 8.2f) - 0.5f, Mathf.PerlinNoise(x, 15.9f) - 0.5f) * 2f;
-                pos += new Vector3(n.x, n.y, 0f) * profile.hitShakePosition * k;
-                rot += new Vector3(n.y, n.x, n.z) * profile.hitShakeAngle * k;
+                shakePos = new Vector3(n.x, n.y, 0f) * profile.hitShakePosition * k;
+                shakeRot = new Vector3(n.y, n.x, n.z) * profile.hitShakeAngle * k;
             }
+            CameraFeelState.ShakePos = shakePos;
+            Quaternion shakeQ = Quaternion.Euler(shakeRot);
+            CameraFeelState.ShakeRot = shakeQ;
 
-            state.PositionCorrection += state.GetFinalOrientation() * pos;
-            state.OrientationCorrection = state.OrientationCorrection * Quaternion.Euler(rot);
+            state.PositionCorrection += state.GetFinalOrientation() * (pos + shakePos);
+            state.OrientationCorrection = state.OrientationCorrection * Quaternion.Euler(rot) * shakeQ;
 
             if (!reduce)
             {
-                float fovCut = SlowZoom.PunchOffset(t);
+                float fovCut = isRail ? 0f : SlowZoom.PunchOffset(t);
                 float kw = SlowZoom.KillWeight(vcam, t);
                 if (kw > 0f)
                 {
-                    fovCut += SlowZoom.KillFovOffset * kw;
+                    fovCut = Mathf.Max(fovCut, SlowZoom.KillFovOffset * kw);
                     // Xoay nhe ve vi tri kill cuoi (gioi han goc de khong vuot gioi han xoay chong chong mat)
                     Quaternion cur = state.GetFinalOrientation();
                     Vector3 dir = SlowZoom.KillPosition - state.GetFinalPosition();
@@ -92,19 +119,23 @@ namespace ClaudeCop.Camera
                 if (fovCut > 0f) state.Lens.FieldOfView = Mathf.Max(20f, state.Lens.FieldOfView - fovCut);
             }
 
-            TrackTargets(ref state, cw);
+            TrackTargets(ref state, baseFov);
         }
 
         /// <summary>
         /// Man doc: muc tieu dang lo ra (enemy dang ngam, con tin, thung) nam ngoai khung ngang thi lia camera
         /// (toi da trackMaxYaw, trackSpeed do/s) de dua no vao khung; da vua thi giu nguyen, khong lia thua.
         /// </summary>
-        void TrackTargets(ref CameraState state, float cw)
+        void TrackTargets(ref CameraState state, float refFov)
         {
             float dt = Time.deltaTime;
-            if (!profile.trackTargets || cw <= 0f)
+            if (isRail || !armed)
             {
-                trackYaw = Mathf.MoveTowards(trackYaw, 0f, profile.trackSpeed * dt);
+                // Camera ray / chua toi diem: khong lia. Giu nguyen trackYaw (khong nha ve de khoi giat khi doi camera).
+            }
+            else if (!profile.trackTargets)
+            {
+                trackYaw = Mathf.SmoothDamp(trackYaw, 0f, ref trackVel, profile.trackSmoothTime, profile.trackSpeed, dt);
             }
             else
             {
@@ -116,17 +147,17 @@ namespace ClaudeCop.Camera
                     fwd.Normalize();
                     Vector3 right = Vector3.Cross(Vector3.up, fwd);
                     float aspect = state.Lens.Aspect > 0f ? state.Lens.Aspect : 1f;
-                    float halfH = Mathf.Atan(Mathf.Tan(state.Lens.FieldOfView * 0.5f * Mathf.Deg2Rad) * aspect) * Mathf.Rad2Deg;
-                    float lim = Mathf.Max(1f, halfH - profile.frameMargin);
+                    float halfH = Mathf.Atan(Mathf.Tan(refFov * 0.5f * Mathf.Deg2Rad) * aspect) * Mathf.Rad2Deg;
+                    float lim = Mathf.Max(1f, halfH - profile.trackMargin);
                     float minH = float.MaxValue, maxH = float.MinValue;
                     var targets = TargetRegistry.Targets;
                     for (int i = 0; i < targets.Count; i++)
                     {
                         var t = targets[i];
-                        if (t == null || !(t.IsTargetable || t.ShowsReticle)) continue;
+                        if (t == null || t.Kind == TargetKind.Grenade || !(t.IsTargetable || t.ShowsReticle)) continue;
                         Vector3 d = t.AimPoint - camPos;
                         float z = Vector3.Dot(d, fwd);
-                        if (z < 0.1f) continue;
+                        if (z < Mathf.Max(0.1f, profile.trackMinDepth)) continue;
                         float h = Mathf.Atan2(Vector3.Dot(d, right), z) * Mathf.Rad2Deg;
                         minH = Mathf.Min(minH, h); maxH = Mathf.Max(maxH, h);
                     }
@@ -137,10 +168,10 @@ namespace ClaudeCop.Camera
                         want = lo <= hi ? Mathf.Clamp(trackYaw, lo, hi) : (minH + maxH) * 0.5f;
                     }
                     want = Mathf.Clamp(want, -profile.trackMaxYaw, profile.trackMaxYaw);
-                    trackYaw = Mathf.MoveTowards(trackYaw, want, profile.trackSpeed * dt);
+                    trackYaw = Mathf.SmoothDamp(trackYaw, want, ref trackVel, profile.trackSmoothTime, profile.trackSpeed, dt);
                 }
             }
-            float yaw = trackYaw * cw;
+            float yaw = trackYaw;
             if (Mathf.Abs(yaw) < 0.01f) return;
             Quaternion cur = state.GetFinalOrientation();
             Quaternion target = Quaternion.AngleAxis(yaw, Vector3.up) * cur;
@@ -153,11 +184,12 @@ namespace ClaudeCop.Camera
         /// </summary>
         public static float FitFov(float verticalFov, float aspect, CameraFeelProfile p)
         {
-            if (p == null || aspect <= 0f || aspect >= p.designAspect || p.keepHorizontalFov <= 0f) return verticalFov;
+            if (p == null) return verticalFov;
+            if (aspect <= 0f || aspect >= p.designAspect || p.keepHorizontalFov <= 0f) return Mathf.Min(verticalFov, p.maxVerticalFov);
             float halfV = verticalFov * 0.5f * Mathf.Deg2Rad;
             float fullV = 2f * Mathf.Atan(Mathf.Tan(halfV) * p.designAspect / aspect) * Mathf.Rad2Deg;
             float v = Mathf.Lerp(verticalFov, fullV, p.keepHorizontalFov);
-            return Mathf.Max(verticalFov, Mathf.Min(v, p.maxVerticalFov));
+            return Mathf.Min(Mathf.Max(verticalFov, v), p.maxVerticalFov);
         }
     }
 }

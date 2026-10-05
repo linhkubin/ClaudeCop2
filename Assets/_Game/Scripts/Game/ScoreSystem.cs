@@ -10,8 +10,19 @@ namespace ClaudeCop.Game
 
         public int Score { get; private set; }
 
-        void OnEnable() => CombatEvents.ShotResolved += OnShotResolved;
-        void OnDisable() => CombatEvents.ShotResolved -= OnShotResolved;
+        void OnEnable() { CombatEvents.ShotResolved += OnShotResolved; BlastEvents.Blasted += OnBlasted; }
+        void OnDisable() { CombatEvents.ShotResolved -= OnShotResolved; BlastEvents.Blasted -= OnBlasted; }
+
+        /// <summary>Public de test. Cong diem no 1 lan tai tam no; khong dung toi combo; khong phat con tin lan hai (Props da lam).</summary>
+        public void OnBlasted(BlastReport b)
+        {
+            if (GameEvents.Current.State != GameState.Playing) return;
+            int pts = ScoreCalculator.ComputeBlast(config, b, CombatEvents.Current.ComboMultiplier, out float mult);
+            if (pts <= 0) return;
+            Score += pts;
+            GameEvents.RaiseScoreChanged(Score);
+            GameEvents.RaiseScoreAwarded(pts, b.Center, false, mult);
+        }
 
         public void ResetScore()
         {

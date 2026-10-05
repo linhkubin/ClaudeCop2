@@ -49,16 +49,36 @@ namespace ClaudeCop.UI
             var it = Acquire();
             if (it == null) return;
             var c = Cfg;
-            string s = justice ? "JUSTICE!\n+" + points : "+" + points;
-            if (multiplier > 1.001f) s += "  x" + multiplier.ToString("0.#");
             var label = it.Label;
             if (label != null)
             {
-                label.text = s;
+                bool mult = multiplier > 1.001f;
+                if (justice) { if (mult) label.SetText("JUSTICE!\n+{0}  x{1:1}", points, multiplier); else label.SetText("JUSTICE!\n+{0}", points); }
+                else { if (mult) label.SetText("+{0}  x{1:1}", points, multiplier); else label.SetText("+{0}", points); }
                 label.fontSize = justice ? c.floatingJusticeSize : c.floatingNormalSize;
                 label.color = justice ? c.floatingJusticeColor : c.floatingNormalColor;
             }
-            it.World = world; it.Age = 0f; it.Life = Mathf.Max(0.05f, c.floatingLife); it.Rise = c.floatingRise;
+            it.World = world; it.Age = 0f; it.Life = Mathf.Max(0.05f, c.floatingLife); it.Rise = c.floatingRise; it.OffsetY = 0f;
+            it.Active = true;
+            it.gameObject.SetActive(true);
+            LastSpawned = it;
+            Place(it);
+        }
+
+        /// <summary>Chu "NO! xK" tai tam vu no (K = so enemy bi ha; khong doc diem nen khong lech voi Game).</summary>
+        public void SpawnBlast(Vector3 world, int enemiesKilled)
+        {
+            var it = Acquire();
+            if (it == null) return;
+            var c = Cfg;
+            var label = it.Label;
+            if (label != null)
+            {
+                if (enemiesKilled > 0) label.SetText("NỔ! x{0}", enemiesKilled); else label.SetText("NỔ!");
+                label.fontSize = c.blastTextSize;
+                label.color = c.blastTextColor;
+            }
+            it.World = world; it.Age = 0f; it.Life = Mathf.Max(0.05f, c.floatingLife); it.Rise = c.floatingRise; it.OffsetY = c.blastTextOffsetY;
             it.Active = true;
             it.gameObject.SetActive(true);
             LastSpawned = it;
@@ -100,12 +120,13 @@ namespace ClaudeCop.UI
             {
                 Vector3 sp = cam.WorldToScreenPoint(it.World);
                 bool visible = sp.z > 0f;
-                if (label != null) label.alpha = visible ? (k < 0.6f ? 1f : 1f - (k - 0.6f) / 0.4f) : 0f;
+                if (label != null) label.alpha = visible ? (k < Cfg.floatingFadeStart ? 1f : 1f - (k - Cfg.floatingFadeStart) / (1f - Cfg.floatingFadeStart)) : 0f;
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(layer, new Vector2(sp.x, sp.y), null, out var local);
                 float ease = 1f - (1f - k) * (1f - k);
-                rt.anchoredPosition = local + new Vector2(0f, it.Rise * ease);
+                rt.anchoredPosition = local + new Vector2(0f, it.Rise * ease + it.OffsetY);
             }
-            float pop = k < 0.15f ? Mathf.Lerp(1.5f, 1f, k / 0.15f) : 1f;
+            float pf = Mathf.Max(0.01f, Cfg.floatingPopFraction);
+            float pop = k < pf ? Mathf.Lerp(Cfg.floatingPopScale, 1f, k / pf) : 1f;
             rt.localScale = new Vector3(pop, pop, 1f);
         }
     }

@@ -163,7 +163,7 @@ namespace ClaudeCop.UI.Editor
         // ---------- RevivePopup ----------
         static void BuildRevivePopup(UIConfig cfg, Sprite white)
         {
-            var root = NewCanvas("RevivePopup", 80);   // tren JevDebugPanel (70), duoi PhaseFade (90)/FakeAdOverlay (100)
+            var root = NewCanvas("RevivePopup", 80);   // tren RankScoreDebugPanel (70), duoi PhaseFade (90)/FakeAdOverlay (100)
             var content = NewImage("Content", root.transform, white, new Color(0f, 0f, 0f, 0.7f), true);   // chan tap xuyen xuong game
             Stretch(content.rectTransform);
             var panel = NewImage("Panel", content.transform, white, new Color(0.08f, 0.1f, 0.16f, 0.95f));
@@ -209,6 +209,7 @@ namespace ClaudeCop.UI.Editor
             AutoSize(title);
             var tg = title.gameObject.AddComponent<CanvasGroup>(); tg.alpha = 0f; tg.blocksRaycasts = false; tg.interactable = false;
             var view = root.AddComponent<PhaseTransitionView>();
+            Set(view, "config", cfg);
             Set(view, "content", content.gameObject);
             Set(view, "blackGroup", bg);
             Set(view, "titleGroup", tg);

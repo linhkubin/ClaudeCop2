@@ -77,7 +77,7 @@ namespace ClaudeCop.UI.Tests
         public void Hud_BindsScoreAmmoLivesAndReload()
         {
             GameEvents.RaiseScoreChanged(1500);
-            Assert.AreEqual((1500).ToString("N0"), TextNamed("ScoreText", "HUD").text);
+            Assert.AreEqual("1500", TextNamed("ScoreText", "HUD").text);
 
             CombatEvents.RaiseAmmoChanged(3, 6, WeaponKind.Pistol);
             Assert.AreEqual("3 / 6", TextNamed("AmmoText").text);
@@ -154,5 +154,47 @@ namespace ClaudeCop.UI.Tests
         {
             o.GetType().GetMethod(method, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(o, null);
         }
-    }
+    
+        sealed class Grenade : ITapTarget
+        {
+            public int Id => 77; public TargetKind Kind => TargetKind.Grenade;
+            public bool IsTargetable => true; public Vector3 AimPoint => new Vector3(0, 0, 10);
+            public bool HasJusticePoint => false; public Vector3 JusticePoint => AimPoint;
+            public bool ShowsReticle => true; public float ReticleProgress => 0.5f; public float ExposedTime => 0;
+            public TapOutcome OnTapHit(ShotInfo s, bool j) => TapOutcome.Kill;
+        }
+
+        [Test]
+        public void Reticle_GrenadeUsesGrenadeStyle_EnemyDoesNot()
+        {
+            var pres = ui.GetComponent<TargetReticlePresenter>();
+            var hud = ui.GetComponentInChildren<HudView>(true);
+            var enemy = new FakeTarget(); var gren = new Grenade();
+            TargetRegistry.Register(enemy);
+            TargetRegistry.Register(gren);
+            var views = hud.ReticleRoot.GetComponentsInChildren<TargetReticleView>(true);
+            Assert.AreEqual(2, views.Length);
+            Assert.AreEqual(1, views.Count(v => v.IsGrenadeStyle), "Dung 1 vong kieu grenade");
+            TargetRegistry.Unregister(enemy); TargetRegistry.Unregister(gren);
+        }
+
+        [Test]
+        public void GrenadeWarning_OnWhenCountPositive_OffWhenZero()
+        {
+            var pres = ui.GetComponent<TargetReticlePresenter>();
+            var hud = ui.GetComponentInChildren<HudView>(true);
+            Assert.IsFalse(hud.GrenadeWarningVisible);
+            var a = new Grenade(); var b = new FakeTarget();
+            TargetRegistry.Register(b);
+            Assert.IsFalse(hud.GrenadeWarningVisible, "Enemy khong bat canh bao");
+            TargetRegistry.Register(a);
+            Assert.AreEqual(1, pres.GrenadeCount);
+            Assert.IsTrue(hud.GrenadeWarningVisible);
+            TargetRegistry.Unregister(b);
+            Assert.IsTrue(hud.GrenadeWarningVisible);
+            TargetRegistry.Unregister(a);
+            Assert.AreEqual(0, pres.GrenadeCount);
+            Assert.IsFalse(hud.GrenadeWarningVisible);
+        }
+}
 }

@@ -1,7 +1,7 @@
 {
     "name": "ClaudeCop.UI.Tests",
     "rootNamespace": "ClaudeCop.UI.Tests",
-    "references": ["ClaudeCop.Core", "ClaudeCop.Combat", "ClaudeCop.UI", "UnityEngine.TestRunner", "UnityEditor.TestRunner", "Unity.ugui", "Unity.TextMeshPro", "ClaudeCop.Ads", "ClaudeCop.Jev"],
+    "references": ["ClaudeCop.Core", "ClaudeCop.Combat", "ClaudeCop.UI", "UnityEngine.TestRunner", "UnityEditor.TestRunner", "Unity.ugui", "Unity.TextMeshPro", "ClaudeCop.Ads", "ClaudeCop.RankScore"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

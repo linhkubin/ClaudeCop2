@@ -21,18 +21,25 @@ namespace ClaudeCop.FX
 
         public FxPool Pool => pool;
 
-        void Awake() { pool = new FxPool(transform); }
+        void Awake()
+        {
+            pool = new FxPool(transform);
+            if (config != null && config.explosion != null && config.explosion.prefab != null)
+                pool.Prewarm(config.explosion.prefab, config.explosionPrewarm);
+        }
 
         void OnEnable()
         {
             CombatEvents.ShotFired += OnShotFired;
             CombatEvents.ShotResolved += OnShotResolved;
+            BlastEvents.Blasted += OnBlasted;
         }
 
         void OnDisable()
         {
             CombatEvents.ShotFired -= OnShotFired;
             CombatEvents.ShotResolved -= OnShotResolved;
+            BlastEvents.Blasted -= OnBlasted;
             pool?.ReleaseAll();
         }
 
@@ -52,6 +59,12 @@ namespace ClaudeCop.FX
         {
             if (e == null || e.prefab == null) return;
             pool.Spawn(e.prefab, pos, rot, e.lifetime, e.maxInstances, Scale, config.maxActiveParticles, Time.time);
+        }
+
+        void OnBlasted(BlastReport r)
+        {
+            if (config == null) return;
+            Play(config.explosion, r.Center, Quaternion.identity);
         }
 
         void OnShotFired(WeaponKind weapon, Vector2 screenPos)

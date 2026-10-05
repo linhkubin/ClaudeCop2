@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ClaudeCop.Core
 {
-    /// <summary>C10. Ket qua mot phat ban. Combat phat qua CombatEvents.ShotResolved; Game, Jev, UI nghe.</summary>
+    /// <summary>C10. Ket qua mot phat ban. Combat phat qua CombatEvents.ShotResolved; Game, RankScore, UI nghe.</summary>
     public struct ShotResult
     {
         public TapOutcome Outcome;

@@ -9,11 +9,13 @@ namespace ClaudeCop.UI
     /// </summary>
     public class PhaseTransitionView : MonoBehaviour
     {
+        [SerializeField] UIConfig config;
         [SerializeField] GameObject content;
         [SerializeField] CanvasGroup blackGroup;
         [SerializeField] CanvasGroup titleGroup;
         [SerializeField] TMP_Text titleText;
 
+        UIConfig Cfg => config != null ? config : UIConfig.Fallback;
         bool playing, useBlack;
         float elapsed, d0, d1, d2;
 
@@ -67,7 +69,7 @@ namespace ClaudeCop.UI
             {
                 // fadeOut: den dan; hold: den + chu hien; fadeIn: sang dan, chu mo theo.
                 if (elapsed < d0) { black = elapsed / d0; title = 0f; }
-                else if (elapsed < d0 + d1) { black = 1f; title = Mathf.Clamp01((elapsed - d0) / Mathf.Min(0.2f, Mathf.Max(0.01f, d1))); }
+                else if (elapsed < d0 + d1) { black = 1f; title = Mathf.Clamp01((elapsed - d0) / Mathf.Min(Cfg.phaseTitleFadeIn, Mathf.Max(0.01f, d1))); }
                 else { float k = (elapsed - d0 - d1) / d2; black = 1f - k; title = 1f - k; }
             }
             else

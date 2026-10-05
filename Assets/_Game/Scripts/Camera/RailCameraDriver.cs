@@ -116,7 +116,7 @@ namespace ClaudeCop.Camera
             pitch = Mathf.SmoothDamp(pitch, wantPitch, ref pitchVel, p.lookDamping, p.maxYawRate, dt);
             float yawRate = Mathf.DeltaAngle(oldYaw, yaw) / dt;
             float wantRoll = UserSettings.ReduceMotion ? 0f : -Mathf.Clamp(yawRate / p.maxYawRate, -1f, 1f) * p.maxRoll;
-            roll = Mathf.SmoothDamp(roll, wantRoll, ref rollVel, 0.3f, Mathf.Infinity, dt);
+            roll = Mathf.SmoothDamp(roll, wantRoll, ref rollVel, p.rollSmoothTime, Mathf.Infinity, dt);
             roll = Mathf.Clamp(roll, -p.maxRoll, p.maxRoll);
 
             cam.transform.SetPositionAndRotation(camPos, Quaternion.Euler(pitch, yaw, roll));

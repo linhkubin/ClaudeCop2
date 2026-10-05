@@ -29,6 +29,15 @@ namespace ClaudeCop.FX.Tests
         }
 
         [Test]
+        public void Pool_Prewarm_SpawnDoesNotInstantiate()
+        {
+            pool.Prewarm(prefab, 3);
+            Assert.AreEqual(3, pool.TotalCreated);
+            for (int i = 0; i < 3; i++) pool.Spawn(prefab, Vector3.zero, Quaternion.identity, 1f, 3, 1f, 1000, 0f);
+            Assert.AreEqual(3, pool.TotalCreated, "khong Instantiate them sau prewarm");
+        }
+
+        [Test]
         public void Pool_ReusesInstanceAfterExpiry()
         {
             var a = pool.Spawn(prefab, Vector3.zero, Quaternion.identity, 1f, 4, 1f, 1000, 0f);

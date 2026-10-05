@@ -24,3 +24,5 @@ MonoBehaviour:
   targetFrameRate: 60
   revivesPerRun: 1
   startImmediately: 0
+  explosionKillPoints: 100
+  grenadeShotPoints: 50

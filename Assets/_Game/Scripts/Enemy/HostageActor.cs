@@ -17,6 +17,7 @@ namespace ClaudeCop.Enemy
         [SerializeField] Vector3 peekLocalOffset = new Vector3(0f, 0f, 1.2f);
 
         static int nextId = 100000;
+        EnemyConfig Cfg => config != null ? config : EnemyConfig.Fallback;
         HostageBrain brain;
         Vector3 hidePos, peekPos;
         Quaternion hideRot, peekRot;
@@ -35,7 +36,7 @@ namespace ClaudeCop.Enemy
         public int Id => id;
         public TargetKind Kind => TargetKind.Hostage;
         public bool IsTargetable => brain != null && brain.IsTargetable && !CombatPauseSignal.IsPaused;
-        public Vector3 AimPoint => transform.position + Vector3.up * (config != null ? config.hostageAimHeight : 1.3f);
+        public Vector3 AimPoint => transform.position + Vector3.up * (Cfg.hostageAimHeight);
         public bool HasJusticePoint => false;
         public Vector3 JusticePoint => AimPoint;
         public bool ShowsReticle => false;
@@ -84,11 +85,9 @@ namespace ClaudeCop.Enemy
 
         void BuildBrain()
         {
-            var c = config;
+            var c = Cfg;
             brain = new HostageBrain(
-                c != null ? c.peekDuration : 0.3f,
-                c != null ? c.hostageExposeTime : 4f,
-                c != null ? c.retreatDuration : 0.3f);
+                c.peekDuration, c.hostageExposeTime, c.retreatDuration);
             brain.ExposeStarted = OnExposeStarted;
             brain.ExposeEnded = OnExposeEnded;
         }

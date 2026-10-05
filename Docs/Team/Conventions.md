@@ -1,29 +1,31 @@
 # Quy ước chung — ClaudeCop2
 
 > Mọi agent **đọc file này trước khi làm task**. Thay đổi file này phải qua PM.
-> Cập nhật lần cuối: 2026-10-04 sau W2–W4 (bảng asmdef thực tế, TMP, URP Mobile, material blockout, tên `HostageActor`, file không commit). Sau đó: màn dọc, game offline (bỏ Jev online + jev-coder).
+> Cập nhật lần cuối: 2026-10-04 sau W2–W4 (bảng asmdef thực tế, TMP, URP Mobile, material blockout, tên `HostageActor`, file không commit). Sau đó: màn dọc, game offline (bỏ RankScore online + rankScore-coder).
+>
+> 2026-10-04: đổi Jev -> RankScore (hệ thống rank/preset offline); 'Jev' chỉ còn là API TypeSafe dùng cho công cụ dev.
 
 ## 1. Phạm vi sở hữu
 Game: rail shooter kiểu Virtua Cop 2 cho mobile — xem `Docs/Design/Plan_VirtuaCop2_Mobile.md`.
 
 > ### ⚡ Đội gọn cho DEMO (M1 + M2) — chủ dự án chốt 2026-10-04
 > Coder **đang hoạt động**: **gameplay-coder** và **ui-coder**, cùng level-designer, reviewer (tester).
-> - **gameplay-coder** sở hữu tạm thời **toàn bộ** thư mục của combat-coder, enemy-coder và jev-coder (Core, Combat, Props, FX, Enemy, Camera, Game, Jev + prefab tương ứng), ngoài phạm vi của chính mình.
+> - **gameplay-coder** sở hữu tạm thời **toàn bộ** thư mục của combat-coder, enemy-coder và rankScore-coder (Core, Combat, Props, FX, Enemy, Camera, Game, RankScore + prefab tương ứng), ngoài phạm vi của chính mình.
 > - **ui-coder** giữ nguyên phạm vi UI/Ads.
-> - **combat-coder, enemy-coder tạm nghỉ** — nhận lại thư mục từ M3/M4. **jev-coder đã giải thể** (2026-10-04: game offline, bỏ Jev online/server) — `Scripts/Jev/` thuộc gameplay-coder.
+> - **combat-coder, enemy-coder tạm nghỉ** — nhận lại thư mục từ M3/M4. **rankScore-coder đã giải thể** (2026-10-04: game offline, bỏ RankScore online/server) — `Scripts/RankScore/` thuộc gameplay-coder.
 > - Code vẫn tách module theo bảng asmdef mục 2. Quy tắc "không ai tham chiếu UI/Ads" vẫn áp dụng.
-> - **Reviewer đổi vai thành tester (2026-10-04):** không duyệt code nữa; mỗi wave viết test cho Unity Test Runner + checklist test thủ công, **chủ dự án chạy test và phản hồi lỗi**. Lỗi → Liaison giao chủ module sửa.
+> - **Reviewer khôi phục vai review code (2026-10-05):** duyệt code/scene sau mỗi task (chỉ đọc, không sửa), báo cáo ở `Docs/Team/Reviews/`. Vai tester (viết test + checklist) tạm dừng; test đã viết giữ nguyên trong `Assets/_Game/Tests/` và `Docs/Team/Testing/`.
 
 | Agent | Model | Sở hữu (chỉ được tạo/sửa trong đây) |
 |---|---|---|
 | project-manager | opus | `Docs/Team/` |
 | game-designer | opus | `Docs/Design/` |
 | level-designer | opus | `Assets/_Game/Level/` (gồm material blockout), `Assets/_Game/Scenes/Levels/` |
-| gameplay-coder | sonnet | `Assets/_Game/Scripts/Camera/`, `Assets/_Game/Scripts/Game/`, `Assets/_Game/Scripts/Jev/`, `Assets/_Game/Prefabs/Game/`, `Assets/_Game/Scenes/Gameplay/`, `Assets/_Game/Scenes/Title.unity`, `Assets/_Game/Settings/` + tài nguyên dùng chung (mục 4) + Player/Build Settings |
+| gameplay-coder | sonnet | `Assets/_Game/Scripts/Camera/`, `Assets/_Game/Scripts/Game/`, `Assets/_Game/Scripts/RankScore/`, `Assets/_Game/Prefabs/Game/`, `Assets/_Game/Scenes/Gameplay/`, `Assets/_Game/Scenes/Title.unity`, `Assets/_Game/Settings/` + tài nguyên dùng chung (mục 4) + Player/Build Settings |
 | combat-coder | sonnet | `Assets/_Game/Scripts/Core/`, `Assets/_Game/Scripts/Combat/`, `Assets/_Game/Scripts/Props/`, `Assets/_Game/Scripts/FX/`, `Assets/_Game/Prefabs/Combat/`, `Assets/_Game/Prefabs/Props/`, `Assets/_Game/Prefabs/FX/` |
 | enemy-coder | sonnet | `Assets/_Game/Scripts/Enemy/`, `Assets/_Game/Prefabs/Enemies/` |
 | ui-coder | sonnet | `Assets/_Game/Scripts/UI/`, `Assets/_Game/Scripts/Ads/`, `Assets/_Game/UI/` (gồm `UI/Fonts/`), `Assets/_Game/Prefabs/UI/`, `Assets/TextMesh Pro/` (TMP Essentials) |
-| reviewer (tester) | sonnet | `Assets/_Game/Tests/EditMode/`, `Assets/_Game/Tests/PlayMode/`, `Docs/Team/Testing/` (bản review cũ ở `Docs/Team/Reviews/` giữ làm lịch sử) |
+| reviewer | sonnet | `Docs/Team/Reviews/` (chỉ báo cáo review; không sửa code). `Assets/_Game/Tests/` và `Docs/Team/Testing/` giữ nguyên, không ai thêm khi chưa có lệnh |
 
 Mỗi coder còn có scene thử riêng: `Assets/_Game/Scenes/Sandbox/<agent-name>.unity` (hoặc `<agent-name>-<module>.unity`), chỉ chủ của nó được sửa.
 
@@ -34,7 +36,7 @@ Mỗi coder còn có scene thử riêng: `Assets/_Game/Scenes/Sandbox/<agent-nam
 ## 2. Assembly Definition (asmdef)
 Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham chiếu thực tế sau W4** — chỉ được tham chiếu theo bảng; cần thêm → hỏi PM.
 
-> Trong DEMO: chủ thực tế của Core, Combat, FX, Enemy, Jev là **gameplay-coder**.
+> Trong DEMO: chủ thực tế của Core, Combat, FX, Enemy, RankScore là **gameplay-coder**.
 
 ### Runtime
 | Assembly | Thư mục | Tham chiếu | Chủ |
@@ -45,10 +47,10 @@ Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham 
 | `ClaudeCop.FX` | `Scripts/FX/` | Core (FX tự nghe `CombatEvents` + raycast, không ai tham chiếu FX) | combat-coder |
 | `ClaudeCop.Enemy` | `Scripts/Enemy/` | Core | enemy-coder |
 | `ClaudeCop.Camera` | `Scripts/Camera/` | Core, Unity.Cinemachine, Unity.Splines, Unity.Mathematics | gameplay-coder |
-| `ClaudeCop.Jev` | `Scripts/Jev/` (gồm `JevDirector`; chỉ offline) | Core, Enemy | gameplay-coder |
-| `ClaudeCop.Game` | `Scripts/Game/` | Core, Combat, Props, Enemy, Camera, Jev, Unity.Cinemachine (Camera/Jev/Cinemachine dùng cho bot debug, bọc define) | gameplay-coder |
+| `ClaudeCop.RankScore` | `Scripts/RankScore/` (gồm `RankScoreDirector`; chỉ offline) | Core, Enemy | gameplay-coder |
+| `ClaudeCop.Game` | `Scripts/Game/` | Core, Combat, Props, Enemy, Camera, RankScore, Unity.Cinemachine (Camera/RankScore/Cinemachine dùng cho bot debug, bọc define) | gameplay-coder |
 | `ClaudeCop.Ads` | `Scripts/Ads/` | Unity.ugui, Unity.TextMeshPro (**không** ref Core/module game) | ui-coder |
-| `ClaudeCop.UI` | `Scripts/UI/` | Core, Combat, Ads, Jev, Unity.ugui, Unity.TextMeshPro | ui-coder |
+| `ClaudeCop.UI` | `Scripts/UI/` | Core, Combat, Ads, RankScore, Unity.ugui, Unity.TextMeshPro | ui-coder |
 
 ### Editor-only (`includePlatforms: [Editor]`)
 | Assembly | Thư mục | Tham chiếu | Chủ |
@@ -56,15 +58,15 @@ Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham 
 | `ClaudeCop.Camera.Editor` | `Scripts/Camera/Editor/` | Core, Camera, Cinemachine, Splines, Mathematics | gameplay-coder |
 | `ClaudeCop.Game.Editor` | `Scripts/Game/Editor/` (menu `ClaudeCop/Game/Assemble Level_01 (T-403)`) | Core, Camera, Camera.Editor, Enemy, Combat, Game, Cinemachine, Splines, Mathematics | gameplay-coder |
 | `ClaudeCop.FX.Editor` | `Scripts/FX/Editor/` | Core, FX | combat-coder |
-| `ClaudeCop.UI.Editor` | `Scripts/UI/Editor/` | UI, Ads, Jev, Core, ugui, TextMeshPro | ui-coder |
+| `ClaudeCop.UI.Editor` | `Scripts/UI/Editor/` | UI, Ads, RankScore, Core, ugui, TextMeshPro | ui-coder |
 
 ### Tests (Editor-only + `defineConstraints: UNITY_INCLUDE_TESTS`, ref thêm TestRunner)
 **EditMode & PlayMode (M3):**
-- `ClaudeCop.Tests.EditMode` | `Assets/Tests/EditMode/` | Core, Combat, Props, FX, Enemy, Jev, Game, Camera, UI, ugui, TMP | tester
+- `ClaudeCop.Tests.EditMode` | `Assets/Tests/EditMode/` | Core, Combat, Props, FX, Enemy, RankScore, Game, Camera, UI, ugui, TMP | tester
 - `ClaudeCop.Tests.PlayMode` | `Assets/Tests/PlayMode/` | như EditMode + SceneHierarchy | tester
 
 **Module-scoped (cũ, có thể giữ):**
-`ClaudeCop.Core.Tests` (Core) · `ClaudeCop.Combat.Tests` (Core, Combat, Props) · `ClaudeCop.Enemy.Tests` (Core, Enemy) · `ClaudeCop.Jev.Tests` (Core, Jev, Enemy) · `ClaudeCop.Game.Tests` (Core, Game) · `ClaudeCop.FX.Tests` (Core, FX) · `ClaudeCop.UI.Tests` (Core, Combat, UI, Ads, Jev, ugui, TMP). Mỗi asmdef Tests nằm trong `Tests/` của module, chủ = chủ module.
+`ClaudeCop.Core.Tests` (Core) · `ClaudeCop.Combat.Tests` (Core, Combat, Props) · `ClaudeCop.Enemy.Tests` (Core, Enemy) · `ClaudeCop.RankScore.Tests` (Core, RankScore, Enemy) · `ClaudeCop.Game.Tests` (Core, Game) · `ClaudeCop.FX.Tests` (Core, FX) · `ClaudeCop.UI.Tests` (Core, Combat, UI, Ads, RankScore, ugui, TMP). Mỗi asmdef Tests nằm trong `Tests/` của module, chủ = chủ module.
 
 ### Luật
 - **Không ai được tham chiếu UI hoặc Ads** (ngoài UI và test/editor của UI). Gameplay báo cho UI bằng event C#.
@@ -74,7 +76,7 @@ Mỗi module một asmdef, do chủ thư mục tạo. Bảng dưới là **tham 
 - Code chỉ dùng để thử (driver, dummy, bot, sandbox starter) phải bọc `#if UNITY_EDITOR || DEVELOPMENT_BUILD` hoặc nằm trong asmdef Editor riêng (F-106).
 
 ### Đặt tên tránh va chạm namespace (F-101, F-116)
-- **Không đặt tên class trùng đoạn cuối của một namespace `ClaudeCop.*`** (Core, Combat, Enemy, Camera, Jev, Game, UI, Ads, Props, FX). Đã áp dụng: **`EnemyActor`** (không `Enemy`), **`HostageActor`** (không `Hostage`, cho đồng bộ), **`FxSystem`** (không `FX`).
+- **Không đặt tên class trùng đoạn cuối của một namespace `ClaudeCop.*`** (Core, Combat, Enemy, Camera, RankScore, Game, UI, Ads, Props, FX). Đã áp dụng: **`EnemyActor`** (không `Enemy`), **`HostageActor`** (không `Hostage`, cho đồng bộ), **`FxSystem`** (không `FX`).
 - Trong `ClaudeCop.Camera` và mọi code tham chiếu assembly Camera (Game, Game.Editor, Camera.Editor…): **không viết `Camera` trần** — dùng `UnityEngine.Camera` hoặc alias `using UCamera = UnityEngine.Camera;`. Khuyến nghị dùng alias ở **mọi** module (UI/Combat hiện dùng `Camera` trần vẫn đúng vì chưa ref Camera, nhưng sẽ vỡ nếu thêm ref). **Không đổi namespace** `ClaudeCop.Camera`.
 
 ## 3. Làm việc chung trong một Unity Editor
@@ -108,7 +110,7 @@ Agent khác cần tag/layer/input/package mới → ghi yêu cầu trong báo c�
 
 ## 5. Scene
 - **level-designer**: dựng môi trường, bàn giao **prefab** `Assets/_Game/Level/Level_XX.prefab` (collider, chỗ nấp, điểm rỗng tên chuẩn `CamPoint_P1_S1`, `EnemySpawn_P1_W1_01`, `HostageSpawn_…`, `PickupSpawn_…`, con `Peek`, `RailHint_P<p>_S<s>_NN`; chỉ số `W` trùng `S` của góc giao tranh) + `SurfaceMaterialTag` trên collider. Chi tiết TASK_BOARD mục "Quy ước level". Không cần NavMesh. Scene blockout: `Scenes/Levels/Level_XX_Blockout.unity`.
-- **gameplay-coder**: ghép scene chơi được `Scenes/Gameplay/Level_XX.unity` = Level prefab + ray/spline + CinemachineCamera + PhaseDirector + EncounterWave + UI + manager (+ FX, Jev). Chỉ đặt/nối prefab, không sửa nội dung prefab của agent khác. `Level_01.unity` dựng lại được bằng menu `ClaudeCop/Game/Assemble Level_01 (T-403)`.
+- **gameplay-coder**: ghép scene chơi được `Scenes/Gameplay/Level_XX.unity` = Level prefab + ray/spline + CinemachineCamera + PhaseDirector + EncounterWave + UI + manager (+ FX, RankScore). Chỉ đặt/nối prefab, không sửa nội dung prefab của agent khác. `Level_01.unity` dựng lại được bằng menu `ClaudeCop/Game/Assemble Level_01 (T-403)`.
 - `GameplayUI` chứa **EventSystem duy nhất** của scene gameplay; `Title.unity` có EventSystem riêng trong `TitlePanel`. Không thêm EventSystem khác.
 
 ## 6. Git

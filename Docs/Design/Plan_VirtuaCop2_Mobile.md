@@ -2,9 +2,9 @@
 >
 > ## Phạm vi DEMO hiện tại: M1 + M2 (+ Props cơ bản ở W4)
 > - **M1 – Vòng lặp cốt lõi:** camera chạy ray (Cinemachine 3 + Splines) qua 1 Phase, tap bắn, enemy ló ra + vòng target thu nhỏ, đạn/reload, 3 mạng, HUD, thắng/thua, CameraFeelProfile cơ bản.
-> - **M2 – Hoàn thiện Level01:** đủ 3 Phase (đường phố, kho hàng, mái nhà), fade + tiêu đề Phase, con tin, combo, Justice Shot, Shotgun/Súng máy + thùng vật phẩm, Revive + quảng cáo giả, màn Title, FX cơ bản (tia lửa, vết đạn, chữ bay, enemy văng, nháy đỏ), tùy chọn "Giảm chuyển động", thiết lập Android. **Jev chỉ dùng `OfflineJevClient`** (luật viết sẵn) + bảng debug.
+> - **M2 – Hoàn thiện Level01:** đủ 3 Phase (đường phố, kho hàng, mái nhà), fade + tiêu đề Phase, con tin, combo, Justice Shot, Shotgun/Súng máy + thùng vật phẩm, Revive + quảng cáo giả, màn Title, FX cơ bản (tia lửa, vết đạn, chữ bay, enemy văng, nháy đỏ), tùy chọn "Giảm chuyển động", thiết lập Android. **RankScore chỉ dùng `OfflineRankScoreClient`** (luật viết sẵn) + bảng debug.
 > - **Props trong demo (W4):** `IShootable`, `SurfaceMaterial`, `PropPool`, hộp bay (`PhysicsProp`), kính vỡ (`BreakableGlass`), thùng nổ (`ExplosiveBarrel`) — theo mục 14 bên dưới.
-> - **CHƯA làm (M3/M4):** cây, cửa, đèn, biển hiệu, đồ ẩn trong hộp, lựu đạn, human shield, đánh giá rank (offline). **Đã bỏ hẳn:** Jev online/TypeSafe, Proxy/Direct client, server Python/Node.
+> - **CHƯA làm (M3/M4):** cây, cửa, đèn, biển hiệu, đồ ẩn trong hộp, lựu đạn, human shield, đánh giá rank (offline). **Đã bỏ hẳn:** RankScore online/TypeSafe, Proxy/Direct client, server Python/Node.
 > - **Giá trị mặc định đã duyệt** cho các chỗ plan còn thiếu: xem `Docs/Team/TASK_BOARD.md` (câu hỏi mở 1–10 của PM, chủ dự án chấp nhận toàn bộ).
 >
 > Thư mục/asmdef thực tế theo `Docs/Team/Conventions.md` (ghi đè mục "Cấu trúc file" bên dưới nếu khác).
@@ -92,14 +92,14 @@ Level01 (prototype): 3 Phase, mỗi Phase có 1 đoạn di chuyển và 2 lần 
     - **Hộp, thùng carton, lon, chai:** dùng Rigidbody và `AddForceAtPosition` theo hướng đạn, nên vật bay và xoay tự nhiên. Shotgun đẩy mạnh hơn. Bắn lon đang bay lên thì được điểm thưởng "tâng lon".
     - **Cây và bụi cây:** bung một đợt lá rơi (particle) tại chỗ trúng, cây rung nhẹ trong 0.5 giây (dao động bằng code, không dùng vật lý).
     - **Kính (cửa sổ, tủ kính):** khối kính được thay bằng các mảnh vỡ cắt sẵn (khoảng 6–10 mảnh có Rigidbody) cùng bụi kính. Kính đã vỡ thì không vỡ lại. Có thể có enemy nấp sau kính.
-    - **Cửa:** dùng HingeJoint hoặc xoay bằng code. Bắn vào cửa thì cửa bật mở về phía bị đẩy. Sau cửa có thể có enemy, con tin hoặc thùng vũ khí; những thứ này do `EncounterWave` cài sẵn và Jev có thể chọn.
+    - **Cửa:** dùng HingeJoint hoặc xoay bằng code. Bắn vào cửa thì cửa bật mở về phía bị đẩy. Sau cửa có thể có enemy, con tin hoặc thùng vũ khí; những thứ này do `EncounterWave` cài sẵn và RankScore có thể chọn.
     - **Thùng nổ (màu đỏ):** bắn 1 phát là nổ, đẩy văng vật xung quanh và hạ các enemy trong bán kính 3 m. Nếu có con tin trong bán kính thì người chơi bị phạt.
     - **Bóng đèn, biển hiệu:** bóng đèn tắt kèm tia lửa; biển hiệu bị đạn đánh rơi xuống.
     - **Vết đạn và tia lửa** dùng hiệu ứng khác nhau theo chất liệu (gỗ, kim loại, kính, lá cây), khai báo bằng `SurfaceMaterial`.
-    - **Luật bắn vật thể:** tốn 1 viên đạn nhưng **giữ combo**. Không tính là bắn trượt khi đo độ chính xác gửi cho Jev; được đếm riêng là "bắn môi trường".
+    - **Luật bắn vật thể:** tốn 1 viên đạn nhưng **giữ combo**. Không tính là bắn trượt khi đo độ chính xác gửi cho RankScore; được đếm riêng là "bắn môi trường".
     - **Vai trò trong gameplay** (giữ tất cả các vai trò):
       - Thùng nổ hạ được cả nhóm enemy, nhưng gây hại cho con tin ở gần.
-      - Hộp có thể chứa đồ ẩn: điểm thưởng, 1 tim (không vượt quá 3), hoặc thùng vũ khí. Đồ trong hộp do `EncounterWave` cài sẵn, Jev có thể chọn qua câu hỏi `weapon_drop`.
+      - Hộp có thể chứa đồ ẩn: điểm thưởng, 1 tim (không vượt quá 3), hoặc thùng vũ khí. Đồ trong hộp do `EncounterWave` cài sẵn, RankScore có thể chọn qua câu hỏi `weapon_drop`.
       - Cửa và kính che enemy: enemy nấp phía sau chưa có vòng target cho tới khi bị lộ ra. Lộ ra theo một trong hai cách: người chơi bắn mở hoặc bắn vỡ, hoặc tự enemy phá ra sau vài giây.
       - Phần lớn vật thể còn lại chỉ để trang trí và cho vui.
     - **Hiệu năng trên mobile:**
@@ -135,16 +135,16 @@ Level01 (prototype): 3 Phase, mỗi Phase có 1 đoạn di chuyển và 2 lần 
 
 **Tên điểm giữ nguyên quy ước** (`EnemySpawn_P<p>_W<w>_NN` + con `Peek`, `HostageSpawn_…`), nên `Level01Assembler` tự nhặt điểm mới khi chạy lại menu `ClaudeCop/Game/Assemble Level_01 (T-403)`.
 
-## Bộ điều phối độ khó Jev (Offline)
-> **Chốt 2026-10-04:** game **chạy offline hoàn toàn**. Bỏ Jev online (TypeSafe API), `ProxyJevClient`, `DirectJevClient`, server `Server/python` + `Server/node`, API key. Không có gọi mạng nào trong game.
+## Bộ điều phối độ khó RankScore (Offline)
+> **Chốt 2026-10-04:** game **chạy offline hoàn toàn**. Bỏ RankScore online (TypeSafe API), `ProxyRankScoreClient`, `DirectRankScoreClient`, server `Server/python` + `Server/node`, API key. Không có gọi mạng nào trong game.
 
-"Jev" trong dự án là **bộ luật viết sẵn chạy trên máy** (`OfflineJevClient`), dùng chung kiểu dữ liệu Choice/Score/Noul kèm xác suất để bảng debug hiển thị được. Jev **chỉ quyết định giữa các đợt giao tranh**, không chạy mỗi frame.
+"RankScore" trong dự án là **bộ luật viết sẵn chạy trên máy** (`OfflineRankScoreClient`), dùng chung kiểu dữ liệu Choice/Score/Noul kèm xác suất để bảng debug hiển thị được. RankScore **chỉ quyết định giữa các đợt giao tranh**, không chạy mỗi frame.
 
-**Những gì Jev quyết định** (theo chỉ số người chơi trong Phase: độ chính xác, thời gian phản xạ, số mạng mất, số lần trúng con tin):
+**Những gì RankScore quyết định** (theo chỉ số người chơi trong Phase: độ chính xác, thời gian phản xạ, số mạng mất, số lần trúng con tin):
 - `reticle_time` (đã có): Choice 2.0 / 2.5 / 3.0 giây, gọi khi Shot di chuyển bắt đầu để áp cho đợt kế tiếp.
 - Mở rộng sau (vẫn offline, cùng cơ chế luật): `wave_preset` (calm/standard/intense/hostage_heavy), `weapon_drop` (none/shotgun/machinegun), đánh giá cuối màn `rank` S/A/B/C + `weakness`.
 
-**An toàn:** `confidence` thấp hơn ngưỡng (0.6) hoặc chưa đủ số phát bắn (`minShotsForConfidence`) → dùng giá trị mặc định của đợt. Jev tắt (`JevConfig.enabled = false`) → mọi đợt dùng cấu hình làm sẵn.
+**An toàn:** `confidence` thấp hơn ngưỡng (0.6) hoặc chưa đủ số phát bắn (`minShotsForConfidence`) → dùng giá trị mặc định của đợt. RankScore tắt (`RankScoreConfig.enabled = false`) → mọi đợt dùng cấu hình làm sẵn.
 
 **Bảng debug trên màn hình (bật/tắt được):** hiện quyết định gần nhất kèm xác suất.
 
@@ -182,15 +182,15 @@ Level01 (prototype): 3 Phase, mỗi Phase có 1 đoạn di chuyển và 2 lần 
 - `Scripts/FX/FloatingText.cs`: chữ điểm bay lên.
 - `Scripts/GameManager.cs`: điểm số, trạng thái thắng/thua, khởi động lại.
 - `Scripts/HUD.cs`: hiển thị điểm, mạng, đạn, nút Reload, màn Win/Game Over kèm nút Chơi lại.
-- `Scripts/Jev/`:
-  - `IJevClient.cs`
-  - `JevTypes.cs`: request, câu hỏi Choice/Score/Noul, response (dữ liệu trong máy, không serialize ra mạng).
-  - `OfflineJevClient.cs` (luật viết sẵn — client duy nhất)
-  - `JevConfig.cs` (ScriptableObject: bật/tắt, thời gian vòng target theo lựa chọn, ngưỡng confidence)
-  - `JevDirector.cs`: soạn state và câu hỏi, gọi Jev trước mỗi đợt, áp kết quả vào `EncounterWave`.
+- `Scripts/RankScore/`:
+  - `IRankScoreClient.cs`
+  - `RankScoreTypes.cs`: request, câu hỏi Choice/Score/Noul, response (dữ liệu trong máy, không serialize ra mạng).
+  - `OfflineRankScoreClient.cs` (luật viết sẵn — client duy nhất)
+  - `RankScoreConfig.cs` (ScriptableObject: bật/tắt, thời gian vòng target theo lựa chọn, ngưỡng confidence)
+  - `RankScoreDirector.cs`: soạn state và câu hỏi, gọi RankScore trước mỗi đợt, áp kết quả vào `EncounterWave`.
   - `PlayerStatsTracker.cs`
-  - `JevRankEvaluator.cs`
-  - `JevDebugOverlay.cs`
+  - `ScoreRankEvaluator.cs`
+  - `RankScoreDebugOverlay.cs`
 - `Scripts/Grenade.cs`: lựu đạn bay tới kèm vòng target nhỏ, tap để bắn hạ.
 - `Scripts/HumanShieldEnemy.cs`: enemy giữ con tin làm khiên, phải tap đúng chấm Justice Shot hoặc đầu enemy.
 - `Prefabs/Enemy.prefab`, `Prefabs/TargetReticle.prefab`, ảnh vòng tròn (tạo sprite dạng ring bằng code hoặc dùng `Image` có sẵn với sprite tròn).
@@ -207,7 +207,7 @@ Level01 (prototype): 3 Phase, mỗi Phase có 1 đoạn di chuyển và 2 lần 
 2. Dựng scene Level01: môi trường, waypoint, các EncounterZone, Canvas và HUD.
 3. Tạo các prefab Enemy và TargetReticle, rồi gán tham chiếu.
 4. Cấu hình Player Settings và Build Settings cho mobile.
-5. Viết các lớp Jev offline trong Unity (`OfflineJevClient`, `JevDirector`).
+5. Viết các lớp RankScore offline trong Unity (`OfflineRankScoreClient`, `RankScoreDirector`).
 7. Viết bảng debug và màn đánh giá cuối màn.
 
 ## Kiểm tra
@@ -226,8 +226,8 @@ Level01 (prototype): 3 Phase, mỗi Phase có 1 đoạn di chuyển và 2 lần 
     - Tap vào enemy đứng trước vật thể thì luôn trúng enemy.
   - Màn tiêu đề "TAP TO START" vào được Level01. Các hiệu ứng tia lửa, vết đạn, chữ điểm bay lên và enemy văng ra đều hiện đúng.
   - Màn Win và Game Over hiện đúng, nút Chơi lại hoạt động.
-- Kiểm tra Jev (offline):
-  - Bảng debug hiện quyết định của Jev, và đợt giao tranh thay đổi theo quyết định đó.
+- Kiểm tra RankScore (offline):
+  - Bảng debug hiện quyết định của RankScore, và đợt giao tranh thay đổi theo quyết định đó.
   - Chơi hai lượt với hai phong cách khác nhau (bắn chuẩn và bắn ẩu): `reticle_time` phải khác nhau giữa hai lượt.
   - Bật chế độ máy bay: game chơi bình thường (không có gọi mạng nào).
 - Chụp screenshot Game view để bạn xem.
