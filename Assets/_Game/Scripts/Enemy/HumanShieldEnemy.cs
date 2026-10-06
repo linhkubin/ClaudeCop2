@@ -55,7 +55,7 @@ namespace ClaudeCop.Enemy
             // Vu no (ScreenPosition = NaN, khong phai tap man hinh): coi shield nhu enemy thuong -> ha enemy.
             if (float.IsNaN(shot.ScreenPosition.x)) return base.OnTapHit(shot, false);
             Vector2? headScreen = Project(AimPoint);
-            float radius = HumanShieldRules.ScaleRadius(Cfg.shieldHeadRadiusPx,
+            float radius = HumanShieldRules.ScaleRadius(Mathf.Max(Cfg.shieldHeadRadiusPx, Cfg.shieldCenterTapRadius),
                 ScreenWidthOverride > 0f ? ScreenWidthOverride : Screen.width, Cfg.uiReferenceWidth);
             switch (HumanShieldRules.Classify(isJustice, shot.ScreenPosition, headScreen, radius))
             {

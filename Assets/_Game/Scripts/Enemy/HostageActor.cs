@@ -23,6 +23,8 @@ namespace ClaudeCop.Enemy
         Quaternion hideRot, peekRot;
         bool positionsCached, registered, initialized;
         bool standStill;
+        // L4-HOSTFIX (GDD vong 11: con tin khong bao gio dung im): het dot luc con tin dang lo -> tu cui xuong (khong ban duoc) roi tat.
+        bool duckOut; float duckT;
         int id;
 
         /// <summary>Phat khi con tin bi ban (vi tri world).</summary>
@@ -120,12 +122,16 @@ namespace ClaudeCop.Enemy
             standStill = on;
         }
 
-        /// <summary>Dot xong: con tin dung im tai cho (khong ban duoc nua, khong tat doi tuong).</summary>
+        /// <summary>Dot xong: con tin dang lo thi het ban duoc ngay va TU CUI xuong cho nap (retreatDuration) roi tat;
+        /// khong bao gio dung im tai cho (GDD vong 11). Chua lo thi huy ngay.</summary>
         public void Freeze()
         {
             if (brain == null || !brain.IsActivated || brain.IsFinished) { if (brain == null || !brain.IsActivated) Dismiss(); return; }
+            duckT = brain.PeekT;
             brain.Dismiss();
             Left?.Invoke(this);
+            duckOut = duckT > 0f;
+            if (!duckOut) gameObject.SetActive(false);
         }
 
         void Update()
@@ -137,6 +143,14 @@ namespace ClaudeCop.Enemy
         /// <summary>Tien state machine dt giay va cap nhat vi tri (Update goi; test goi truc tiep).</summary>
         public void Tick(float dt)
         {
+            if (duckOut)
+            {
+                duckT -= dt / Mathf.Max(0.05f, Cfg.retreatDuration);
+                float k = Mathf.Max(0f, duckT);
+                transform.SetPositionAndRotation(Vector3.Lerp(hidePos, peekPos, k), Quaternion.Slerp(hideRot, peekRot, k));
+                if (duckT <= 0f) { duckOut = false; gameObject.SetActive(false); }
+                return;
+            }
             if (brain == null || brain.IsFinished || !brain.IsActivated) return;
             brain.Tick(dt);
             float t = brain.PeekT;

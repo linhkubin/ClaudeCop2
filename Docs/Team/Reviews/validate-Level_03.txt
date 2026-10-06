@@ -1,0 +1,32 @@
+[LevelValidator] Level_03: PASS (0 FAIL, 0 WARN) - 19 shot, 12 wave
+(a) PASS Khoang cach >= 12 m, <= 35 m :: min 12.3 m
+(b) PASS Vua khung 9:16 + 9:19.5 :: |h| max 5.3 (<=5.5), rong max 9.9 (<=21), FOV can 35.9/43.1 (<=45)
+(c) PASS Tam nhin (raycast) :: 0/25 tia bi chan
+(d) PASS Noi shot/rail :: 16 cap, lech vi tri max 0.000 m (rail), goc max 15.0
+(e) PASS Thoi gian Move <= 6 s :: 6 rail, max 5.9 s
+           Shot_P1_S1_Move: 37.4 m, 5.9 s
+           Shot_P1_S4_Move: 9.9 m, 3.8 s
+           Shot_P2_S1_Move: 26.0 m, 4.4 s
+           Shot_P2_S4_Move: 3.4 m, 2.0 s
+           Shot_P3_S1_Move: 18.8 m, 3.5 s
+           Shot_P3_S4_Move: 0.8 m, 1.2 s
+(f) PASS Tuyen (yaw, dao chieu, cat cheo) :: yaw rong max 68 (<=150), dao chieu max 1 (<=4), cat cheo 0
+           Phase 1: yaw rong -3, tong 111, dao chieu 1
+           Phase 2: yaw rong 19, tong 65, dao chieu 1
+           Phase 3: yaw rong 68, tong 121, dao chieu 0
+(g) PASS So luong enemy + marker cam (Level_03) :: 20 enemy (max/wave 3 <=4, tong <=20), marker cam: 0
+           Wave_P1_W2: 2 enemy, maxConcurrent 2
+           Wave_P1_W3: 2 enemy, maxConcurrent 2
+           Wave_P1_W5: 2 enemy, maxConcurrent 2
+           Wave_P1_W6: 1 enemy, maxConcurrent 2
+           Wave_P2_W2: 1 enemy, maxConcurrent 2
+           Wave_P2_W3: 2 enemy, maxConcurrent 2
+           Wave_P2_W5: 2 enemy, maxConcurrent 2
+           Wave_P2_W6: 1 enemy, maxConcurrent 2
+           Wave_P3_W2: 1 enemy, maxConcurrent 2
+           Wave_P3_W3: 2 enemy, maxConcurrent 2
+           Wave_P3_W5: 3 enemy, maxConcurrent 2
+           Wave_P3_W6: 1 enemy, maxConcurrent 2
+(h) PASS Ten object :: 0 sai quy uoc, 0 trung ten
+(i) PASS Tham chieu (missing/null) :: 12 wave, 19 shot, 0 van de
+(j) PASS PropSlot khop Prop :: 1/1 khop, 0 lech

@@ -37,14 +37,16 @@ namespace ClaudeCop.Enemy
         [SerializeField] List<HostageActor> sceneHostages = new List<HostageActor>();
         [SerializeField] List<Transform> hostageSpawnPoints = new List<Transform>();
         [SerializeField] HostageActor hostagePrefab;
-        [Tooltip("Con tin dung im tai cho den het dot (khong tu thut vao/bien mat); het dot thi dung im, khong ban duoc.")]
-        [SerializeField] bool hostagesStandStill = true;
+        [Tooltip("Mac dinh false: con tin tu cui xuong sau hostageExposeTime. Bat = dung im tai cho den het dot (con tin co dinh); het dot thi dung im, khong ban duoc.")]
+        [SerializeField] bool hostagesStandStill = false;
         [Header("Pickup (GameObject co WeaponPickup)")]
         [SerializeField] List<GameObject> scenePickups = new List<GameObject>();
         [SerializeField] List<Transform> pickupSpawnPoints = new List<Transform>();
         [SerializeField] GameObject pickupPrefab;
         [Tooltip("So enemy toi da song cung luc trong dot (<= 0 = khong gioi han). Enemy ke tiep cho den khi co cho trong.")]
         [SerializeField] int maxConcurrent;
+        [Header("Canh hai (GagFall) - khong phai muc tieu, khong tinh kill")]
+        [SerializeField] List<GagFall> gags = new List<GagFall>();
         [SerializeField, TextArea] string description;
 
         struct Slot { public EnemyActor enemy; public HostageActor hostage; }
@@ -218,6 +220,8 @@ namespace ClaudeCop.Enemy
                 GetPeek(sp, out Vector3 pp, out Quaternion pr);
                 var e = Instantiate(prefab, sp.position, sp.rotation, transform);
                 e.Setup(config, sp.position, sp.rotation, pp, pr);
+                var entry = sp.GetComponent<SpawnPointEntry>();
+                if (entry != null) e.SetEntryStyle(entry.Style, entry.DropHeight);
                 e.gameObject.SetActive(false);
                 spawnedEnemies.Add(e);
             }
@@ -246,6 +250,7 @@ namespace ClaudeCop.Enemy
             lastKillPos = transform.position;
             nextIndex = 0;
             foreach (var e in queue) if (e != null && e.SceneStanding) e.Activate();
+            foreach (var g in gags) if (g != null) g.Play();
             ActivateNext();   // phan tu dau lo ngay (dot khong enemy: LateUpdate se phat Cleared)
         }
 

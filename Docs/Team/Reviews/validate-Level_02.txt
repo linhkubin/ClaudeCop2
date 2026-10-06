@@ -1,5 +1,5 @@
 [LevelValidator] Level_02: PASS (0 FAIL, 0 WARN) - 18 shot, 12 wave
-(a) PASS Khoang cach >= 12 m :: min 13.4 m
+(a) PASS Khoang cach >= 12 m, <= 35 m :: min 13.4 m
 (b) PASS Vua khung 9:16 + 9:19.5 :: |h| max 5.4 (<=5.5), rong max 10.2 (<=21), FOV can 36.0/43.2 (<=45)
 (c) PASS Tam nhin (raycast) :: 0/26 tia bi chan
 (d) PASS Noi shot/rail :: 15 cap, lech vi tri max 0.000 m (rail), goc max 18.0

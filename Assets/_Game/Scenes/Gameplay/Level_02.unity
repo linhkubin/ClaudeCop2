@@ -1206,6 +1206,8 @@ MonoBehaviour:
   overlayCamera: {fileID: 1414320595}
   tapShooter: {fileID: 501650483}
   layerName: Viewmodel
+  ejectShells: 1
+  shellLife: 1.5
   RecordDiagnostics: 0
   AimCount: 0
   AimClampedCount: 0
@@ -1558,11 +1560,12 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P2 W3 (L2)
 --- !u!1001 &659288498
 PrefabInstance:
@@ -2274,11 +2277,12 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P2 W2 (L2)
 --- !u!1 &866785344
 GameObject:
@@ -2930,11 +2934,12 @@ MonoBehaviour:
   hostageSpawnPoints:
   - {fileID: 188778766}
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P3 W5 (L2)
 --- !u!1 &1010702123
 GameObject:
@@ -2996,11 +3001,12 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P1 W5 (L2)
 --- !u!1 &1056270260
 GameObject:
@@ -3181,11 +3187,12 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P3 W3 (L2)
 --- !u!1 &1147054363
 GameObject:
@@ -3352,11 +3359,12 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 3
+  gags: []
   description: P3 W6 (L2)
 --- !u!4 &1148907630
 Transform:
@@ -4084,11 +4092,12 @@ MonoBehaviour:
   hostageSpawnPoints:
   - {fileID: 188778756}
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P2 W5 (L2)
 --- !u!1 &1411483733
 GameObject:
@@ -4526,11 +4535,12 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P1 W6 (L2)
 --- !u!1001 &1539989407
 PrefabInstance:
@@ -4663,12 +4673,59 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P1 W2 (L2)
+--- !u!1 &1626850040
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1626850042}
+  - component: {fileID: 1626850041}
+  m_Layer: 0
+  m_Name: ChainEntryRedirect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1626850041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1626850040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60b3bbe14320fac49985d6ccb6462e4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ClaudeCop.Game::ClaudeCop.Game.StandaloneLevelRedirect
+  levelIndex: 1
+  redirectToChain: 1
+--- !u!4 &1626850042
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1626850040}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1707603871
 GameObject:
   m_ObjectHideFlags: 0
@@ -5215,11 +5272,12 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P3 W2 (L2)
 --- !u!1001 &1858834599
 PrefabInstance:
@@ -5923,11 +5981,12 @@ MonoBehaviour:
   hostageSpawnPoints:
   - {fileID: 188778764}
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P1 W3 (L2)
 --- !u!1 &2004992700
 GameObject:
@@ -6292,11 +6351,12 @@ MonoBehaviour:
   sceneHostages: []
   hostageSpawnPoints: []
   hostagePrefab: {fileID: 5855214700950170907, guid: 0ff36f7bdabd66d4bb6fdcd0debc4641, type: 3}
-  hostagesStandStill: 1
+  hostagesStandStill: 0
   scenePickups: []
   pickupSpawnPoints: []
   pickupPrefab: {fileID: 0}
   maxConcurrent: 2
+  gags: []
   description: P2 W6 (L2)
 --- !u!1001 &2121549600
 PrefabInstance:
@@ -6393,3 +6453,4 @@ SceneRoots:
   - {fileID: 565816887}
   - {fileID: 931379220}
   - {fileID: 1804775175}
+  - {fileID: 1626850042}

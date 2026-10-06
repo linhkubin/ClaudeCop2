@@ -28,6 +28,13 @@ namespace ClaudeCop.Enemy
         [Tooltip("Enemy dat san trong scene, dung lo san o vi tri hien tai (khong lo ra tu cho nap): khi kich hoat vao thang Ngam, van co vong target; het vong thi ban roi ngam tiep.")]
         [SerializeField] bool sceneStanding;
 
+        /// <summary>Kieu xuat hien. Auto = hanh vi cu (chui len sau vat nap hoac chay vao tu ngoai man hinh).</summary>
+        public enum EntryStyle { Auto, Drop, Slide, Vault, Door }
+
+        [Header("Kieu xuat hien")]
+        [Tooltip("Drop: nhay tu tren xuong. Slide: luot nhanh tu mep man hinh. Vault: nhay qua vat nap tu phia sau. Door: di ra tu cua Door_Enemy_* gan nhat (khong co -> Slide). Chi co hieu luc khi choi voi camera.")]
+        [SerializeField] EntryStyle entry = EntryStyle.Auto;
+
         [Header("Grenadier")]
         [Tooltip("Khi vong thu het thi NEM luu dan thay vi ban (can grenadePrefab).")]
         [SerializeField] bool throwsGrenade;
@@ -37,8 +44,9 @@ namespace ClaudeCop.Enemy
 
         // Moi enemy chay vao tu ngoai man hinh (khong moc tu duoi dat): toc do chay, khoang ngoai man hinh them, gioi han thoi gian.
         const float RunSpeed = 4.5f, OffscreenMargin = 1.2f, MinRunTime = 0.5f, MaxRunTime = 2.2f, FallbackRunDistance = 10f;
-        float entryRunTime = -1f, entryThreshold = -1f;
+        float entryRunTime = -1f, entryThreshold = -1f, dropHeightOverride = -1f;
         bool runner;                                   // chay vao tu ngoai man hinh (khong co vat nap che >= 1/2 nguoi): ban xong dung im 3-5 s roi ban tiep
+        const float DoorSearchRadius = 15f;
         const float CoverFractionToRise = 0.5f, BodyHeight = 1.8f;
         static int nextId = 1;
         EnemyBrain brain;
@@ -64,6 +72,17 @@ namespace ClaudeCop.Enemy
         public bool IsActivated => brain != null && brain.IsActivated;
         /// <summary>Enemy dung san (khong lo ra tu cho nap). Doi truoc khi kich hoat.</summary>
         public bool SceneStanding => sceneStanding;
+
+        /// <summary>Doi kieu xuat hien. Chi co hieu luc khi chua kich hoat.</summary>
+        public void SetEntryStyle(EntryStyle style) { if (!IsActivated) entry = style; }
+
+        /// <summary>Doi kieu xuat hien + do cao nhay (Drop, m; &lt;= 0 = tu tinh theo mep tren man hinh). Chi co hieu luc khi chua kich hoat.</summary>
+        public void SetEntryStyle(EntryStyle style, float dropHeight)
+        {
+            if (IsActivated) return;
+            entry = style;
+            dropHeightOverride = dropHeight > 0f ? dropHeight : -1f;
+        }
 
         /// <summary>Bat/tat che do dung san. Chi co hieu luc khi chua kich hoat.</summary>
         public void SetSceneStanding(bool on)
@@ -207,6 +226,7 @@ namespace ClaudeCop.Enemy
         {
             var cam = Application.isPlaying ? UnityEngine.Camera.main : null; // edit-mode test: khong chay vao theo camera dang mo
             // Enemy bi vat nap che >= 1/2 chieu cao nguoi thi chui tu duoi len sau vat nap (hide/peek theo marker); con lai chay vao tu ngoai man hinh.
+            if (cam != null && entry != EntryStyle.Auto && !sceneStanding) { StartStyledEntry(cam); return; }
             if (cam != null && !sceneStanding && CoveredFraction(cam) >= CoverFractionToRise) cam = null;
             else if (cam != null) runner = true;
             if (cam != null)
@@ -233,6 +253,80 @@ namespace ClaudeCop.Enemy
             transform.SetPositionAndRotation(hidePos, hideRot);
             SetRenderers(true);
         }
+
+        /// <summary>Drop / Slide / Vault: chon hidePos + thoi gian rieng; duong di do Tick uon theo entry. Sau khi vao enemy dung im nhu runner.</summary>
+        void StartStyledEntry(UnityEngine.Camera cam)
+        {
+            runner = true;
+            Vector3 fwd = cam.transform.forward; fwd.y = 0f;
+            fwd = fwd.sqrMagnitude < 1e-4f ? Vector3.forward : fwd.normalized;
+            Vector3 right = Vector3.Cross(Vector3.up, fwd);
+            Vector3 toE = peekPos - cam.transform.position;
+            float depth = Mathf.Max(1f, Vector3.Dot(toE, cam.transform.forward));
+            hideRot = peekRot;
+            switch (entry)
+            {
+                case EntryStyle.Drop:
+                {
+                    Vector3 top = cam.ViewportToWorldPoint(new Vector3(0.5f, 1f, depth));
+                    float h = dropHeightOverride > 0f ? dropHeightOverride : Mathf.Clamp(top.y - peekPos.y + 1.5f, 3f, 9f); // co do cao rieng: nhay tu gac thap
+                    hidePos = peekPos + Vector3.up * h;
+                    entryRunTime = Mathf.Clamp(h / 9f, 0.4f, 1f);
+                    entryThreshold = Mathf.Clamp(1.5f / h + 0.1f, 0.15f, 0.9f);
+                    break;
+                }
+                case EntryStyle.Slide:
+                {
+                    float side = Vector3.Dot(toE, right) >= 0f ? 1f : -1f;
+                    Vector3 edge = cam.ViewportToWorldPoint(new Vector3(side > 0f ? 1f : 0f, 0.5f, depth));
+                    float dist = Mathf.Clamp(Mathf.Max(0f, Vector3.Dot(edge - peekPos, right * side)) + OffscreenMargin + 2f, 3f, 16f);
+                    hidePos = peekPos + right * side * dist;
+                    hideRot = Quaternion.LookRotation(-right * side);
+                    entryRunTime = Mathf.Clamp(dist / (RunSpeed * 2f), 0.4f, 1.4f);
+                    entryThreshold = Mathf.Clamp((OffscreenMargin + 2f) / dist + 0.05f, 0.15f, 0.9f);
+                    break;
+                }
+                case EntryStyle.Door:
+                {
+                    Transform door = FindNearestDoor();
+                    if (door == null) { entry = EntryStyle.Slide; StartStyledEntry(cam); return; }   // khong co cua: luot vao tu mep man hinh
+                    Vector3 d = door.position; d.y = peekPos.y;
+                    float dist = Mathf.Max(1.5f, Vector3.Distance(d, peekPos));
+                    hidePos = d;
+                    Vector3 dir = peekPos - d; dir.y = 0f;
+                    hideRot = dir.sqrMagnitude < 1e-4f ? peekRot : Quaternion.LookRotation(dir.normalized);
+                    entryRunTime = Mathf.Clamp(dist / RunSpeed, MinRunTime, MaxRunTime);
+                    entryThreshold = 0.1f;                                // ban duoc ngay khi buoc ra khoi cua
+                    break;
+                }
+                default: // Vault
+                    hidePos = peekPos + fwd * 2.2f;                       // phia sau vat nap (xa camera)
+                    hideRot = Quaternion.LookRotation(-fwd);
+                    peekRot = hideRot;
+                    entryRunTime = 0.8f;
+                    entryThreshold = 0.3f;
+                    break;
+            }
+            BuildBrain();
+            transform.SetPositionAndRotation(hidePos, hideRot);
+            SetRenderers(true);
+        }
+
+        /// <summary>Cua gan peekPos nhat (object ten bat dau bang "Door_Enemy_", trong ban kinh 15 m), null neu khong co.</summary>
+        Transform FindNearestDoor()
+        {
+            Transform best = null; float bestSqr = DoorSearchRadius * DoorSearchRadius;
+            foreach (var t in FindObjectsByType<Transform>(FindObjectsSortMode.None))
+            {
+                if (!t.name.StartsWith("Door_Enemy_", StringComparison.Ordinal)) continue;
+                float s = (t.position - peekPos).sqrMagnitude;
+                if (s < bestSqr) { bestSqr = s; best = t; }
+            }
+            return best;
+        }
+
+        /// <summary>Ham dinh hinh t theo kieu xuat hien (Drop: roi nhanh dan; Slide: luot giam toc; Vault: tuyen tinh + cung nhay).</summary>
+        float ShapeT(float t) => !runner ? t : entry == EntryStyle.Drop ? t * t : entry == EntryStyle.Slide ? 1f - (1f - t) * (1f - t) : t;
 
         /// <summary>Ty le chieu cao nguoi (5 diem tu chan toi dau) tai peekPos bi vat can (khong phai enemy/con tin/kinh bat vo) che khuat tu camera.</summary>
         float CoveredFraction(UnityEngine.Camera cam)
@@ -276,7 +370,9 @@ namespace ClaudeCop.Enemy
             if (dead || brain == null) return;
             brain.Tick(dt);
             float t = brain.PeekT;
-            transform.SetPositionAndRotation(Vector3.Lerp(hidePos, peekPos, t), Quaternion.Slerp(hideRot, peekRot, t));
+            Vector3 pos = Vector3.Lerp(hidePos, peekPos, ShapeT(t));
+            if (runner && entry == EntryStyle.Vault) pos += Vector3.up * (Mathf.Sin(t * Mathf.PI) * 1.0f);
+            transform.SetPositionAndRotation(pos, Quaternion.Slerp(hideRot, peekRot, t));
         }
 
         void OnAimStarted()

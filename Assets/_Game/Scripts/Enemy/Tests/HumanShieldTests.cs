@@ -89,6 +89,26 @@ namespace ClaudeCop.Enemy.Tests
         }
 
         [Test]
+        public void Tap_InCenterRadius_BeyondHeadRadius_IsEnemyKill_NotHostage()
+        {
+            var e = Make();
+            // 80px tu tam: ngoai shieldHeadRadiusPx (45) nhung trong shieldCenterTapRadius (90).
+            var o = e.OnTapHit(new ShotInfo { ScreenPosition = new Vector2(580, 900), Direction = Vector3.forward }, false);
+            Assert.AreEqual(TapOutcome.Kill, o);
+            Assert.IsTrue(e.IsDead);
+            Assert.IsFalse(e.IsHostageWounded);
+        }
+
+        [Test]
+        public void Tap_OutsideCenterRadius_IsHostageHit()
+        {
+            var e = Make();
+            var o = e.OnTapHit(new ShotInfo { ScreenPosition = new Vector2(600, 900), Direction = Vector3.forward }, false);
+            Assert.AreEqual(TapOutcome.HostageHit, o);
+            Assert.IsFalse(e.IsDead);
+        }
+
+        [Test]
         public void Tap_Head_IsKill()
         {
             var e = Make();

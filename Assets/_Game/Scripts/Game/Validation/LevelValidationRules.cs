@@ -25,6 +25,9 @@ namespace ClaudeCop.Game.Validation
         [Min(0)] public int maxEnemiesPerWave = 4;
         [Min(0)] public int maxEnemiesTotal = 24;
         [Tooltip("Tran so enemy cung luc (maxConcurrent cua wave phai > 0 va <= tran nay)")] [Min(0)] public int maxConcurrentCap = 3;
+        [Tooltip("> 0: scene chuoi level (vd. Level_Chain). Tong enemy toi da = gia tri nay x so level trong scene (thay maxEnemiesTotal); "
+            + "moi level con con bi gioi han theo rule rieng cua no (vd. Level_02), level khong co rule rieng dung gia tri nay.")]
+        [Min(0)] public int maxEnemiesPerLevel = 0;
     }
 
     /// <summary>Nguong cua Editor tool ClaudeCop/Validate Level. Khong hard-code trong validator.</summary>
@@ -33,6 +36,7 @@ namespace ClaudeCop.Game.Validation
     {
         [Header("(a) Khoang cach")]
         [Min(0)] public float minTargetDistance = 12f;
+        [Tooltip("GDD vong 11: tran khoang cach muc tieu (xa thu toi 35 m). <= 0 = khong kiem.")] [Min(0)] public float maxTargetDistance = 35f;
         [Tooltip("Pickup noi duoc phep gan hon (WARN neu nho hon)")] [Min(0)] public float minPickupDistance = 8f;
         [Tooltip("Do cao ngam (m) cong vao diem Peek")] public float aimHeight = 1.5f;
 
@@ -98,6 +102,25 @@ namespace ClaudeCop.Game.Validation
 
         [Header("(j) PropSlot khop Prop")]
         public float propSlotTolerance = 0.05f;
+
+        /// <summary>Level con cua mot wave trong scene chuoi: ten root Level_XX cua diem spawn; khong co thi theo tien to wave "L5_" -> Level_05; mac dinh Level_01.</summary>
+        public static string LevelKeyOf(string waveName, string spawnRootName)
+        {
+            if (!string.IsNullOrEmpty(spawnRootName) && spawnRootName.StartsWith("Level_", StringComparison.Ordinal)) return spawnRootName;
+            var m = System.Text.RegularExpressions.Regex.Match(waveName ?? "", @"^L(\d+)_");
+            if (m.Success) return "Level_" + int.Parse(m.Groups[1].Value).ToString("00");
+            return "Level_01";
+        }
+
+        /// <summary>Gioi han enemy cua level con trong chuoi: rule rieng cua level (neu co) hoac chain.maxEnemiesPerLevel.</summary>
+        public int PerLevelLimit(LevelRule chain, string levelKey)
+        {
+            var r = RuleFor(levelKey);
+            return r != null && r != fallbackRule && r != chain ? r.maxEnemiesTotal : chain.maxEnemiesPerLevel;
+        }
+
+        /// <summary>Tong enemy toi da cua scene chuoi: maxEnemiesPerLevel x so level.</summary>
+        public static int ChainTotalLimit(LevelRule chain, int levelCount) => chain.maxEnemiesPerLevel * Mathf.Max(1, levelCount);
 
         public LevelRule RuleFor(string sceneName)
         {

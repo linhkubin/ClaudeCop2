@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: LevelValidationRules
   m_EditorClassIdentifier: ClaudeCop.Game::ClaudeCop.Game.Validation.LevelValidationRules
   minTargetDistance: 12
+  maxTargetDistance: 35
   minPickupDistance: 8
   aimHeight: 1.5
   aspectPortrait: 0.5625
@@ -48,6 +49,7 @@ MonoBehaviour:
     maxEnemiesPerWave: 4
     maxEnemiesTotal: 24
     maxConcurrentCap: 3
+    maxEnemiesPerLevel: 0
   - sceneNameContains: Level_02
     forbidHostage: 0
     forbidBarrel: 1
@@ -57,6 +59,37 @@ MonoBehaviour:
     maxEnemiesPerWave: 4
     maxEnemiesTotal: 28
     maxConcurrentCap: 3
+    maxEnemiesPerLevel: 0
+  - sceneNameContains: Level_03
+    forbidHostage: 0
+    forbidBarrel: 1
+    forbidWeaponCrate: 1
+    forbidHumanShield: 1
+    forbidGrenadier: 1
+    maxEnemiesPerWave: 4
+    maxEnemiesTotal: 20
+    maxConcurrentCap: 3
+    maxEnemiesPerLevel: 0
+  - sceneNameContains: Level_04
+    forbidHostage: 0
+    forbidBarrel: 1
+    forbidWeaponCrate: 1
+    forbidHumanShield: 0
+    forbidGrenadier: 1
+    maxEnemiesPerWave: 5
+    maxEnemiesTotal: 27
+    maxConcurrentCap: 4
+    maxEnemiesPerLevel: 0
+  - sceneNameContains: Level_Chain
+    forbidHostage: 0
+    forbidBarrel: 0
+    forbidWeaponCrate: 0
+    forbidHumanShield: 0
+    forbidGrenadier: 0
+    maxEnemiesPerWave: 5
+    maxEnemiesTotal: 0
+    maxConcurrentCap: 4
+    maxEnemiesPerLevel: 32
   fallbackRule:
     sceneNameContains: 
     forbidHostage: 0
@@ -67,6 +100,7 @@ MonoBehaviour:
     maxEnemiesPerWave: 8
     maxEnemiesTotal: 80
     maxConcurrentCap: 6
+    maxEnemiesPerLevel: 0
   hostagePrefixes:
   - HostageSpawn_
   barrelPrefixes:

@@ -46,6 +46,15 @@ namespace ClaudeCop.Game.Editor
             public float baseYaw;
             /// <summary>&gt; 0: toc do (m/s) cua shot Move dau Phase 2+ (ray noi Phase, dai hon ray thuong) va camera nhin theo tiep tuyen ray.</summary>
             public float linkSpeed;
+            /// <summary>true: rail Move dau Phase 1 cung la ray noi (nhin theo tiep tuyen, linkSpeed) - level noi tiep trong chuoi bat dau tai goc cuoi level truoc.</summary>
+            public bool linkFirst;
+            /// <summary>So Phase cua level (mac dinh 3; Level 5 = 5). Moi Phase 6 shot.</summary>
+            public int phaseCount = 3;
+            /// <summary>L3-L4: ten marker (vd. "CamPoint_P3_S7") cua goc dwell cuoi level - them shot Combat KHONG encounter (dwell) vao cuoi Phase cuoi:
+            /// sau wave cuoi camera quay nhin cua noi level ke mo (truoc bang ket qua / truoc ray level ke). null = khong co.</summary>
+            public string exitCamPoint;
+            /// <summary>Thoi gian giu goc exitCamPoint (s) va thoi gian blend vao goc do (s).</summary>
+            public float exitDwell = 0.8f, exitBlend = 1.0f;
         }
 
         public static void Run(LevelSpec spec)
@@ -90,7 +99,7 @@ namespace ClaudeCop.Game.Editor
             var hostagePrefab = AssetDatabase.LoadAssetAtPath<HostageActor>(Pre + "Enemies/Hostage.prefab");
             var config = AssetDatabase.LoadAssetAtPath<EnemyConfig>(Pre + "Enemies/Data/EnemyConfig_Default.asset");
 
-            for (int p = 1; p <= 3; p++)
+            for (int p = 1; p <= spec.phaseCount; p++)
             {
                 var phase = new RailPhase { title = Titles[p - 1] };
                 CameraShot prevShot = null;
@@ -115,7 +124,7 @@ namespace ClaudeCop.Game.Editor
                             // Giu huong cua shot Combat truoc (hoac +Z khi vao Phase) den 40% rail, roi xoay dan ve huong shot Combat ke (SetNextLook).
                             float holdYaw = prevShot != null && prevShot.kind == ShotKind.Combat ? prevShot.transform.eulerAngles.y : spec.baseYaw;
                             shot.lookKeys = new List<LookKey> { new LookKey(0.4f, holdYaw) };
-                            if (s == 1 && p > 1 && spec.linkSpeed > 0f)
+                            if (s == 1 && (p > 1 || spec.linkFirst) && spec.linkSpeed > 0f)
                             {
                                 // Ray noi Phase: camera nhin THEO HUONG DI (tiep tuyen ray, khong lookKeys) - khong truot ngang; dau/cuoi ray khop huong shot truoc/sau.
                                 shot.lookKeys = new List<LookKey>();
@@ -153,6 +162,22 @@ namespace ClaudeCop.Game.Editor
                     prevShot = shot;
                     EditorUtility.SetDirty(shot);
                 }
+                if (p == spec.phaseCount && !string.IsNullOrEmpty(spec.exitCamPoint) && points.TryGetValue(spec.exitCamPoint, out var ecp))
+                {
+                    // Goc dwell cuoi level (khong encounter): nhin cua noi level ke mo, FOV = FOV ray (vao ray level ke khong doi FOV).
+                    var go = new GameObject(pre + "Shot_P" + p + "_S7_Combat"); // ten theo quy uoc Shot_P*_S*_Combat (shot dwell khong encounter)
+                    go.transform.SetParent(shots, false);
+                    go.transform.SetPositionAndRotation(ecp.position, ecp.rotation);
+                    var shot = go.AddComponent<CameraShot>();
+                    shot.kind = ShotKind.Combat;
+                    shot.entry = ShotEntry.Blend;
+                    shot.fov = profile.baseFov;
+                    shot.blendTime = spec.exitBlend;
+                    shot.dwell = spec.exitDwell;
+                    shot.EnsureCameras(profile);
+                    phase.shots.Add(shot);
+                    EditorUtility.SetDirty(shot);
+                }
                 phases.Add(phase);
             }
             rig.phases = phases;
@@ -172,7 +197,7 @@ namespace ClaudeCop.Game.Editor
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("[" + spec.logName + "] Done: 3 Phase, " + Waves.Length + " wave.");
+            Debug.Log("[" + spec.logName + "] Done: " + spec.phaseCount + " Phase, " + Waves.Length + " wave.");
         }
 
         // ---- M3 (T-702): Props, Grenadier, HumanShield, PropSystems, RankScoreDirector ----
@@ -212,30 +237,7 @@ namespace ClaudeCop.Game.Editor
                 }
             }
 
-            // Grenadier / HumanShield vao EncounterWave
-            var gPrefab = AssetDatabase.LoadAssetAtPath<EnemyActor>(Pre + "Enemies/Enemy_Grenadier.prefab");
-            var hsPrefab = AssetDatabase.LoadAssetAtPath<HumanShieldEnemy>(Pre + "Enemies/Enemy_HumanShield.prefab");
-            if (!append) foreach (var wave in encounters.GetComponentsInChildren<EncounterWave>(true))
-            {
-                // ten Wave_P{p}_W{w}
-                var parts = wave.name.Split('_'); if (parts.Length < 3) continue;
-                string key = parts[1] + "_" + parts[2] + "_";
-                if (parts[1] == "P1") continue; // chi tu Phase 2
-                var so = new SerializedObject(wave);
-                var g = Find(points, "GrenadierSpawn_" + key);
-                if (g.Count > 0)
-                {
-                    so.FindProperty("grenadierPrefab").objectReferenceValue = gPrefab;
-                    SetList(so.FindProperty("grenadierSpawnPoints"), g);
-                }
-                var h = Find(points, "ShieldSpawn_" + key);
-                if (h.Count > 0)
-                {
-                    so.FindProperty("humanShieldPrefab").objectReferenceValue = hsPrefab;
-                    SetList(so.FindProperty("humanShieldSpawnPoints"), h);
-                }
-                so.ApplyModifiedPropertiesWithoutUndo();
-            }
+            // Grenadier / HumanShield: noi trong WireWave (moi Phase, ca khi append - Level 5 co khien nguoi tu P1).
 
             EnsurePrefab(roots, "PropSystems", Pre + "Props/PropSystems.prefab");
 
@@ -291,12 +293,36 @@ namespace ClaudeCop.Game.Editor
             so.FindProperty("hostagePrefab").objectReferenceValue = hostagePrefab;
             SetList(so.FindProperty("spawnPoints"), Find(pts, "EnemySpawn_" + key));
             SetList(so.FindProperty("hostageSpawnPoints"), Find(pts, "HostageSpawn_" + key));
+            // Grenadier / khien nguoi (marker GrenadierSpawn_ / ShieldSpawn_ trong prefab level)
+            var gr = Find(pts, "GrenadierSpawn_" + key);
+            if (gr.Count > 0)
+            {
+                so.FindProperty("grenadierPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<EnemyActor>(Pre + "Enemies/Enemy_Grenadier.prefab");
+                SetList(so.FindProperty("grenadierSpawnPoints"), gr);
+                so.FindProperty("maxGrenadiersPerWave").intValue = gr.Count;
+            }
+            var sh = Find(pts, "ShieldSpawn_" + key);
+            if (sh.Count > 0)
+            {
+                so.FindProperty("humanShieldPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<HumanShieldEnemy>(Pre + "Enemies/Enemy_HumanShield.prefab");
+                SetList(so.FindProperty("humanShieldSpawnPoints"), sh);
+                so.FindProperty("maxHumanShieldsPerWave").intValue = sh.Count;
+            }
             var picks = Find(pts, "PickupSpawn_" + key);
             if (def.pickup != null && picks.Count > 0)
             {
                 so.FindProperty("pickupPrefab").objectReferenceValue =
                     AssetDatabase.LoadAssetAtPath<GameObject>(Pre + "Combat/WeaponPickup_" + def.pickup + ".prefab");
                 SetList(so.FindProperty("pickupSpawnPoints"), picks);
+            }
+            // Canh hai (GagFall) dat san trong prefab level: Gag_P*_W*_NN
+            var gagProp = so.FindProperty("gags");
+            if (gagProp != null)
+            {
+                var gagList = new List<GagFall>();
+                foreach (var t in Find(pts, "Gag_" + key)) { var g = t.GetComponent<GagFall>(); if (g != null) gagList.Add(g); }
+                gagProp.arraySize = gagList.Count;
+                for (int i = 0; i < gagList.Count; i++) gagProp.GetArrayElementAtIndex(i).objectReferenceValue = gagList[i];
             }
             so.FindProperty("description").stringValue = "P" + p + " W" + w + " (" + def.preset + ")";
             if (def.maxConcurrent > 0) so.FindProperty("maxConcurrent").intValue = def.maxConcurrent;
@@ -328,7 +354,7 @@ namespace ClaudeCop.Game.Editor
             string key = "P" + p + "_W" + w + "_";
             float aim = config != null ? config.aimHeight : 1.5f;
             var list = new List<Vector3>();
-            foreach (var prefix in new[] { "EnemySpawn_", "HostageSpawn_" })
+            foreach (var prefix in new[] { "EnemySpawn_", "HostageSpawn_", "ShieldSpawn_", "GrenadierSpawn_" })
                 foreach (var sp in Find(pts, prefix + key))
                 {
                     var peek = sp.Find("Peek");

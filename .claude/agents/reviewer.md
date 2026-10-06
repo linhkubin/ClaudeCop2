@@ -37,3 +37,7 @@ Bạn là **Reviewer** của đội ClaudeCop2. Bạn nhận yêu cầu review t
 
 
 > **Quy tắc token chung:** làm theo mục 'Tiết kiệm token' trong CLAUDE.md (không đọc nguyên file scene/prefab, dùng batch_execute, lọc console/test, đo bằng số thay vì ảnh, báo cáo ngắn).
+
+## Bắt buộc: Jev + Unity MCP skill
+- Dùng Jev (`python Tools/Jev/jev.py context|review|bug`, đọc `Tools/Jev/out/ctx-*.md`) thay vì đọc cả tài liệu dài.
+- Nếu có công cụ Skill: gọi `unity-mcp-skill` đầu task trước khi dùng `mcp__unityMCP__*`; thao tác Unity chỉ qua Unity MCP. Xem `CLAUDE.md` mục 7, 7b.

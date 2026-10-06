@@ -212,8 +212,11 @@ namespace ClaudeCop.Enemy.Tests
             w.FlushClear();
             Assert.AreEqual(1, cleared, "con tin dang lo khong chan Cleared");
             Assert.AreEqual(0, w.ActiveHostageCount);
-            Assert.IsTrue(h.gameObject.activeSelf, "con tin dung im, khong tat dot ngot");
+            Assert.IsTrue(h.gameObject.activeSelf, "con tin khong tat dot ngot");
             Assert.IsFalse(h.IsTargetable, "het dot: khong ban duoc nua");
+            // L4-HOSTFIX (GDD vong 11): con tin khong dung im - tu cui xuong roi tat
+            h.Tick(1f);
+            Assert.IsFalse(h.gameObject.activeSelf, "con tin dang lo khi het dot phai tu cui xuong, khong dung im");
         }
 
         [Test]

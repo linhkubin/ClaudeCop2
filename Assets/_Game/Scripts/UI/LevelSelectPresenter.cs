@@ -32,17 +32,21 @@ namespace ClaudeCop.UI
                 r.anchoredPosition = new Vector2(x0 + i * (buttonSize.x + spacing), 0f); r.sizeDelta = buttonSize;
                 var img = go.GetComponent<Image>(); img.color = new Color(0.15f, 0.45f, 0.9f, 1f);
                 var b = go.GetComponent<Button>(); b.targetGraphic = img; b.onClick.AddListener(() => GameCommands.RequestSelectLevel(level));
-                Label("Label", "LEVEL " + (i + 1), 54, Vector2.zero, buttonSize, Color.white, go.transform);
+                var lbl = Label("Label", "LEVEL " + (i + 1), 54, Vector2.zero, buttonSize - new Vector2(16f, 16f), Color.white, go.transform);
+                // Nut hep (6+ level tren 1000 px): khong xuong dong, tu thu nho chu cho vua nut
+                lbl.textWrappingMode = TextWrappingModes.NoWrap;
+                lbl.enableAutoSizing = true; lbl.fontSizeMax = 54; lbl.fontSizeMin = 24;
             }
         }
 
-        void Label(string name, string text, float size, Vector2 pos, Vector2 box, Color color, Transform parent)
+        TextMeshProUGUI Label(string name, string text, float size, Vector2 pos, Vector2 box, Color color, Transform parent)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
             go.transform.SetParent(parent != null ? parent : transform, false);
             var t = go.GetComponent<TextMeshProUGUI>();
             t.text = text; t.fontSize = size; t.alignment = TextAlignmentOptions.Center; t.color = color; t.fontStyle = FontStyles.Bold; t.raycastTarget = false;
             var r = t.rectTransform; r.anchorMin = r.anchorMax = r.pivot = new Vector2(0.5f, 0.5f); r.anchoredPosition = pos; r.sizeDelta = box;
+            return t;
         }
     }
 }

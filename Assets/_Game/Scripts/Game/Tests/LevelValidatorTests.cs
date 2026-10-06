@@ -84,5 +84,52 @@ namespace ClaudeCop.Game.Tests
             Assert.AreEqual(0.4f + 30f / 4.5f, LevelGeometry.MoveSeconds(30f, 3.5f, 0f, 0.4f, 0.4f, 5.8f, 4.5f, 0f), 0.01f);
             Assert.AreEqual(2f, LevelGeometry.MoveSeconds(10f, 3.5f, 10f, 0f, 0f, 5.8f, 4.5f, 1f), 0.01f);
         }
+
+        [Test]
+        public void Chain_LevelKey_FromRootOrWavePrefix()
+        {
+            Assert.AreEqual("Level_02", LevelValidationRules.LevelKeyOf("L3_Wave_P1_W2", "Level_02"));
+            Assert.AreEqual("Level_03", LevelValidationRules.LevelKeyOf("L3_Wave_P1_W2", "Encounters"));
+            Assert.AreEqual("Level_01", LevelValidationRules.LevelKeyOf("Wave_P1_W2", null));
+        }
+
+        [Test]
+        public void Chain_Limits_ScaleWithLevelCount_AndUseOwnLevelRule()
+        {
+            var rules = ScriptableObject.CreateInstance<LevelValidationRules>();
+            var chain = new LevelRule { sceneNameContains = "Level_Chain", maxEnemiesPerLevel = 32 };
+            rules.levelRules = new List<LevelRule> { new LevelRule { sceneNameContains = "Level_02", maxEnemiesTotal = 28 }, chain };
+            Assert.AreSame(chain, rules.RuleFor("Level_Chain"));
+            Assert.AreEqual(160, LevelValidationRules.ChainTotalLimit(chain, 5));
+            Assert.AreEqual(28, rules.PerLevelLimit(chain, "Level_02"));
+            Assert.AreEqual(32, rules.PerLevelLimit(chain, "Level_03"));   // khong co rule rieng -> theo chuoi
+            Object.DestroyImmediate(rules);
+        }
+
+        [Test]
+        public void RulesAsset_HasOwnRuleForLevel01To04_AndChain()
+        {
+            var rules = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelValidationRules>("Assets/_Game/Settings/LevelValidationRules.asset");
+            Assert.IsNotNull(rules);
+            foreach (var key in new[] { "Level_01", "Level_02", "Level_03", "Level_04", "Level_Chain" })
+                Assert.AreEqual(key, rules.RuleFor(key).sceneNameContains, key);
+            var chain = rules.RuleFor("Level_Chain");
+            Assert.AreEqual(20, rules.PerLevelLimit(chain, "Level_03"));   // trong chuoi: Level_03 dung rule rieng
+            Assert.AreEqual(27, rules.PerLevelLimit(chain, "Level_04"));   // L4 kho tien: 27 enemy (GDD vong 11)
+            var l4 = rules.RuleFor("Level_04");
+            Assert.IsFalse(l4.forbidHumanShield, "L4: luat moi khien nguoi");
+            Assert.IsFalse(l4.forbidHostage);
+            Assert.GreaterOrEqual(l4.maxEnemiesPerWave, 5, "L4: 'Don dap loi vang' 5 enemy");
+            Assert.GreaterOrEqual(chain.maxEnemiesPerWave, l4.maxEnemiesPerWave, "chuoi khong chat hon level con");
+            Assert.GreaterOrEqual(chain.maxConcurrentCap, l4.maxConcurrentCap);
+        }
+
+        [Test]
+        public void RulesAsset_MaxTargetDistance_Is35m()
+        {
+            var rules = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelValidationRules>("Assets/_Game/Settings/LevelValidationRules.asset");
+            Assert.AreEqual(35f, rules.maxTargetDistance, 1e-3f);   // GDD vong 11: xa thu toi 35 m
+            Assert.Less(rules.minTargetDistance, rules.maxTargetDistance);
+        }
     }
 }

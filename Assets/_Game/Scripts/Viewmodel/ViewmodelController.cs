@@ -264,7 +264,7 @@ namespace ClaudeCop.Viewmodel
             if (!ejectShells || s == null || s.muzzle == null) return;
             WeaponKind kind = ActiveKind ?? WeaponKind.Pistol;
             bool shotgun = kind == WeaponKind.Shotgun;
-            float len = shotgun ? 0.085f : (kind == WeaponKind.MachineGun ? 0.050f : 0.058f), rad = shotgun ? 0.019f : (kind == WeaponKind.MachineGun ? 0.010f : 0.011f);
+            float len = shotgun ? 0.057f : (kind == WeaponKind.MachineGun ? 0.033f : 0.039f), rad = shotgun ? 0.013f : (kind == WeaponKind.MachineGun ? 0.0067f : 0.0073f);
             if (brassMat == null) brassMat = MakeMat(new Color(0.9f, 0.68f, 0.22f), 0.9f, 0.65f);
             if (shellMat == null) shellMat = MakeMat(new Color(0.8f, 0.12f, 0.08f), 0.1f, 0.4f);
 

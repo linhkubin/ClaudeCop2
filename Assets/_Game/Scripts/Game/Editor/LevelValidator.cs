@@ -141,7 +141,7 @@ namespace ClaudeCop.Game.Editor
             gI.summary = waves.Count + " wave, " + shots.Count + " shot, " + CountNon(gI) + " van de";
 
             // ----- (a) khoang cach, (b) vua khung, (c) tam nhin
-            var gA = G("a", "Khoang cach >= " + rules.minTargetDistance + " m");
+            var gA = G("a", "Khoang cach >= " + rules.minTargetDistance + " m" + (rules.maxTargetDistance > 0f ? ", <= " + rules.maxTargetDistance + " m" : ""));
             var gB = G("b", "Vua khung 9:16 + 9:19.5");
             var gC = G("c", "Tam nhin (raycast)");
             float minDist = float.MaxValue, maxH = 0f, maxW = 0f, maxFovP = 0f, maxFovT = 0f; int blocked = 0, rays = 0;
@@ -163,6 +163,8 @@ namespace ClaudeCop.Game.Editor
                         string m = wi.shot.name + " -> " + t.name + " " + d.ToString("0.0") + " m < " + need;
                         if (pick) gA.Warn(m); else gA.Fail(m);
                     }
+                    if (!pick && rules.maxTargetDistance > 0f && d > rules.maxTargetDistance + 1e-3f)
+                        gA.Fail(wi.shot.name + " -> " + t.name + " " + d.ToString("0.0") + " m > " + rules.maxTargetDistance);
                     // raycast moi muc tieu
                     {
                         rays++;
@@ -289,14 +291,42 @@ namespace ClaudeCop.Game.Editor
                 if (rule.maxConcurrentCap > 0 && ne > rule.maxConcurrentCap && (conc <= 0 || conc > rule.maxConcurrentCap))
                     gG.Fail(wi.wave.name + ": maxConcurrent " + conc + " (can 1.." + rule.maxConcurrentCap + " vi " + ne + " enemy)");
             }
-            if (total > rule.maxEnemiesTotal) gG.Fail("Tong " + total + " enemy > " + rule.maxEnemiesTotal);
+            string totalNote = "tong <=" + rule.maxEnemiesTotal;
+            if (rule.maxEnemiesPerLevel > 0)
+            {
+                // Scene chuoi: dem theo level con; tong <= maxEnemiesPerLevel x so level, moi level <= rule rieng cua no.
+                var perLevel = new SortedDictionary<string, int>();
+                foreach (var wi in waves)
+                {
+                    int ne = 0; string root = null;
+                    foreach (var t in wi.targets)
+                    {
+                        if (t.spawn != null && root == null && t.spawn.root.name.StartsWith("Level_", StringComparison.Ordinal)) root = t.spawn.root.name;
+                        if (t.kind == "Enemy" || t.kind == "Grenadier" || t.kind == "Shield") ne++;
+                    }
+                    string key = LevelValidationRules.LevelKeyOf(wi.wave.name, root);
+                    perLevel.TryGetValue(key, out int c); perLevel[key] = c + ne;
+                }
+                int limit = LevelValidationRules.ChainTotalLimit(rule, perLevel.Count);
+                var parts = new List<string>();
+                foreach (var kv in perLevel)
+                {
+                    int lim = rules.PerLevelLimit(rule, kv.Key);
+                    parts.Add(kv.Key + " " + kv.Value + "/" + lim);
+                    if (kv.Value > lim) gG.Fail(kv.Key + ": " + kv.Value + " enemy > " + lim + " (rule level)");
+                }
+                gG.Info("Theo level: " + string.Join(", ", parts));
+                if (total > limit) gG.Fail("Tong " + total + " enemy > " + limit + " (" + rule.maxEnemiesPerLevel + " x " + perLevel.Count + " level)");
+                totalNote = "tong <=" + limit + " = " + rule.maxEnemiesPerLevel + "x" + perLevel.Count + " level";
+            }
+            else if (total > rule.maxEnemiesTotal) gG.Fail("Tong " + total + " enemy > " + rule.maxEnemiesTotal);
             int forbidden = 0;
             CountForbidden(all, rule.forbidHostage, rules.hostagePrefixes, "con tin", gG, ref forbidden);
             CountForbidden(all, rule.forbidBarrel, rules.barrelPrefixes, "thung no", gG, ref forbidden);
             CountForbidden(all, rule.forbidWeaponCrate, rules.weaponCratePrefixes, "thung sung", gG, ref forbidden);
             CountForbidden(all, rule.forbidHumanShield, rules.humanShieldPrefixes, "khien nguoi", gG, ref forbidden);
             CountForbidden(all, rule.forbidGrenadier, rules.grenadierPrefixes, "grenadier", gG, ref forbidden);
-            gG.summary = total + " enemy (max/wave " + maxWave + " <=" + rule.maxEnemiesPerWave + ", tong <=" + rule.maxEnemiesTotal + "), marker cam: " + forbidden;
+            gG.summary = total + " enemy (max/wave " + maxWave + " <=" + rule.maxEnemiesPerWave + ", " + totalNote + "), marker cam: " + forbidden;
 
             // ----- (h) ten
             var gH = G("h", "Ten object");
@@ -309,8 +339,9 @@ namespace ClaudeCop.Game.Editor
                 {
                     if (!t.name.StartsWith(kv.Key.prefix, StringComparison.Ordinal)) continue;
                     if (!kv.Value.IsMatch(t.name)) { bad++; gH.Warn("sai quy uoc " + kv.Key.label + ": " + PathOf(t)); }
-                    if (seen.TryGetValue(t.name, out int c)) { seen[t.name] = c + 1; if (c == 1) gH.Fail("trung ten: " + t.name); }
-                    else seen[t.name] = 1;
+                    string dk = t.root.name + "/" + t.name;   // chuoi level: moi level (root Level_XX) co bo marker rieng cung ten
+                    if (seen.TryGetValue(dk, out int c)) { seen[dk] = c + 1; if (c == 1) gH.Fail("trung ten: " + dk); }
+                    else seen[dk] = 1;
                     break;
                 }
             }
@@ -321,8 +352,9 @@ namespace ClaudeCop.Game.Editor
             var slots = new Dictionary<string, Transform>(); var props = new Dictionary<string, Transform>();
             foreach (var t in all)
             {
+                string pn = StripLevelPrefix(t.name);   // chuoi level: Prop ghep voi tien to L2_/L3_
                 if (t.name.StartsWith("PropSlot_", StringComparison.Ordinal)) slots[t.name.Substring("PropSlot_".Length)] = t;
-                else if (t.name.StartsWith("Prop_", StringComparison.Ordinal) && t.name.Split('_').Length >= 5) props[t.name.Substring("Prop_".Length)] = t;
+                else if (pn.StartsWith("Prop_", StringComparison.Ordinal) && pn.Split('_').Length >= 5) props[pn.Substring("Prop_".Length)] = t;
             }
             int matched = 0, off = 0;
             foreach (var kv in slots)
@@ -360,6 +392,9 @@ namespace ClaudeCop.Game.Editor
         }
 
         // ------------------------------------------------------------------
+        /// <summary>Bo tien to level cua chuoi (vd. "L2_Prop_Glass_..." -> "Prop_Glass_...").</summary>
+        static string StripLevelPrefix(string n) => Regex.Replace(n, @"^L\d+_", "");
+
         static int CountNon(Group g) { int n = 0; foreach (var d in g.details) if (!d.StartsWith("     ")) n++; return n; }
         static int CountFail(Group g) { int n = 0; foreach (var d in g.details) if (d.StartsWith("FAIL")) n++; return n; }
 
@@ -403,7 +438,8 @@ namespace ClaudeCop.Game.Editor
                 if (h.distance > dist - rules.sightlineEndTolerance) break;
                 if (t.spawn != null && h.collider.transform.IsChildOf(t.spawn)) continue;
                 bool ign = false;
-                foreach (var pf in rules.sightlineIgnorePrefixes) if (h.collider.name.StartsWith(pf, StringComparison.Ordinal) || h.collider.transform.root.name.StartsWith(pf, StringComparison.Ordinal)) { ign = true; break; }
+                string cn = StripLevelPrefix(h.collider.name), rn = StripLevelPrefix(h.collider.transform.root.name);
+                foreach (var pf in rules.sightlineIgnorePrefixes) if (cn.StartsWith(pf, StringComparison.Ordinal) || rn.StartsWith(pf, StringComparison.Ordinal)) { ign = true; break; }
                 if (ign) continue;
                 return h.collider.name + " @" + h.distance.ToString("0.0") + " m";
             }

@@ -26,7 +26,7 @@ namespace ClaudeCop.Enemy
         [Min(0.1f), Tooltip("Enemy dau hang (gio tay) bao lau truoc khi bien mat (s)")] public float surrenderTime = 1f;
 
         [Header("Hostage")]
-        [Min(0.5f), Tooltip("Con tin lo ra bao lau truoc khi tu roi di (s)")] public float hostageExposeTime = 4f;
+        [Min(0.5f), Tooltip("Con tin lo ra bao lau truoc khi tu roi di (s)")] public float hostageExposeTime = 3f;
         [Min(0.1f), Tooltip("Cao diem ngam con tin so voi chan (m)")] public float hostageAimHeight = 1.3f;
 
         [Header("Grenadier (luu dan)")]
@@ -41,6 +41,7 @@ namespace ClaudeCop.Enemy
 
         [Header("Human shield")]
         [Min(1f), Tooltip("Ban kinh trung dau (px, chuan chieu rong tham chieu)")] public float shieldHeadRadiusPx = 45f;
+        [Min(1f), Tooltip("Ban kinh tam enemy giu con tin (px chuan): tap trong ban kinh nay quanh AimPoint luon ban ENEMY, ke ca khi con tin chong len. Mac dinh = ban kinh tap cua vu khi (90). Dung gia tri lon hon shieldHeadRadiusPx.")] public float shieldCenterTapRadius = 90f;
         [Min(1f), Tooltip("Chieu rong man hinh chuan de quy doi px")] public float uiReferenceWidth = 1080f;
         [Min(0.1f), Tooltip("Cao diem ngam (dau) so voi chan khi khong co con Head (m)")] public float shieldHeadHeight = 1.75f;
         [Min(0f), Tooltip("Toc do con tin chay khi duoc tha (m/s)")] public float hostageRunSpeed = 3f;
